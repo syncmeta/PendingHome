@@ -50,7 +50,7 @@
 - Produces: 12 个 `output` id —— `pwm_ch1_cw` `pwm_ch1_ww` … `pwm_ch6_cw` `pwm_ch6_ww`(后续任务的灯与限流逻辑依赖这些 id)
 - Produces: `switch` id `hct245_enable`(Task 2 的上电时序依赖)
 
-- [ ] **Step 1: 建立 venv 并确认 esphome 可用**
+- [x] **Step 1: 建立 venv 并确认 esphome 可用**
 
 ```bash
 cd /Users/hey/Untitled/PendingHome/cct-driver
@@ -61,7 +61,7 @@ python3 -m venv .venv
 
 预期:输出版本号。**本计划的 YAML 已在 esphome 2025.5.2 上实测通过 `esphome config`**,若你的版本更新出现差异,以官方文档为准。
 
-- [ ] **Step 2: 写 secrets 模板与 gitignore**
+- [x] **Step 2: 写 secrets 模板与 gitignore**
 
 `firmware/secrets.yaml.example`:
 ```yaml
@@ -77,7 +77,7 @@ secrets.yaml
 .esphome/
 ```
 
-- [ ] **Step 3: 写主配置的骨架 + 12 路 ledc 输出**
+- [x] **Step 3: 写主配置的骨架 + 12 路 ledc 输出**
 
 `firmware/cct-driver.yaml`:
 ```yaml
@@ -189,7 +189,7 @@ output:
     phase_angle: 180deg
 ```
 
-- [ ] **Step 4: 验证配置能通过**
+- [x] **Step 4: 验证配置能通过**
 
 ```bash
 cd /Users/hey/Untitled/PendingHome/cct-driver/firmware
@@ -202,7 +202,7 @@ sed -i '' 's|GENERATE_WITH_openssl_rand_-base64_32|'"$(openssl rand -base64 32)"
 
 > `ledc` 的 `phase_angle` 已在 **esphome 2025.5.2 实测支持**。若你的版本报错不认此项,删除全部 `phase_angle` 行并在文件顶部注释记录原因,重跑本步。
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add firmware/cct-driver.yaml firmware/secrets.yaml.example firmware/.gitignore
@@ -220,7 +220,7 @@ git commit -m "feat(fw): ESPHome skeleton with 12 LEDC PWM outputs"
 - Consumes: Task 1 的 12 个 `output` id、`hct245_enable`
 - Produces: 6 个 `light` id —— `light_ch1` … `light_ch6`(Task 3 的限流逻辑依赖)
 
-- [ ] **Step 1: 追加 6 个 cwww 灯**
+- [x] **Step 1: 追加 6 个 cwww 灯**
 
 在 `output:` 段之后追加。`constant_brightness: true` 保证 CW+WW 合计 duty ≤100%,使每条灯带平均电流不超过单通道满载值。
 
@@ -296,7 +296,7 @@ light:
 
 > **`restore_mode` 是待用户确认项**(设计文档 v7 头部):`RESTORE_DEFAULT_OFF` = 恢复断电前状态、无记录时关;若用户选择"来电一律不亮",全部改为 `ALWAYS_OFF`。
 
-- [ ] **Step 2: 追加上电时序**
+- [x] **Step 2: 追加上电时序**
 
 在 `esphome:` 段内追加 `on_boot`。优先级 `-100` 在所有组件(含 light 状态恢复)之后执行,保证使能 /OE 时 PWM 已是正确值,不会出现上电闪光。
 
@@ -311,7 +311,7 @@ esphome:
         - switch.turn_on: hct245_enable
 ```
 
-- [ ] **Step 3: 验证**
+- [x] **Step 3: 验证**
 
 ```bash
 cd /Users/hey/Untitled/PendingHome/cct-driver/firmware
@@ -320,7 +320,7 @@ cd /Users/hey/Untitled/PendingHome/cct-driver/firmware
 
 预期:能看到 6 个 light、1 个 switch、12 个 output,且无 ERROR。
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 git add firmware/cct-driver.yaml
@@ -340,7 +340,7 @@ git commit -m "feat(fw): 6 CCT light entities and power-on enable sequence"
 
 **背景:** 设计文档 §3 —— 6 条灯带理论峰值 17.5A 超过 12A 运行预算,需固件按实测电流动态降额。**此为运行管理,不是安全保护**;短路由硬件保险丝承担。
 
-- [ ] **Step 1: 追加 I2C 与 INA237**
+- [x] **Step 1: 追加 I2C 与 INA237**
 
 ```yaml
 i2c:
@@ -375,7 +375,7 @@ sensor:
     update_interval: 60s
 ```
 
-- [ ] **Step 2: 追加限流逻辑**
+- [x] **Step 2: 追加限流逻辑**
 
 `set_max_power()` 直接缩放 PWM 输出上限,不改变灯在 HA 中上报的亮度 —— 这正是保护限幅该有的行为。
 
@@ -441,7 +441,7 @@ interval:
       - script.execute: apply_power_scale
 ```
 
-- [ ] **Step 3: 验证**
+- [x] **Step 3: 验证**
 
 ```bash
 cd /Users/hey/Untitled/PendingHome/cct-driver/firmware
@@ -454,7 +454,7 @@ cd /Users/hey/Untitled/PendingHome/cct-driver/firmware
 > **已实测**:C++ 侧 `esphome::output::FloatOutput::set_max_power(float)` 确实存在(`components/output/float_output.h:39`),故 Step 2 的 lambda 限流机制成立。
 > 注意 `esphome config` 只做配置校验,**不编译 lambda**。首次 `esphome compile` 时若报 `set_max_power` 未定义,改用 `id(x)->set_level(...)` 直接写占空比,并相应调整逻辑。
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 git add firmware/cct-driver.yaml
@@ -473,7 +473,7 @@ git commit -m "feat(fw): INA237 monitoring with dynamic current limiting"
 
 **背景:** 设计文档 §9 —— 墙壁开关联动必须是**板内本地自动化**,WiFi/HA 挂掉时物理开关仍可控灯。
 
-- [ ] **Step 1: 追加 4 路干接点**
+- [x] **Step 1: 追加 4 路干接点**
 
 GPIO34/35/36/39 为纯输入脚,**内部无上拉**,依赖板上 10k 外部上拉;`delayed_on` 兜底 GPIO36/39 的 errata 毛刺。
 
@@ -550,7 +550,7 @@ binary_sensor:
           - light.toggle: light_ch4
 ```
 
-- [ ] **Step 2: 追加状态灯**
+- [x] **Step 2: 追加状态灯**
 
 ```yaml
   - platform: status
@@ -565,7 +565,7 @@ light:
 
 > 注意:`- platform: status` 属于 `binary_sensor:` 段(接在上一步的 sw4 之后),`status_led` 属于 `light:` 段(接在 6 个 cwww 灯之后)。合并时保持段落唯一。
 
-- [ ] **Step 3: 验证**
+- [x] **Step 3: 验证**
 
 ```bash
 cd /Users/hey/Untitled/PendingHome/cct-driver/firmware
@@ -574,12 +574,29 @@ cd /Users/hey/Untitled/PendingHome/cct-driver/firmware
 
 预期:`CONFIG OK`。若 `light:` 或 `binary_sensor:` 段重复定义会报 YAML 错误,合并到唯一段落后重跑。
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 git add firmware/cct-driver.yaml
 git commit -m "feat(fw): dry-contact wall switch inputs with local control"
 ```
+
+### ✅ Task 1–4 实际执行结果(2026-08-02)
+
+固件已合并为单文件 `firmware/cct-driver.yaml`(未按计划拆成 4 次提交,因四部分强耦合于同一文件)。
+
+| 验证 | 命令 | 结果 |
+|---|---|---|
+| 配置合法性 | `esphome config cct-driver.yaml` | ✅ `INFO Configuration is valid!`,**0 warning** |
+| 实体数量 | grep 计数 | ✅ 12× ledc、6× cwww、1× switch |
+| **C++ 编译** | `esphome compile cct-driver.yaml` | ✅ **SUCCESS(160s)** —— `set_max_power()` 等 lambda 调用全部合法 |
+| 资源占用 | 编译输出 | RAM 10.2%(33.5KB/320KB);Flash 55.2%(0.97MB / 1.75MB OTA 分区) |
+
+**连带确认的 BOM 决策**:ESP32-WROOM-32E-**N4**(4MB)容量充足,OTA 双分区有余量,无需升级 N8。
+
+**发现并修正的问题**:设计文档 §5 原称 PWM 引脚"全非 strapping",实为 **GPIO5 是 strapping 脚**。已在 §5 补充三个被占用 strapping 脚(GPIO5/2/15)的逐一安全性论证,并在固件中显式声明 `ignore_strapping_warning: true` + 理由注释。
+
+**尚未验证(需硬件)**:PWM 实际频率与波形、INA237 通信与读数、上电有无闪光、HA 实体呈现、干接点实际响应。列入收板后的样机测试。
 
 ---
 
