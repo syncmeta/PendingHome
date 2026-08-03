@@ -1,0 +1,420 @@
+# 6 路 CCT 灯带驱动板 — ESPHome 配置
+#
+# 硬件:ESP32-WROOM-32E + 2× 74HCT245 + 12× 60V NMOS 低边驱动
+# 设计文档:docs/superpowers/specs/2026-07-29-led-cct-driver-design.md (v7)
+#
+# GPIO 分配已在设计文档 §5 锁定,修改前请先改设计文档。
+# 注意:GPIO12 必须全程悬空(上电被拉高会令 ESP32 按 1.8V flash 电压启动,板子无法开机)。
+
+substitutions:
+  device_name: "cct-driver-01"
+  friendly_name: "CCT 驱动板 01"
+  pwm_frequency: "19531Hz"
+  # 总电流预算(A)。硬件主回路按 15A 连续设计,此处为正常运行上限。
+  current_limit: "12.0"
+  # 迟滞下限,低于此值才开始恢复限幅
+  current_release: "11.0"
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  on_boot:
+    # priority -100:在所有组件(含 light 状态恢复)之后执行。
+    # 此时 12 路 PWM 已是正确值,再使能 HCT245 输出,避免上电闪光。
+    - priority: -100
+      then:
+        - logger.log: "PWM 已初始化,使能 HCT245 输出"
+        - switch.turn_on: hct245_enable
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+logger:
+  level: INFO
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "${device_name} Fallback"
+
+captive_portal:
+
+# ---------------------------------------------------------------------------
+# HCT245 输出使能
+# ---------------------------------------------------------------------------
+# 硬件:GPIO15 → 10k → MMBT3904 基极(另有 100k 下拉);集电极 → /OE;
+#       /OE 另有 10k 上拉到 5V_SYS。
+# GPIO15 高 → NPN 导通 → /OE 拉低 → 12 路输出使能。
+# 未上电/复位/崩溃时 GPIO15 为高阻,100k 下拉关断 NPN,/OE 被拉高 → 输出高阻,
+# 灯带自动熄灭。这是硬件失效安全,不依赖固件执行任何代码。
+switch:
+  - platform: gpio
+    id: hct245_enable
+    name: "输出使能"
+    # GPIO15 是 strapping 脚。此处安全:经 10k(R14)+ 100k(R15)到地构成弱下拉,
+    # 启动时读低,效果仅为关闭 ROM 引导日志输出,对 ESPHome 日志与下载模式无影响。
+    pin:
+      number: GPIO15
+      ignore_strapping_warning: true
+    restore_mode: ALWAYS_OFF
+    entity_category: diagnostic
+
+# ---------------------------------------------------------------------------
+# 12 路 PWM
+# ---------------------------------------------------------------------------
+# 每对 CW/WW 相位错开 180°,降低总线纹波峰值(改善量需在样机上以总线电流波形验证)。
+output:
+  - platform: ledc
+    id: pwm_ch1_cw
+    pin: GPIO4
+    frequency: ${pwm_frequency}
+    phase_angle: 0deg
+  - platform: ledc
+    id: pwm_ch1_ww
+    # GPIO5 是 strapping 脚(SDIO 时序选择)。此处安全:它只驱动 74HCT245 的
+    # CMOS 输入(高阻),不构成任何外部上拉/下拉,启动时保持内部上拉的默认态。
+    # 引脚已全部用满,无非 strapping 脚可替换。
+    pin:
+      number: GPIO5
+      ignore_strapping_warning: true
+    frequency: ${pwm_frequency}
+    phase_angle: 180deg
+
+  - platform: ledc
+    id: pwm_ch2_cw
+    pin: GPIO13
+    frequency: ${pwm_frequency}
+    phase_angle: 0deg
+  - platform: ledc
+    id: pwm_ch2_ww
+    pin: GPIO14
+    frequency: ${pwm_frequency}
+    phase_angle: 180deg
+
+  - platform: ledc
+    id: pwm_ch3_cw
+    pin: GPIO16
+    frequency: ${pwm_frequency}
+    phase_angle: 0deg
+  - platform: ledc
+    id: pwm_ch3_ww
+    pin: GPIO17
+    frequency: ${pwm_frequency}
+    phase_angle: 180deg
+
+  - platform: ledc
+    id: pwm_ch4_cw
+    pin: GPIO18
+    frequency: ${pwm_frequency}
+    phase_angle: 0deg
+  - platform: ledc
+    id: pwm_ch4_ww
+    pin: GPIO19
+    frequency: ${pwm_frequency}
+    phase_angle: 180deg
+
+  - platform: ledc
+    id: pwm_ch5_cw
+    pin: GPIO21
+    frequency: ${pwm_frequency}
+    phase_angle: 0deg
+  - platform: ledc
+    id: pwm_ch5_ww
+    pin: GPIO22
+    frequency: ${pwm_frequency}
+    phase_angle: 180deg
+
+  - platform: ledc
+    id: pwm_ch6_cw
+    pin: GPIO23
+    frequency: ${pwm_frequency}
+    phase_angle: 0deg
+  - platform: ledc
+    id: pwm_ch6_ww
+    pin: GPIO25
+    frequency: ${pwm_frequency}
+    phase_angle: 180deg
+
+# ---------------------------------------------------------------------------
+# 6 个 CCT 灯实体
+# ---------------------------------------------------------------------------
+# constant_brightness: true 保证 CW+WW 合计 duty ≤100%,
+# 使每条灯带的平均电流不超过单通道满载值(设计文档 §3)。
+light:
+  - platform: cwww
+    id: light_ch1
+    name: "通道 1"
+    cold_white: pwm_ch1_cw
+    warm_white: pwm_ch1_ww
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2700 K
+    constant_brightness: true
+    gamma_correct: 2.2
+    default_transition_length: 500ms
+    restore_mode: RESTORE_DEFAULT_OFF
+
+  - platform: cwww
+    id: light_ch2
+    name: "通道 2"
+    cold_white: pwm_ch2_cw
+    warm_white: pwm_ch2_ww
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2700 K
+    constant_brightness: true
+    gamma_correct: 2.2
+    default_transition_length: 500ms
+    restore_mode: RESTORE_DEFAULT_OFF
+
+  - platform: cwww
+    id: light_ch3
+    name: "通道 3"
+    cold_white: pwm_ch3_cw
+    warm_white: pwm_ch3_ww
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2700 K
+    constant_brightness: true
+    gamma_correct: 2.2
+    default_transition_length: 500ms
+    restore_mode: RESTORE_DEFAULT_OFF
+
+  - platform: cwww
+    id: light_ch4
+    name: "通道 4"
+    cold_white: pwm_ch4_cw
+    warm_white: pwm_ch4_ww
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2700 K
+    constant_brightness: true
+    gamma_correct: 2.2
+    default_transition_length: 500ms
+    restore_mode: RESTORE_DEFAULT_OFF
+
+  - platform: cwww
+    id: light_ch5
+    name: "通道 5"
+    cold_white: pwm_ch5_cw
+    warm_white: pwm_ch5_ww
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2700 K
+    constant_brightness: true
+    gamma_correct: 2.2
+    default_transition_length: 500ms
+    restore_mode: RESTORE_DEFAULT_OFF
+
+  - platform: cwww
+    id: light_ch6
+    name: "通道 6"
+    cold_white: pwm_ch6_cw
+    warm_white: pwm_ch6_ww
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2700 K
+    constant_brightness: true
+    gamma_correct: 2.2
+    default_transition_length: 500ms
+    restore_mode: RESTORE_DEFAULT_OFF
+
+  # 板载状态灯(GPIO2)
+  - platform: status_led
+    id: status_light
+    # GPIO2 是 strapping 脚。此处安全:LED 串电阻到地构成弱下拉,
+    # 而"低电平"正是进入下载模式所要求的状态。
+    pin:
+      number: GPIO2
+      ignore_strapping_warning: true
+    internal: true
+
+# ---------------------------------------------------------------------------
+# I2C:INA237 功率监测 + 板边 Qwiic 扩展口
+# ---------------------------------------------------------------------------
+i2c:
+  sda: GPIO32
+  scl: GPIO33
+  frequency: 100kHz
+  scan: true
+
+sensor:
+  - platform: ina2xx_i2c
+    model: INA237
+    address: 0x40
+    shunt_resistance: 0.002 ohm
+    max_current: 20 A
+    # adc_range 1 = ±40.96mV 档 → 2mΩ 采样电阻下满量程 20.48A
+    adc_range: 1
+    update_interval: 1s
+    current:
+      name: "总电流"
+      id: bus_current
+      accuracy_decimals: 2
+    power:
+      name: "总功率"
+      id: bus_power
+      accuracy_decimals: 1
+    bus_voltage:
+      name: "母线电压"
+      id: bus_voltage
+      accuracy_decimals: 2
+
+  - platform: wifi_signal
+    name: "WiFi 信号"
+    update_interval: 60s
+    entity_category: diagnostic
+
+# ---------------------------------------------------------------------------
+# 动态限流
+# ---------------------------------------------------------------------------
+# ⚠️ 这是运行管理,不是安全保护。短路与过流的硬保护由电源限流、15A 主保险丝
+#    和每路 4A 慢断保险丝承担(设计文档 §3、§6.1、§6.2)。
+#
+# 6 条灯带理论峰值 17.5A 超过 12A 运行预算,故按实测总电流缩放全部 PWM 输出上限。
+# set_max_power() 只压 PWM 占空比上限,不改变灯在 HA 中上报的亮度 —— 这正是限幅
+# 该有的行为。
+globals:
+  - id: power_scale
+    type: float
+    restore_value: false
+    initial_value: '1.0'
+  - id: ina_fault_count
+    type: int
+    restore_value: false
+    initial_value: '0'
+
+script:
+  - id: apply_power_scale
+    mode: single
+    then:
+      - lambda: |-
+          const float s = id(power_scale);
+          id(pwm_ch1_cw).set_max_power(s);
+          id(pwm_ch1_ww).set_max_power(s);
+          id(pwm_ch2_cw).set_max_power(s);
+          id(pwm_ch2_ww).set_max_power(s);
+          id(pwm_ch3_cw).set_max_power(s);
+          id(pwm_ch3_ww).set_max_power(s);
+          id(pwm_ch4_cw).set_max_power(s);
+          id(pwm_ch4_ww).set_max_power(s);
+          id(pwm_ch5_cw).set_max_power(s);
+          id(pwm_ch5_ww).set_max_power(s);
+          id(pwm_ch6_cw).set_max_power(s);
+          id(pwm_ch6_ww).set_max_power(s);
+
+interval:
+  - interval: 1s
+    then:
+      - lambda: |-
+          const float i = id(bus_current).state;
+
+          // INA237 读数连续无效 → 切断输出(设计文档 §9:传感器故障时禁止输出)
+          if (std::isnan(i)) {
+            id(ina_fault_count) += 1;
+            if (id(ina_fault_count) == 5) {
+              ESP_LOGE("guard", "INA237 连续 5 次读数无效,切断输出");
+              id(hct245_enable).turn_off();
+            }
+            return;
+          }
+          id(ina_fault_count) = 0;
+
+          float s = id(power_scale);
+          if (i > ${current_limit}f) {
+            s -= 0.05f;                 // 超预算:每秒降 5%
+            if (s < 0.30f) s = 0.30f;
+          } else if (i < ${current_release}f && s < 1.0f) {
+            s += 0.02f;                 // 回落:每秒恢复 2%
+            if (s > 1.0f) s = 1.0f;
+          } else {
+            return;                     // 落在迟滞死区内,不动作
+          }
+          id(power_scale) = s;
+          ESP_LOGW("guard", "总电流 %.2fA,输出限幅至 %.0f%%", i, s * 100.0f);
+      - script.execute: apply_power_scale
+
+# ---------------------------------------------------------------------------
+# 4 路墙壁开关干接点
+# ---------------------------------------------------------------------------
+# GPIO34/35/36/39 是纯输入脚且内部无上拉,依赖板上 10k 外部上拉。
+# delayed_on/off 兼作消抖与 GPIO36/39 errata(WiFi 省电模式偶发毛刺)的兜底。
+# 联动逻辑写在板内,WiFi/HA 掉线时物理开关仍可控灯。
+binary_sensor:
+  - platform: gpio
+    id: sw1
+    name: "墙壁开关 1"
+    pin:
+      number: GPIO34
+      inverted: true
+    filters:
+      - delayed_on: 30ms
+      - delayed_off: 30ms
+    on_click:
+      min_length: 20ms
+      max_length: 500ms
+      then:
+        - light.toggle: light_ch1
+
+  - platform: gpio
+    id: sw2
+    name: "墙壁开关 2"
+    pin:
+      number: GPIO35
+      inverted: true
+    filters:
+      - delayed_on: 30ms
+      - delayed_off: 30ms
+    on_click:
+      min_length: 20ms
+      max_length: 500ms
+      then:
+        - light.toggle: light_ch2
+
+  - platform: gpio
+    id: sw3
+    name: "墙壁开关 3"
+    pin:
+      number: GPIO36
+      inverted: true
+    filters:
+      - delayed_on: 30ms
+      - delayed_off: 30ms
+    on_click:
+      min_length: 20ms
+      max_length: 500ms
+      then:
+        - light.toggle: light_ch3
+
+  - platform: gpio
+    id: sw4
+    name: "墙壁开关 4"
+    pin:
+      number: GPIO39
+      inverted: true
+    filters:
+      - delayed_on: 30ms
+      - delayed_off: 30ms
+    on_click:
+      min_length: 20ms
+      max_length: 500ms
+      then:
+        - light.toggle: light_ch4
+
+  - platform: status
+    name: "运行状态"
+
+# ---------------------------------------------------------------------------
+# UART2:板边毫米波/串口传感器接口(未接传感器时保持注释)
+# ---------------------------------------------------------------------------
+# uart:
+#   tx_pin: GPIO26
+#   rx_pin: GPIO27
+#   baud_rate: 256000
+#   parity: NONE
+#   stop_bits: 1
