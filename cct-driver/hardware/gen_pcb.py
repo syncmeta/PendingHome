@@ -137,15 +137,15 @@ BOARD_H = 145   # v15 实测分区后收敛值
 TOP_Y = 8.0          # 上边所有端子的中心 y
 ZONE_Y = 16.0        # 端子下方各列的起始 y
 LCOL_X = 11.0        # 左侧保护列中心
-COL_X = [28, 42, 56, 70, 84, 98]
+COL_X = [30, 44, 58, 72, 86, 100]
 
 # ---- 上板边:24V 输入 + 6 路灯带端子 ----
 at("J1", LCOL_X, TOP_Y, 180)
 
 # ---- 左列:输入保护与计量(与 J1 同侧,主干不折返)----
 ly = place_row(ZONE_Y, [("F1", LCOL_X, 0)])
-ly = place_row(ly, [("Q1", LCOL_X, 0)])
-ly = place_row(ly, [("Q2", LCOL_X, 0)])
+# Q1/Q2 并排:两管 D 极片同带、S 脚同带,覆铜可整带切分
+ly = place_row(ly + 1.2, [("Q1", 7.6, 90), ("Q2", 14.4, 90)])
 ly = place_row(ly, [("DZ1", LCOL_X - 4, 0), ("R2", LCOL_X + 3.5, 0)])
 ly = place_row(ly, [("R1", LCOL_X - 4, 0), ("R3", LCOL_X + 3.5, 0)])
 ly = place_row(ly, [("Q3", LCOL_X - 4, 0)])
@@ -230,7 +230,7 @@ at("U4", 96, BOARD_H - 12, 180)
 
 def auto_nudge(max_iter=25):
     # 固定件:全部端子、IC、模组、测试点;其余小件可被推开
-    fixed = {"J1","F1","J2","J9","J10","J11","U4","U6","U7","U2","U5","L1"} | set(f"J{i}" for i in range(3,9))
+    fixed = {"J1","F1","Q1","Q2","J2","J9","J10","J11","U4","U6","U7"} | set(f"J{i}" for i in range(3,9))
     for it in range(max_iter):
         envs = {}
         for ref in ref_padnets:
@@ -329,7 +329,7 @@ for ref, netname, x, y in TPS:
         p.SetNet(net_of(netname))
 
 # M3 安装孔(右下角避开天线净空)
-for i, (x, y) in enumerate([(4, 66), (BOARD_W - 4, 68), (4, 133), (BOARD_W - 4, 115)]):
+for i, (x, y) in enumerate([(4, 66), (BOARD_W - 4, 80), (4, 133), (BOARD_W - 4, 115)]):
     fp = pcbnew.FootprintLoad(KISYS + "/MountingHole.pretty", "MountingHole_3.2mm_M3")
     if fp is None:
         break

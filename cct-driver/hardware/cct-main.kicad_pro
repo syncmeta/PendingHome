@@ -268,33 +268,150 @@
     "version": 3
   },
   "net_settings": {
+    "meta": {
+      "version": 4
+    },
     "classes": [
       {
-        "bus_width": 12,
-        "clearance": 0.2,
-        "diff_pair_gap": 0.25,
-        "diff_pair_via_gap": 0.25,
-        "diff_pair_width": 0.2,
-        "line_style": 0,
-        "microvia_diameter": 0.3,
-        "microvia_drill": 0.1,
         "name": "Default",
-        "pcb_color": "rgba(0, 0, 0, 0.000)",
-        "priority": 2147483647,
-        "schematic_color": "rgba(0, 0, 0, 0.000)",
-        "track_width": 0.2,
-        "tuning_profile": "",
+        "clearance": 0.2,
+        "track_width": 0.25,
         "via_diameter": 0.6,
         "via_drill": 0.3,
-        "wire_width": 6
+        "microvia_diameter": 0.3,
+        "microvia_drill": 0.1,
+        "diff_pair_width": 0.2,
+        "diff_pair_gap": 0.25,
+        "bus_width": 12,
+        "line_style": 0,
+        "wire_width": 6,
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "schematic_color": "rgba(0, 0, 0, 0.000)"
+      },
+      {
+        "name": "TRUNK",
+        "clearance": 0.3,
+        "track_width": 3.5,
+        "via_diameter": 1.2,
+        "via_drill": 0.6,
+        "microvia_diameter": 0.3,
+        "microvia_drill": 0.1,
+        "diff_pair_width": 0.2,
+        "diff_pair_gap": 0.25,
+        "bus_width": 12,
+        "line_style": 0,
+        "wire_width": 6,
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "schematic_color": "rgba(0, 0, 0, 0.000)"
+      },
+      {
+        "name": "PWR2",
+        "clearance": 0.25,
+        "track_width": 2.0,
+        "via_diameter": 1.0,
+        "via_drill": 0.5,
+        "microvia_diameter": 0.3,
+        "microvia_drill": 0.1,
+        "diff_pair_width": 0.2,
+        "diff_pair_gap": 0.25,
+        "bus_width": 12,
+        "line_style": 0,
+        "wire_width": 6,
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "schematic_color": "rgba(0, 0, 0, 0.000)"
+      },
+      {
+        "name": "PWR1",
+        "clearance": 0.2,
+        "track_width": 1.0,
+        "via_diameter": 0.8,
+        "via_drill": 0.4,
+        "microvia_diameter": 0.3,
+        "microvia_drill": 0.1,
+        "diff_pair_width": 0.2,
+        "diff_pair_gap": 0.25,
+        "bus_width": 12,
+        "line_style": 0,
+        "wire_width": 6,
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "schematic_color": "rgba(0, 0, 0, 0.000)"
+      },
+      {
+        "name": "GND",
+        "clearance": 0.2,
+        "track_width": 0.5,
+        "via_diameter": 0.8,
+        "via_drill": 0.4,
+        "microvia_diameter": 0.3,
+        "microvia_drill": 0.1,
+        "diff_pair_width": 0.2,
+        "diff_pair_gap": 0.25,
+        "bus_width": 12,
+        "line_style": 0,
+        "wire_width": 6,
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "schematic_color": "rgba(0, 0, 0, 0.000)"
       }
     ],
-    "meta": {
-      "version": 5
-    },
-    "net_colors": null,
     "netclass_assignments": null,
-    "netclass_patterns": []
+    "netclass_patterns": [
+      {
+        "netclass": "TRUNK",
+        "pattern": "V24_IN"
+      },
+      {
+        "netclass": "TRUNK",
+        "pattern": "V24_FUSED"
+      },
+      {
+        "netclass": "TRUNK",
+        "pattern": "V24_PROT"
+      },
+      {
+        "netclass": "TRUNK",
+        "pattern": "V24_BUS"
+      },
+      {
+        "netclass": "PWR2",
+        "pattern": "CH*_VOUT"
+      },
+      {
+        "netclass": "PWR2",
+        "pattern": "CH*_CW_D"
+      },
+      {
+        "netclass": "PWR2",
+        "pattern": "CH*_WW_D"
+      },
+      {
+        "netclass": "PWR2",
+        "pattern": "V24_LOGIC"
+      },
+      {
+        "netclass": "PWR1",
+        "pattern": "V5_BUCK"
+      },
+      {
+        "netclass": "PWR1",
+        "pattern": "V5_SYS"
+      },
+      {
+        "netclass": "PWR1",
+        "pattern": "V3P3"
+      },
+      {
+        "netclass": "PWR1",
+        "pattern": "SW_NODE"
+      },
+      {
+        "netclass": "PWR1",
+        "pattern": "USB_VBUS"
+      },
+      {
+        "netclass": "GND",
+        "pattern": "GND"
+      }
+    ]
   },
   "pcbnew": {
     "last_paths": {
