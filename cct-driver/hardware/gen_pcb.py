@@ -123,10 +123,38 @@ def place_row(y, items, margin=0.5):
         bot = max(bot, y - e[1] + e[3])
     return bot + margin
 
-BOARD_H = 150
+BOARD_W = 110
+BOARD_H = 145   # v15 实测分区后收敛值
+
+# ============================================================================
+# 布局架构(v15):所有对外接线集中在上板边
+#   上边:24V 输入 J1(最左)+ CH1..CH6 灯带端子
+#   左列:输入保护与计量链(F1→Q1/Q2→RS1→INA237),紧邻 J1,避免 15A 主干折返
+#   右侧六列:每路 保险丝→MOS→续流→TVS→本地去耦
+#   下方:驱动区 → 大电解排 → 控制区(buck/USB/ESP32,接口在下板边)
+# ============================================================================
+
+TOP_Y = 8.0          # 上边所有端子的中心 y
+ZONE_Y = 16.0        # 端子下方各列的起始 y
+LCOL_X = 11.0        # 左侧保护列中心
+COL_X = [28, 42, 56, 70, 84, 98]
+
+# ---- 上板边:24V 输入 + 6 路灯带端子 ----
+at("J1", LCOL_X, TOP_Y, 180)
+
+# ---- 左列:输入保护与计量(与 J1 同侧,主干不折返)----
+ly = place_row(ZONE_Y, [("F1", LCOL_X, 0)])
+ly = place_row(ly, [("Q1", LCOL_X, 0)])
+ly = place_row(ly, [("Q2", LCOL_X, 0)])
+ly = place_row(ly, [("DZ1", LCOL_X - 4, 0), ("R2", LCOL_X + 3.5, 0)])
+ly = place_row(ly, [("R1", LCOL_X - 4, 0), ("R3", LCOL_X + 3.5, 0)])
+ly = place_row(ly, [("Q3", LCOL_X - 4, 0)])
+ly = place_row(ly, [("RS1", LCOL_X, 0)])
+ly = place_row(ly, [("U1", LCOL_X - 2, 0), ("C6", LCOL_X + 5, 0)])
+ly = place_row(ly, [("D1", LCOL_X, 0)])
+left_end = ly
 
 # ---- 六列功率级 ----
-COL_X = [14, 28.5, 43, 57.5, 72, 86]
 CH = [
     (1, "F2", "J3", "Q7", "Q8", "R16", "R17", "R18", "R19", "D5", "D6", "D7", "D8", "C16", "C17", "LED2", "LED3", "R20", "R21"),
     (2, "F3", "J4", "Q9", "Q10", "R22", "R23", "R24", "R25", "D9", "D10", "D11", "D12", "C18", "C19", "LED4", "LED5", "R26", "R27"),
@@ -138,8 +166,8 @@ CH = [
 col_end = 0
 for i, (n, F, J, Qc, Qw, Rgc, Rgw, Rpc, Rpw, Dfc, Dfw_, Dtc, Dtw, Ce, Cm, Lc, Lw, Rlc, Rlw) in enumerate(CH):
     x = COL_X[i]
-    at(J, x, 8, 180)
-    y = place_row(14.5, [(F, x, 0)])
+    at(J, x, TOP_Y, 180)
+    y = place_row(ZONE_Y, [(F, x, 0)])
     y = place_row(y, [(Dfc, x - 2.6, 0)])
     y = place_row(y, [(Dfw_, x + 2.6, 0)])
     y = place_row(y, [(Qc, x, 0)])
@@ -151,67 +179,58 @@ for i, (n, F, J, Qc, Qw, Rgc, Rgw, Rpc, Rpw, Dfc, Dfw_, Dtc, Dtw, Ce, Cm, Lc, Lw
     y = place_row(y + 0.9, [(Rpc, x - 4.2, 0), (Rpw, x + 4.2, 0)])
     col_end = max(col_end, y)
 
-# ---- 驱动区 ----
-DRV_Y = col_end + 0.6
-drv_end = place_row(DRV_Y, [("C14", 27, 90), ("U6", 35, 0), ("U7", 55, 0), ("C15", 63, 90),
-                            ("R13", 70, 0), ("Q6", 74.5, 0), ("R14", 79, 0), ("R15", 83, 0)])
-# 12 组通道指示灯(电气上属驱动区:接 HCT245 输出)
+# ---- 驱动区(HCT245 + 12 组通道指示灯)----
+DRV_Y = max(col_end, left_end) + 0.8
+drv_end = place_row(DRV_Y, [("C14", 26, 90), ("U6", 34, 0), ("U7", 56, 0), ("C15", 64, 90),
+                            ("R13", 72, 0), ("Q6", 77, 0), ("R14", 82, 0), ("R15", 86, 0)])
 LEDS = [("LED2","R20"),("LED3","R21"),("LED4","R26"),("LED5","R27"),("LED6","R32"),("LED7","R33"),
         ("LED8","R38"),("LED9","R39"),("LED10","R44"),("LED11","R45"),("LED12","R50"),("LED13","R51")]
-_slots = [8+3*i for i in range(6)] + [41+3*i for i in range(3)] + [88+3*i for i in range(3)]
+_slots = [4+3.2*i for i in range(6)] + [40+3.2*i for i in range(3)] + [92+3.2*i for i in range(3)]
 for (led, res), lx in zip(LEDS, _slots):
     at(led, lx, DRV_Y + 2.4, 0)
     at(res, lx, DRV_Y + 5.4, 0)
 
-# ---- 功率脊椎(x 位置经包络审计)----
-SP_Y = drv_end + 0.6
-ends = []
-ends.append(place_row(SP_Y + 2, [("J1", 5, 90)]))
-ends.append(place_row(SP_Y + 1.5, [("F1", 26.5, 0)]))
-y = place_row(SP_Y, [("Q1", 43, 0)]); ends.append(place_row(y, [("Q2", 43, 0)]))
-y = place_row(SP_Y, [("DZ1", 50.8, 0)])
-y = place_row(y, [("R1", 50.8, 0)])
-ends.append(place_row(y, [("Q3", 50.8, 0)]))
-y = place_row(SP_Y, [("R2", 54.5, 0)]); ends.append(place_row(y, [("R3", 54.5, 0)]))
-row1 = place_row(SP_Y, [("C1", 62, 0), ("C2", 74.4, 0), ("C3", 86.8, 0)])
-row2 = place_row(SP_Y + 13.4, [("RS1", 41, 0), ("C6", 50, 0), ("U1", 56, 0), ("C4", 66, 0), ("C5", 78.4, 0), ("D1", 89, 0)])
-sp_end = max(ends + [row1, row2])
+# ---- 大电解排(V24_PROT 节点,经左列宽铜连接)----
+BULK_Y = drv_end + 0.8
+bulk_end = place_row(BULK_Y, [("C1", 12, 0), ("C2", 26, 0), ("C3", 40, 0),
+                              ("C4", 54, 0), ("C5", 68, 0)])
 
 # ---- 控制区 ----
-CT_Y = sp_end + 0.6
-y1 = place_row(CT_Y, [("PTC1", 14, 0), ("R52", 19, 0), ("R53", 22.5, 0), ("C32", 27, 0),
-                      ("C34", 31.5, 90), ("R62", 36, 0), ("R65", 40, 0), ("SW2", 45, 0),
-                      ("SW1", 54, 0), ("LED1", 59, 0), ("R8", 63, 0), ("R4", 67, 0),
-                      ("C12", 71, 0), ("R5", 75, 0), ("C10", 79, 0), ("C11", 83, 0)])
-y2 = place_row(y1, [("L1", 20, 0), ("C33", 29, 0), ("U2", 36, 0),
-                    ("R66", 42, 0), ("C39", 46, 0), ("C35", 64, 0)])
-y2b = place_row(y1 + 7.5, [("R67", 42, 0), ("C40", 46, 0), ("C38", 50, 0)])
-y3 = place_row(max(y2, y2b), [("D2", 27, 0), ("R63", 33, 0), ("C36", 37.5, 0),
-                     ("D3", 42.5, 0), ("U3", 52, 0), ("C13", 58, 0), ("U5", 65, 0),
-                     ("Q4", 72.5, 0), ("R11", 76.5, 0)])
-y3b = place_row(y3, [("R64", 33, 0), ("C37", 37.5, 0), ("D4", 42.5, 0), ("C41", 49.5, 0),
-                     ("Q5", 72.5, 0), ("R12", 76.5, 0)])
+CT_Y = bulk_end + 0.8
+y1 = place_row(CT_Y, [("PTC1", 6, 0), ("R52", 12, 0), ("R53", 16, 0), ("C32", 22, 0),
+                      ("C34", 27, 90), ("R62", 32, 0), ("R65", 36, 0), ("SW2", 42, 0),
+                      ("SW1", 51, 0), ("LED1", 57, 0), ("R8", 61, 0), ("R4", 65, 0),
+                      ("C12", 69, 0), ("R5", 74, 0), ("C10", 78, 0), ("C11", 82, 0)])
+y2 = place_row(y1, [("L1", 14, 0), ("C33", 24, 0), ("U2", 32, 0),
+                    ("R66", 39, 0), ("C39", 43, 0), ("C35", 60, 0)])
+y2b = place_row(y1 + 7.5, [("R67", 39, 0), ("C40", 43, 0), ("C38", 47, 0)])
+y3 = place_row(max(y2, y2b), [("D2", 24, 0), ("R63", 31, 0), ("C36", 36, 0),
+                     ("D3", 42, 0), ("U3", 50, 0), ("C13", 58, 0), ("U5", 66, 0),
+                     ("Q4", 74, 0), ("R11", 78, 0)])
+y3b = place_row(y3, [("R64", 31, 0), ("C37", 36, 0), ("D4", 42, 0), ("C41", 49, 0),
+                     ("Q5", 74, 0), ("R12", 78, 0)])
 y_ctl_end = y3b
-at("C42", 44, BOARD_H - 12.5, 0); at("C43", 44, BOARD_H - 10, 0)
-at("R9", 47, BOARD_H - 12.5, 0); at("R10", 47, BOARD_H - 10, 0)
-print(f"[zones] 列尾 {col_end:.1f} | 驱动 {drv_end:.1f} | 脊椎 {sp_end:.1f} | 控制 {y_ctl_end:.1f}(板高 {BOARD_H})")
+print(f"[zones] 左列 {left_end:.1f} | 列尾 {col_end:.1f} | 驱动 {drv_end:.1f} | 电解 {bulk_end:.1f} | 控制 {y_ctl_end:.1f}")
 
-# ---- 底边固定带(与 RC 阵列 x 错开共存)----
+# ---- 下板边:调试/传感器/开关接口 ----
 for i, r in enumerate(["C28", "C29", "C30", "C31"]):
-    at(r, 51 + i * 4, BOARD_H - 12.5, 0)
+    at(r, 55 + i * 4, BOARD_H - 12.5, 0)
 for i, r in enumerate(["R58", "R59", "R60", "R61"]):
-    at(r, 51 + i * 4, BOARD_H - 10, 0)
+    at(r, 55 + i * 4, BOARD_H - 10, 0)
 for i, r in enumerate(["R54", "R55", "R56", "R57"]):
-    at(r, 51 + i * 4, BOARD_H - 7.5, 0)
+    at(r, 55 + i * 4, BOARD_H - 7.5, 0)
+at("C42", 46, BOARD_H - 12.5, 0); at("C43", 46, BOARD_H - 10, 0)
+at("R9", 50, BOARD_H - 12.5, 0); at("R10", 50, BOARD_H - 10, 0)
 at("J9", 10, BOARD_H - 4, 180)
 at("J10", 22, BOARD_H - 4, 180)
 at("J11", 36, BOARD_H - 3, 180)
-at("J2", 70, BOARD_H - 4, 0)
-at("U4", 88, BOARD_H - 12, 180)   # 天线悬出下板边
+at("J2", 76, BOARD_H - 4, 0)
+at("U4", 96, BOARD_H - 12, 180)
+
 
 def auto_nudge(max_iter=25):
-    # 测试点作为固定障碍参与避让
-    fixed = {"J1","F1","J2","J9","J10","J11","U4","U6","U7"} | set(f"J{i}" for i in range(3,9))
+    # 固定件:全部端子、IC、模组、测试点;其余小件可被推开
+    fixed = {"J1","F1","J2","J9","J10","J11","U4","U6","U7","U2","U5","L1"} | set(f"J{i}" for i in range(3,9))
     for it in range(max_iter):
         envs = {}
         for ref in ref_padnets:
@@ -241,7 +260,6 @@ def auto_nudge(max_iter=25):
                 else:
                     my += (oy + 0.3) * (1 if my >= oyc else -1)
                 POS[mover] = (mx, my, mr)
-                envs.pop(mover, None)
                 x, y, rot = POS[mover]
                 e = envelope(fp_of(ref_padnets[mover][0]), rot)
                 envs[mover] = (x + e[0], y + e[1], x + e[2], y + e[3])
@@ -251,9 +269,10 @@ def auto_nudge(max_iter=25):
             return True
     print(f"[nudge] {max_iter} 轮未完全收敛")
     return False
-TPS = [("TP1", "V24_BUS", 46, 74), ("TP2", "GND", 96, 68),
-       ("TP3", "V5_SYS", 40, 101), ("TP4", "V3P3", 53, 99),
-       ("TP5", "CH1_CW_GR", 3, 60.5), ("TP6", "CH1_CW_D", 3, 31)]
+
+TPS = [("TP1", "V24_BUS", 21, 30), ("TP2", "GND", 106, 20),
+       ("TP3", "V5_SYS", 70, 128.5), ("TP4", "V3P3", 106, CT_Y + 6),
+       ("TP5", "CH1_CW_GR", 106, 45), ("TP6", "CH1_CW_D", 106, 33)]
 auto_nudge()
 
 # ============================================================================
@@ -310,7 +329,7 @@ for ref, netname, x, y in TPS:
         p.SetNet(net_of(netname))
 
 # M3 安装孔(右下角避开天线净空)
-for i, (x, y) in enumerate([(4, 4), (96, 4), (4, BOARD_H - 16), (96, BOARD_H - 30)]):
+for i, (x, y) in enumerate([(4, 66), (BOARD_W - 4, 68), (4, 133), (BOARD_W - 4, 115)]):
     fp = pcbnew.FootprintLoad(KISYS + "/MountingHole.pretty", "MountingHole_3.2mm_M3")
     if fp is None:
         break
@@ -327,7 +346,7 @@ def edge(x1, y1, x2, y2):
     seg.SetLayer(pcbnew.Edge_Cuts)
     seg.SetWidth(FromMM(0.1))
     board.Add(seg)
-edge(0, 0, 100, 0); edge(100, 0, 100, BOARD_H); edge(100, BOARD_H, 0, BOARD_H); edge(0, BOARD_H, 0, 0)
+edge(0, 0, BOARD_W, 0); edge(BOARD_W, 0, BOARD_W, BOARD_H); edge(BOARD_W, BOARD_H, 0, BOARD_H); edge(0, BOARD_H, 0, 0)
 
 
 # ---- 摆放重叠自检(包络级,与 DRC 独立)----
