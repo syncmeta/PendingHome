@@ -312,7 +312,9 @@ def gen():
             y = y0
             x += col_w
         u = uuid.uuid4()
-        out.append(f'  (symbol (lib_id "cct:{sn}") (at {x} {y} 0) (unit 1)')
+        x = round(x / 1.27) * 1.27
+        y = round(y / 1.27) * 1.27
+        out.append(f'  (symbol (lib_id "cct:{sn}") (at {x:.2f} {y:.2f} 0) (unit 1)')
         out.append(f'    (in_bom yes) (on_board yes) (uuid "{u}")')
         out.append(f'    (property "Reference" "{ref}" (at {x} {y-ymax-3} 0) (effects (font (size 1.27 1.27))))')
         out.append(f'    (property "Value" "{cid}" (at {x} {y-ymin+3} 0) (effects (font (size 1.27 1.27))))')

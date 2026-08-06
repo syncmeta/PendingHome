@@ -74,235 +74,235 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at -15.24 20.32 0)
         (length 2.54)
         (name "GND" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -15.24 17.78 0)
         (length 2.54)
         (name "3V3" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -15.24 15.24 0)
         (length 2.54)
         (name "EN" (effects (font (size 1.27 1.27))))
         (number "3" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -15.24 12.70 0)
         (length 2.54)
         (name "SENSOR_VP" (effects (font (size 1.27 1.27))))
         (number "4" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -15.24 10.16 0)
         (length 2.54)
         (name "SENSOR_VN" (effects (font (size 1.27 1.27))))
         (number "5" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -15.24 7.62 0)
         (length 2.54)
         (name "IO34" (effects (font (size 1.27 1.27))))
         (number "6" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -15.24 5.08 0)
         (length 2.54)
         (name "IO35" (effects (font (size 1.27 1.27))))
         (number "7" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -15.24 2.54 0)
         (length 2.54)
         (name "IO32" (effects (font (size 1.27 1.27))))
         (number "8" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -15.24 -0.00 0)
         (length 2.54)
         (name "IO33" (effects (font (size 1.27 1.27))))
         (number "9" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -15.24 -2.54 0)
         (length 2.54)
         (name "IO25" (effects (font (size 1.27 1.27))))
         (number "10" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -15.24 -5.08 0)
         (length 2.54)
         (name "IO26" (effects (font (size 1.27 1.27))))
         (number "11" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -15.24 -7.62 0)
         (length 2.54)
         (name "IO27" (effects (font (size 1.27 1.27))))
         (number "12" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -15.24 -10.16 0)
         (length 2.54)
         (name "IO14" (effects (font (size 1.27 1.27))))
         (number "13" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -15.24 -12.70 0)
         (length 2.54)
         (name "IO12" (effects (font (size 1.27 1.27))))
         (number "14" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -15.24 -15.24 0)
         (length 2.54)
         (name "GND" (effects (font (size 1.27 1.27))))
         (number "15" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -15.24 -17.78 0)
         (length 2.54)
         (name "IO13" (effects (font (size 1.27 1.27))))
         (number "16" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -15.24 -20.32 0)
         (length 2.54)
         (name "NC" (effects (font (size 1.27 1.27))))
         (number "17" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -15.24 -22.86 0)
         (length 2.54)
         (name "NC" (effects (font (size 1.27 1.27))))
         (number "18" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -15.24 -25.40 0)
         (length 2.54)
         (name "NC" (effects (font (size 1.27 1.27))))
         (number "19" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 15.24 -25.40 180)
         (length 2.54)
         (name "NC" (effects (font (size 1.27 1.27))))
         (number "20" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 15.24 -22.86 180)
         (length 2.54)
         (name "NC" (effects (font (size 1.27 1.27))))
         (number "21" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 15.24 -20.32 180)
         (length 2.54)
         (name "NC" (effects (font (size 1.27 1.27))))
         (number "22" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 15.24 -17.78 180)
         (length 2.54)
         (name "IO15" (effects (font (size 1.27 1.27))))
         (number "23" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 15.24 -15.24 180)
         (length 2.54)
         (name "IO2" (effects (font (size 1.27 1.27))))
         (number "24" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 15.24 -12.70 180)
         (length 2.54)
         (name "IO0" (effects (font (size 1.27 1.27))))
         (number "25" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 15.24 -10.16 180)
         (length 2.54)
         (name "IO4" (effects (font (size 1.27 1.27))))
         (number "26" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 15.24 -7.62 180)
         (length 2.54)
         (name "IO16" (effects (font (size 1.27 1.27))))
         (number "27" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 15.24 -5.08 180)
         (length 2.54)
         (name "IO17" (effects (font (size 1.27 1.27))))
         (number "28" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 15.24 -2.54 180)
         (length 2.54)
         (name "IO5" (effects (font (size 1.27 1.27))))
         (number "29" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 15.24 -0.00 180)
         (length 2.54)
         (name "IO18" (effects (font (size 1.27 1.27))))
         (number "30" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 15.24 2.54 180)
         (length 2.54)
         (name "IO19" (effects (font (size 1.27 1.27))))
         (number "31" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 15.24 5.08 180)
         (length 2.54)
         (name "NC" (effects (font (size 1.27 1.27))))
         (number "32" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 15.24 7.62 180)
         (length 2.54)
         (name "IO21" (effects (font (size 1.27 1.27))))
         (number "33" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 15.24 10.16 180)
         (length 2.54)
         (name "RXD0" (effects (font (size 1.27 1.27))))
         (number "34" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 15.24 12.70 180)
         (length 2.54)
         (name "TXD0" (effects (font (size 1.27 1.27))))
         (number "35" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 15.24 15.24 180)
         (length 2.54)
         (name "IO22" (effects (font (size 1.27 1.27))))
         (number "36" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 15.24 17.78 180)
         (length 2.54)
         (name "IO23" (effects (font (size 1.27 1.27))))
         (number "37" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 15.24 20.32 180)
         (length 2.54)
         (name "GND" (effects (font (size 1.27 1.27))))
         (number "38" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 0.00 27.94 270)
         (length 5.08)
         (name "GND" (effects (font (size 1.27 1.27))))
@@ -384,13 +384,13 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at 5.08 -0.00 180)
         (length 2.54)
         (name "2" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -5.08 -0.00 0)
         (length 2.54)
         (name "1" (effects (font (size 1.27 1.27))))
@@ -473,13 +473,13 @@
         (stroke (width 0) (type default))
         (fill (type background))
       )
-      (pin unspecified line
+      (pin passive line
         (at -8.89 -1.27 0)
         (length 5.08)
         (name "1" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 8.89 -1.27 180)
         (length 5.08)
         (name "2" (effects (font (size 1.27 1.27))))
@@ -583,13 +583,13 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at -5.08 -0.00 0)
         (length 2.54)
         (name "1" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 5.08 -0.00 180)
         (length 2.54)
         (name "2" (effects (font (size 1.27 1.27))))
@@ -693,13 +693,13 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at 5.08 -0.00 180)
         (length 2.54)
         (name "2" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -5.08 -0.00 0)
         (length 2.54)
         (name "1" (effects (font (size 1.27 1.27))))
@@ -774,97 +774,97 @@
         (stroke (width 0) (type default))
         (fill (type background))
       )
-      (pin unspecified line
+      (pin passive line
         (at -6.35 13.97 0)
         (length 2.54)
         (name "GND" (effects (font (size 1.27 1.27))))
         (number "A1B12" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -6.35 11.43 0)
         (length 2.54)
         (name "VBUS" (effects (font (size 1.27 1.27))))
         (number "A4B9" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -6.35 8.89 0)
         (length 2.54)
         (name "SBU2" (effects (font (size 1.27 1.27))))
         (number "B8" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -6.35 6.35 0)
         (length 2.54)
         (name "CC1" (effects (font (size 1.27 1.27))))
         (number "A5" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -6.35 3.81 0)
         (length 2.54)
         (name "DN2" (effects (font (size 1.27 1.27))))
         (number "B7" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -6.35 1.27 0)
         (length 2.54)
         (name "DP1" (effects (font (size 1.27 1.27))))
         (number "A6" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -6.35 -1.27 0)
         (length 2.54)
         (name "DN1" (effects (font (size 1.27 1.27))))
         (number "A7" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -6.35 -3.81 0)
         (length 2.54)
         (name "DP2" (effects (font (size 1.27 1.27))))
         (number "B6" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -6.35 -6.35 0)
         (length 2.54)
         (name "SBU1" (effects (font (size 1.27 1.27))))
         (number "A8" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -6.35 -8.89 0)
         (length 2.54)
         (name "CC2" (effects (font (size 1.27 1.27))))
         (number "B5" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -6.35 -11.43 0)
         (length 2.54)
         (name "VBUS" (effects (font (size 1.27 1.27))))
         (number "B4A9" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -6.35 -13.97 0)
         (length 2.54)
         (name "GND" (effects (font (size 1.27 1.27))))
         (number "B1A12" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 11.43 -6.35 180)
         (length 2.54)
         (name "EH" (effects (font (size 1.27 1.27))))
         (number "4" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 11.43 -8.89 180)
         (length 2.54)
         (name "EH" (effects (font (size 1.27 1.27))))
         (number "3" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 11.43 -11.43 180)
         (length 2.54)
         (name "EH" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 11.43 -13.97 180)
         (length 2.54)
         (name "EH" (effects (font (size 1.27 1.27))))
@@ -961,13 +961,13 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at -5.08 -0.00 0)
         (length 2.54)
         (name "K" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 5.08 -0.00 180)
         (length 2.54)
         (name "A" (effects (font (size 1.27 1.27))))
@@ -1064,13 +1064,13 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at 5.08 -0.00 180)
         (length 2.54)
         (name "A" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -5.08 -0.00 0)
         (length 2.54)
         (name "K" (effects (font (size 1.27 1.27))))
@@ -1174,19 +1174,19 @@
         (stroke (width 0) (type default))
         (fill (type background))
       )
-      (pin unspecified line
+      (pin passive line
         (at 2.54 5.08 270)
         (length 2.54)
         (name "C" (effects (font (size 1.27 1.27))))
         (number "3" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -2.54 -0.00 0)
         (length 2.54)
         (name "B" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 2.54 -5.08 90)
         (length 2.54)
         (name "E" (effects (font (size 1.27 1.27))))
@@ -1290,13 +1290,13 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin input line
+      (pin passive line
         (at -3.81 -0.00 0)
         (length 2.54)
         (name "1" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin input line
+      (pin passive line
         (at 3.81 -0.00 180)
         (length 2.54)
         (name "2" (effects (font (size 1.27 1.27))))
@@ -1378,13 +1378,13 @@
         (stroke (width 0) (type default))
         (fill (type background))
       )
-      (pin input line
+      (pin passive line
         (at 5.08 -0.00 180)
         (length 2.54)
         (name "2" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin input line
+      (pin passive line
         (at -5.08 -0.00 0)
         (length 2.54)
         (name "1" (effects (font (size 1.27 1.27))))
@@ -1488,19 +1488,19 @@
         (stroke (width 0) (type default))
         (fill (type background))
       )
-      (pin unspecified line
+      (pin passive line
         (at 2.54 5.08 270)
         (length 2.54)
         (name "C" (effects (font (size 1.27 1.27))))
         (number "3" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -2.54 -0.00 0)
         (length 2.54)
         (name "B" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 2.54 -5.08 90)
         (length 2.54)
         (name "E" (effects (font (size 1.27 1.27))))
@@ -1582,13 +1582,13 @@
         (stroke (width 0) (type default))
         (fill (type background))
       )
-      (pin input line
+      (pin passive line
         (at 5.08 -0.00 180)
         (length 2.54)
         (name "2" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin input line
+      (pin passive line
         (at -5.08 -0.00 0)
         (length 2.54)
         (name "1" (effects (font (size 1.27 1.27))))
@@ -1706,13 +1706,13 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at -5.08 -1.27 0)
         (length 3.81)
         (name "K" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 5.08 -1.27 180)
         (length 3.81)
         (name "A" (effects (font (size 1.27 1.27))))
@@ -1830,13 +1830,13 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at -5.08 -1.27 0)
         (length 3.81)
         (name "K" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 5.08 -1.27 180)
         (length 3.81)
         (name "A" (effects (font (size 1.27 1.27))))
@@ -1918,13 +1918,13 @@
         (stroke (width 0) (type default))
         (fill (type background))
       )
-      (pin input line
+      (pin passive line
         (at 5.08 -0.00 180)
         (length 2.54)
         (name "2" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin input line
+      (pin passive line
         (at -5.08 -0.00 0)
         (length 2.54)
         (name "1" (effects (font (size 1.27 1.27))))
@@ -1999,13 +1999,13 @@
         (stroke (width 0) (type default))
         (fill (type background))
       )
-      (pin input line
+      (pin passive line
         (at 5.08 -0.00 180)
         (length 2.54)
         (name "2" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin input line
+      (pin passive line
         (at -5.08 -0.00 0)
         (length 2.54)
         (name "1" (effects (font (size 1.27 1.27))))
@@ -2087,13 +2087,13 @@
         (stroke (width 0) (type default))
         (fill (type background))
       )
-      (pin input line
+      (pin passive line
         (at 5.08 -0.00 180)
         (length 2.54)
         (name "2" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin input line
+      (pin passive line
         (at -5.08 -0.00 0)
         (length 2.54)
         (name "1" (effects (font (size 1.27 1.27))))
@@ -2174,61 +2174,61 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at -11.43 5.08 0)
         (length 2.54)
         (name "A1" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -11.43 2.54 0)
         (length 2.54)
         (name "A0" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -11.43 -0.00 0)
         (length 2.54)
         (name "ALERT" (effects (font (size 1.27 1.27))))
         (number "3" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -11.43 -2.54 0)
         (length 2.54)
         (name "SDA" (effects (font (size 1.27 1.27))))
         (number "4" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -11.43 -5.08 0)
         (length 2.54)
         (name "SCL" (effects (font (size 1.27 1.27))))
         (number "5" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 11.43 -5.08 180)
         (length 2.54)
         (name "VS" (effects (font (size 1.27 1.27))))
         (number "6" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 11.43 -2.54 180)
         (length 2.54)
         (name "GND" (effects (font (size 1.27 1.27))))
         (number "7" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 11.43 -0.00 180)
         (length 2.54)
         (name "VBUS" (effects (font (size 1.27 1.27))))
         (number "8" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 11.43 2.54 180)
         (length 2.54)
         (name "IN–" (effects (font (size 1.27 1.27))))
         (number "9" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 11.43 5.08 180)
         (length 2.54)
         (name "IN+" (effects (font (size 1.27 1.27))))
@@ -2367,19 +2367,19 @@
         (stroke (width 0) (type default))
         (fill (type background))
       )
-      (pin unspecified line
+      (pin passive line
         (at 2.54 5.08 270)
         (length 2.54)
         (name "D" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -2.54 -0.00 0)
         (length 2.54)
         (name "G" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 2.54 -5.08 90)
         (length 2.54)
         (name "S" (effects (font (size 1.27 1.27))))
@@ -2460,37 +2460,37 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at 2.54 8.89 270)
         (length 2.54)
         (name "6" (effects (font (size 1.27 1.27))))
         (number "6" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 2.54 -8.89 90)
         (length 2.54)
         (name "5" (effects (font (size 1.27 1.27))))
         (number "5" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -3.81 -3.81 0)
         (length 2.54)
         (name "4" (effects (font (size 1.27 1.27))))
         (number "4" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -3.81 -1.27 0)
         (length 2.54)
         (name "3" (effects (font (size 1.27 1.27))))
         (number "3" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -3.81 1.27 0)
         (length 2.54)
         (name "2" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -3.81 3.81 0)
         (length 2.54)
         (name "1" (effects (font (size 1.27 1.27))))
@@ -2587,13 +2587,13 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at 0.00 -5.08 90)
         (length 2.54)
         (name "1" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 0.00 5.08 270)
         (length 2.54)
         (name "2" (effects (font (size 1.27 1.27))))
@@ -2709,25 +2709,25 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at 5.08 2.54 180)
         (length 2.54)
         (name "B" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -5.08 2.54 0)
         (length 2.54)
         (name "A" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 5.08 -5.08 180)
         (length 2.54)
         (name "D" (effects (font (size 1.27 1.27))))
         (number "4" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -5.08 -5.08 0)
         (length 2.54)
         (name "C" (effects (font (size 1.27 1.27))))
@@ -2873,19 +2873,19 @@
         (stroke (width 0) (type default))
         (fill (type background))
       )
-      (pin unspecified line
+      (pin passive line
         (at 2.54 5.08 270)
         (length 2.54)
         (name "D" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -5.08 -0.00 0)
         (length 2.54)
         (name "G" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 2.54 -5.08 90)
         (length 2.54)
         (name "S" (effects (font (size 1.27 1.27))))
@@ -3008,25 +3008,25 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at -12.70 -0.00 0)
         (length 5.08)
         (name "1" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -12.70 -2.54 0)
         (length 5.08)
         (name "2" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 12.70 -0.00 180)
         (length 5.08)
         (name "3" (effects (font (size 1.27 1.27))))
         (number "3" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 12.70 -2.54 180)
         (length 5.08)
         (name "4" (effects (font (size 1.27 1.27))))
@@ -3116,13 +3116,13 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at 5.08 -0.00 180)
         (length 3.81)
         (name "A" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -5.08 -0.00 0)
         (length 3.81)
         (name "K" (effects (font (size 1.27 1.27))))
@@ -3197,25 +3197,25 @@
         (stroke (width 0) (type default))
         (fill (type background))
       )
-      (pin unspecified line
+      (pin passive line
         (at 5.08 2.54 180)
         (length 5.08)
         (name "1" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 5.08 -0.00 180)
         (length 5.08)
         (name "2" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 5.08 -2.54 180)
         (length 5.08)
         (name "3" (effects (font (size 1.27 1.27))))
         (number "3" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 5.08 -5.08 180)
         (length 5.08)
         (name "4" (effects (font (size 1.27 1.27))))
@@ -3312,13 +3312,13 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at 5.08 -0.00 180)
         (length 2.54)
         (name "2" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -5.08 -0.00 0)
         (length 2.54)
         (name "1" (effects (font (size 1.27 1.27))))
@@ -3399,19 +3399,19 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at -3.81 2.54 0)
         (length 2.54)
         (name "1" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -3.81 -0.00 0)
         (length 2.54)
         (name "2" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -3.81 -2.54 0)
         (length 2.54)
         (name "3" (effects (font (size 1.27 1.27))))
@@ -3508,13 +3508,13 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at -5.08 -0.00 0)
         (length 2.54)
         (name "1" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 5.08 -0.00 180)
         (length 2.54)
         (name "2" (effects (font (size 1.27 1.27))))
@@ -3595,31 +3595,31 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at -3.81 5.08 0)
         (length 2.54)
         (name "1" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -3.81 2.54 0)
         (length 2.54)
         (name "2" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -3.81 -0.00 0)
         (length 2.54)
         (name "3" (effects (font (size 1.27 1.27))))
         (number "3" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -3.81 -2.54 0)
         (length 2.54)
         (name "4" (effects (font (size 1.27 1.27))))
         (number "4" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -3.81 -5.08 0)
         (length 2.54)
         (name "5" (effects (font (size 1.27 1.27))))
@@ -3694,13 +3694,13 @@
         (stroke (width 0) (type default))
         (fill (type background))
       )
-      (pin unspecified line
+      (pin passive line
         (at 5.08 -0.00 180)
         (length 2.54)
         (name "2" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -5.08 -0.00 0)
         (length 2.54)
         (name "1" (effects (font (size 1.27 1.27))))
@@ -3774,121 +3774,121 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at -8.89 11.43 0)
         (length 2.54)
         (name "DIR" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -8.89 8.89 0)
         (length 2.54)
         (name "A0" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -8.89 6.35 0)
         (length 2.54)
         (name "A1" (effects (font (size 1.27 1.27))))
         (number "3" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -8.89 3.81 0)
         (length 2.54)
         (name "A2" (effects (font (size 1.27 1.27))))
         (number "4" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -8.89 1.27 0)
         (length 2.54)
         (name "A3" (effects (font (size 1.27 1.27))))
         (number "5" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -8.89 -1.27 0)
         (length 2.54)
         (name "A4" (effects (font (size 1.27 1.27))))
         (number "6" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -8.89 -3.81 0)
         (length 2.54)
         (name "A5" (effects (font (size 1.27 1.27))))
         (number "7" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -8.89 -6.35 0)
         (length 2.54)
         (name "A6" (effects (font (size 1.27 1.27))))
         (number "8" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -8.89 -8.89 0)
         (length 2.54)
         (name "A7" (effects (font (size 1.27 1.27))))
         (number "9" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -8.89 -11.43 0)
         (length 2.54)
         (name "GND" (effects (font (size 1.27 1.27))))
         (number "10" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 8.89 -11.43 180)
         (length 2.54)
         (name "B7" (effects (font (size 1.27 1.27))))
         (number "11" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 8.89 -8.89 180)
         (length 2.54)
         (name "B6" (effects (font (size 1.27 1.27))))
         (number "12" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 8.89 -6.35 180)
         (length 2.54)
         (name "B5" (effects (font (size 1.27 1.27))))
         (number "13" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 8.89 -3.81 180)
         (length 2.54)
         (name "B4" (effects (font (size 1.27 1.27))))
         (number "14" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 8.89 -1.27 180)
         (length 2.54)
         (name "B3" (effects (font (size 1.27 1.27))))
         (number "15" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 8.89 1.27 180)
         (length 2.54)
         (name "B2" (effects (font (size 1.27 1.27))))
         (number "16" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 8.89 3.81 180)
         (length 2.54)
         (name "B1" (effects (font (size 1.27 1.27))))
         (number "17" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 8.89 6.35 180)
         (length 2.54)
         (name "B0" (effects (font (size 1.27 1.27))))
         (number "18" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 8.89 8.89 180)
         (length 2.54)
         (name "~{OE}" (effects (font (size 1.27 1.27))))
         (number "19" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 8.89 11.43 180)
         (length 2.54)
         (name "VCC" (effects (font (size 1.27 1.27))))
@@ -3969,55 +3969,55 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at -12.70 2.54 0)
         (length 2.54)
         (name "BOOT" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -12.70 -0.00 0)
         (length 2.54)
         (name "VIN" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -12.70 -2.54 0)
         (length 2.54)
         (name "EN" (effects (font (size 1.27 1.27))))
         (number "3" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -12.70 -5.08 0)
         (length 2.54)
         (name "RT/CLK" (effects (font (size 1.27 1.27))))
         (number "4" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 12.70 -5.08 180)
         (length 2.54)
         (name "FB" (effects (font (size 1.27 1.27))))
         (number "5" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 12.70 -2.54 180)
         (length 2.54)
         (name "COMP" (effects (font (size 1.27 1.27))))
         (number "6" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 12.70 -0.00 180)
         (length 2.54)
         (name "GND" (effects (font (size 1.27 1.27))))
         (number "7" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 12.70 2.54 180)
         (length 2.54)
         (name "SW" (effects (font (size 1.27 1.27))))
         (number "8" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 0.00 7.62 270)
         (length 2.54)
         (name "PAD" (effects (font (size 1.27 1.27))))
@@ -4098,25 +4098,25 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at -11.43 2.54 0)
         (length 2.54)
         (name "GND" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -11.43 -0.00 0)
         (length 2.54)
         (name "VOUT" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -11.43 -2.54 0)
         (length 2.54)
         (name "VIN" (effects (font (size 1.27 1.27))))
         (number "3" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 11.43 -0.00 180)
         (length 2.54)
         (name "VOUT" (effects (font (size 1.27 1.27))))
@@ -4216,13 +4216,13 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at -8.89 -1.27 0)
         (length 5.08)
         (name "1" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 8.89 -1.27 180)
         (length 5.08)
         (name "2" (effects (font (size 1.27 1.27))))
@@ -4303,13 +4303,13 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at -3.81 1.27 0)
         (length 2.54)
         (name "1" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -3.81 -1.27 0)
         (length 2.54)
         (name "2" (effects (font (size 1.27 1.27))))
@@ -4390,97 +4390,97 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at -11.43 8.89 0)
         (length 2.54)
         (name "GND" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -11.43 6.35 0)
         (length 2.54)
         (name "TXD" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -11.43 3.81 0)
         (length 2.54)
         (name "RXD" (effects (font (size 1.27 1.27))))
         (number "3" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -11.43 1.27 0)
         (length 2.54)
         (name "V3" (effects (font (size 1.27 1.27))))
         (number "4" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -11.43 -1.27 0)
         (length 2.54)
         (name "D+" (effects (font (size 1.27 1.27))))
         (number "5" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -11.43 -3.81 0)
         (length 2.54)
         (name "D-" (effects (font (size 1.27 1.27))))
         (number "6" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -11.43 -6.35 0)
         (length 2.54)
         (name "NC." (effects (font (size 1.27 1.27))))
         (number "7" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -11.43 -8.89 0)
         (length 2.54)
         (name "~{OUT}" (effects (font (size 1.27 1.27))))
         (number "8" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 11.43 -8.89 180)
         (length 2.54)
         (name "~{CTS}" (effects (font (size 1.27 1.27))))
         (number "9" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 11.43 -6.35 180)
         (length 2.54)
         (name "~{DSR}" (effects (font (size 1.27 1.27))))
         (number "10" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 11.43 -3.81 180)
         (length 2.54)
         (name "~{RI}" (effects (font (size 1.27 1.27))))
         (number "11" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 11.43 -1.27 180)
         (length 2.54)
         (name "~{DCD}" (effects (font (size 1.27 1.27))))
         (number "12" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 11.43 1.27 180)
         (length 2.54)
         (name "~{DTR}" (effects (font (size 1.27 1.27))))
         (number "13" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 11.43 3.81 180)
         (length 2.54)
         (name "~{RTS}" (effects (font (size 1.27 1.27))))
         (number "14" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 11.43 6.35 180)
         (length 2.54)
         (name "R232" (effects (font (size 1.27 1.27))))
         (number "15" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at 11.43 8.89 180)
         (length 2.54)
         (name "VCC" (effects (font (size 1.27 1.27))))
@@ -4577,13 +4577,13 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at 5.08 -0.00 180)
         (length 1.27)
         (name "2" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -5.08 -0.00 0)
         (length 1.27)
         (name "1" (effects (font (size 1.27 1.27))))
@@ -4665,13 +4665,13 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin unspecified line
+      (pin passive line
         (at 5.08 -0.00 180)
         (length 2.54)
         (name "2" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin unspecified line
+      (pin passive line
         (at -5.08 -0.00 0)
         (length 2.54)
         (name "1" (effects (font (size 1.27 1.27))))
@@ -4753,13 +4753,13 @@
         (stroke (width 0) (type default))
         (fill (type background))
       )
-      (pin input line
+      (pin passive line
         (at 5.08 -0.00 180)
         (length 2.54)
         (name "2" (effects (font (size 1.27 1.27))))
         (number "2" (effects (font (size 1.27 1.27))))
       )
-      (pin input line
+      (pin passive line
         (at -5.08 -0.00 0)
         (length 2.54)
         (name "1" (effects (font (size 1.27 1.27))))
@@ -4870,13 +4870,13 @@
         (stroke (width 0) (type default))
         (fill (type none))
       )
-      (pin input line
+      (pin passive line
         (at -5.08 -0.00 0)
         (length 2.54)
         (name "1" (effects (font (size 1.27 1.27))))
         (number "1" (effects (font (size 1.27 1.27))))
       )
-      (pin input line
+      (pin passive line
         (at 5.08 -0.00 180)
         (length 2.54)
         (name "2" (effects (font (size 1.27 1.27))))
