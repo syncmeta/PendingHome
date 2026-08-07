@@ -290,7 +290,7 @@
       },
       {
         "name": "TRUNK",
-        "clearance": 0.3,
+        "clearance": 0.2,
         "track_width": 3.5,
         "via_diameter": 1.2,
         "via_drill": 0.6,
