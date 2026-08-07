@@ -48843,7 +48843,7 @@
 			)
 		)
 	)
-	(gr_text "UART 5V"
+	(gr_text "I2C 3.3V"
 		(at 10 137.15 0)
 		(layer "F.SilkS")
 		(uuid "4d3bd2f3-f4bd-4e4b-a758-1cb351608087")
@@ -48854,7 +48854,7 @@
 			)
 		)
 	)
-	(gr_text "I2C 3.3V"
+	(gr_text "UART 5V"
 		(at 21.995 137.575 0)
 		(layer "F.SilkS")
 		(uuid "817e674a-5432-4600-a79a-eacc7bf19c02")

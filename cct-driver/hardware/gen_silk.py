@@ -108,7 +108,7 @@ label(107.6, 30.0, "FUSE 4A-T x6 / MAIN 15A", 0.8, angle=90)
 # 板名版本(右缘竖排)
 label(107.6, 75.0, "CCT-DRIVER v1.0 2026-08", 0.9, angle=90, bold=True)
 # 底部接口
-for (ref_, txt) in [("J9","UART 5V"), ("J10","I2C 3.3V"), ("J11","SW1-4 DRY")]:
+for (ref_, txt) in [("J9","I2C 3.3V"), ("J10","UART 5V"), ("J11","SW1-4 DRY")]:
     pos = None
     for fp in board.GetFootprints():
         if fp.GetReference() == ref_:
