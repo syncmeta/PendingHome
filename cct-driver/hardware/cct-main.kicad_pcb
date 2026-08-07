@@ -92,7 +92,7 @@
 		(uuid "01edf3b3-0c99-4c67-b05c-a4da1c306d2a")
 		(at 22 98.507)
 		(property "Reference" "C32"
-			(at 0 2.505 0)
+			(at 0 2.505 180)
 			(layer "F.SilkS")
 			(uuid "93068e52-3369-44aa-8d69-84ad522dd9cb")
 			(effects
@@ -348,7 +348,7 @@
 		(at 25.8 76.125)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R18"
-			(at 2.85 0 0)
+			(at 2.85 0 180)
 			(layer "F.SilkS")
 			(uuid "97c80e59-a182-4f4e-ac87-21da02a5f1d0")
 			(effects
@@ -560,7 +560,7 @@
 		(at 40 80.56)
 		(descr "0805")
 		(property "Reference" "LED8"
-			(at -0.115 4.565 0)
+			(at -0.115 4.565 180)
 			(layer "F.SilkS")
 			(uuid "121e0f2a-2d18-424b-b4fe-e47538858e98")
 			(effects
@@ -841,7 +841,7 @@
 		(uuid "0db0cee6-b604-4b2a-86e3-45726728ff3c")
 		(at 86 8 180)
 		(property "Reference" "J7"
-			(at 0 4.975 0)
+			(at 0 4.975 180)
 			(layer "F.SilkS")
 			(uuid "15b6d3ad-283c-4fab-ac7a-59908cdce531")
 			(effects
@@ -1106,7 +1106,7 @@
 		(at 39.8 76.125)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R24"
-			(at -2.85 -1.585 0)
+			(at -2.85 -1.585 180)
 			(layer "F.SilkS")
 			(uuid "bf61fad2-baef-492b-9c27-4f6071005131")
 			(effects
@@ -1318,7 +1318,7 @@
 		(at 55 135)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R58"
-			(at -2.850001 0 0)
+			(at -2.850001 0 180)
 			(layer "F.SilkS")
 			(uuid "6c1ce11a-22f3-407c-b741-9dc1ace5a9db")
 			(effects
@@ -1529,7 +1529,7 @@
 		(uuid "10f7aab5-46df-471e-b1ca-0180e7c893e5")
 		(at 55.4 23.795)
 		(property "Reference" "D13"
-			(at 0 2.815 0)
+			(at 0 2.815 180)
 			(layer "F.SilkS")
 			(uuid "d025448b-3374-449d-90bc-554eb065e098")
 			(effects
@@ -1757,7 +1757,7 @@
 		(at 43 111.037)
 		(descr "100nF (104) ±10% 50V")
 		(property "Reference" "C40"
-			(at 0 1.685 0)
+			(at 0 1.685 180)
 			(layer "F.SilkS")
 			(uuid "7b32687d-1bb6-4638-bcf9-240a59b6467e")
 			(effects
@@ -2013,7 +2013,7 @@
 		(at 20 77.96)
 		(descr "0805")
 		(property "Reference" "LED7"
-			(at -0.115001 -1.985 0)
+			(at -0.115001 -1.985 180)
 			(layer "F.SilkS")
 			(uuid "0591da5e-1401-4ff2-b879-49f0ea34f497")
 			(effects
@@ -2294,7 +2294,7 @@
 		(uuid "12cb05ab-80f3-42f4-8246-e4573c1e9d62")
 		(at 11 19.495)
 		(property "Reference" "F1"
-			(at 0 4.345 0)
+			(at 0 4.345 180)
 			(layer "F.SilkS")
 			(uuid "2e06edd9-9bb3-4e39-a368-e0653afcfc66")
 			(effects
@@ -2506,7 +2506,7 @@
 		(at 13.6 80.56)
 		(descr "0805")
 		(property "Reference" "LED5"
-			(at -0.115 4.565 0)
+			(at -0.115 4.565 180)
 			(layer "F.SilkS")
 			(uuid "77c76bde-b206-4f31-92ce-24df889552b4")
 			(effects
@@ -2787,7 +2787,7 @@
 		(uuid "16d149b0-f09b-49e2-9e2b-4cc97cd4f290")
 		(at 74.6 60.745)
 		(property "Reference" "D20"
-			(at 0 -2.815 0)
+			(at 0 -2.815 180)
 			(layer "F.SilkS")
 			(uuid "cea79c18-2ea6-40cd-9abf-b128ecd1a606")
 			(effects
@@ -3015,7 +3015,7 @@
 		(at 81.8 73.055)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R40"
-			(at 2.849999 1.585 0)
+			(at 2.849999 1.585 180)
 			(layer "F.SilkS")
 			(uuid "af82400f-b10a-4545-822e-22cce4f4ee91")
 			(effects
@@ -3227,7 +3227,7 @@
 		(at 104.2 76.125)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R49"
-			(at 0 1.585 0)
+			(at 0 1.585 180)
 			(layer "F.SilkS")
 			(uuid "5df9c1e9-0a8b-4afc-9f42-ea4aad271b94")
 			(effects
@@ -3438,7 +3438,7 @@
 		(uuid "1b1ac7e9-2f61-4203-83cd-97a39f770c04")
 		(at 55.4 56.315)
 		(property "Reference" "D15"
-			(at 0 2.815 0)
+			(at 0 2.815 180)
 			(layer "F.SilkS")
 			(uuid "db23fa28-7869-4b1c-af62-9274e293dd0c")
 			(effects
@@ -3665,7 +3665,7 @@
 		(uuid "1d05d14e-8258-4707-beb2-3423313cc92c")
 		(at 36 117.507)
 		(property "Reference" "C36"
-			(at 0 -2.505 0)
+			(at 0 -2.505 180)
 			(layer "F.SilkS")
 			(uuid "f7e95187-b23d-480a-a473-1624114adf14")
 			(effects
@@ -3921,7 +3921,7 @@
 		(at 98.4 83.56)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R51"
-			(at 0 1.585 0)
+			(at 0 1.585 180)
 			(layer "F.SilkS")
 			(uuid "d3f286d5-410f-479e-9ab5-12e75bd29567")
 			(effects
@@ -4132,7 +4132,7 @@
 		(uuid "1fc7279d-4905-4beb-a834-1db697a6831a")
 		(at 11 8 180)
 		(property "Reference" "J1"
-			(at 0 -3.275 0)
+			(at 0 -3.275 180)
 			(layer "F.SilkS")
 			(uuid "46226226-085e-448e-97d3-0ac994d58554")
 			(effects
@@ -4440,7 +4440,7 @@
 		(at 74 125.442)
 		(descr "S8050 (200-350)")
 		(property "Reference" "Q5"
-			(at 0 -2.455 0)
+			(at 0 -2.455 180)
 			(layer "F.SilkS")
 			(uuid "8e983ba3-2a2d-42d2-bf47-a292c51d8ac1")
 			(effects
@@ -4660,7 +4660,7 @@
 		(at 32 97.587)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R62"
-			(at 0 -1.585 0)
+			(at 0 -1.585 180)
 			(layer "F.SilkS")
 			(uuid "b4166658-8246-4b60-bd3e-7056e1b3a685")
 			(effects
@@ -4871,7 +4871,7 @@
 		(uuid "21f99f20-064e-47b7-b9b7-a7ddd2f7a436")
 		(at 72 18.665)
 		(property "Reference" "F5"
-			(at 0 -3.515 0)
+			(at 0 -3.515 180)
 			(layer "F.SilkS")
 			(uuid "26fb2d7a-7d83-45de-a9c8-501620d51b22")
 			(effects
@@ -5104,7 +5104,7 @@
 		(uuid "233596ee-7f56-4f1c-a76f-700f20396388")
 		(at 40 91.247)
 		(property "Reference" "C3"
-			(at -9.610001 7.705 0)
+			(at -9.610001 7.705 180)
 			(layer "F.SilkS")
 			(uuid "0f6a7281-0e66-448d-b4c1-0b4847fbaf9f")
 			(effects
@@ -5404,7 +5404,7 @@
 		(at 57 97.677)
 		(descr "0603")
 		(property "Reference" "LED1"
-			(at -0.115 1.674999 0)
+			(at -0.115 1.674999 180)
 			(layer "F.SilkS")
 			(uuid "e713a257-1565-4a2e-8f01-d2b0f38513da")
 			(effects
@@ -5656,7 +5656,7 @@
 		(at 39.8 73.055)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R22"
-			(at -2.85 0 0)
+			(at -2.85 0 180)
 			(layer "F.SilkS")
 			(uuid "de4c59f3-2ed5-40e6-bc8a-2780bf0a70d4")
 			(effects
@@ -5867,7 +5867,7 @@
 		(uuid "2563935a-9791-4d17-96ca-e080956ec75a")
 		(at 43 67.515)
 		(property "Reference" "C18"
-			(at 8.655 -6.405 0)
+			(at 8.655 -6.405 180)
 			(layer "F.SilkS")
 			(uuid "1cc04628-4154-4cc2-8a65-00934560e7ed")
 			(effects
@@ -6166,7 +6166,7 @@
 		(uuid "2628bb82-a235-45fa-aee4-068cfbc54d37")
 		(at 60 107.007)
 		(property "Reference" "C35"
-			(at 0 -5.155 0)
+			(at 0 -5.155 180)
 			(layer "F.SilkS")
 			(uuid "c714dfbd-9451-45cf-b612-1e99478ba481")
 			(effects
@@ -6465,7 +6465,7 @@
 		(uuid "262ed5da-a110-4a8a-8e8c-998b52daf6d3")
 		(at 11 46.315)
 		(property "Reference" "RS1"
-			(at 0 -2.885 0)
+			(at 0 -2.885 180)
 			(layer "F.SilkS")
 			(uuid "ad8388ff-31b1-49ae-956d-f80c1967ca3a")
 			(effects
@@ -6677,7 +6677,7 @@
 		(at 95.8 76.125)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R48"
-			(at 2.849999 0 0)
+			(at 2.849999 0 180)
 			(layer "F.SilkS")
 			(uuid "5df5bc37-f40f-41fb-8796-a23c9022debd")
 			(effects
@@ -6889,7 +6889,7 @@
 		(at 46.4 83.56)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R44"
-			(at 2.85 0 0)
+			(at 2.85 0 180)
 			(layer "F.SilkS")
 			(uuid "e02ed2d1-65a2-4cec-98c5-f452a1baeadc")
 			(effects
@@ -7101,7 +7101,7 @@
 		(at 98.4 77.96)
 		(descr "0805")
 		(property "Reference" "LED13"
-			(at -4.42 0.015 0)
+			(at -4.42 0.015 180)
 			(layer "F.SilkS")
 			(uuid "322062b9-bb53-4838-a5a0-b5bc288fc485")
 			(effects
@@ -7382,7 +7382,7 @@
 		(uuid "2e45d35f-8812-47db-a6ff-c9cda59ffbf3")
 		(at 97.4 56.315)
 		(property "Reference" "D27"
-			(at 0 2.815 0)
+			(at 0 2.815 180)
 			(layer "F.SilkS")
 			(uuid "25516c47-7ed5-4b88-be31-88863641bc85")
 			(effects
@@ -7610,7 +7610,7 @@
 		(at 96.76 80.56)
 		(descr "0805")
 		(property "Reference" "LED12"
-			(at 4.189999 0.014999 0)
+			(at 4.189999 0.014999 180)
 			(layer "F.SilkS")
 			(uuid "0103a265-051b-4f37-9718-7ad8228cb5ec")
 			(effects
@@ -7892,7 +7892,7 @@
 		(at 46 132.5)
 		(descr "10uF (106) ±10% 25V")
 		(property "Reference" "C42"
-			(at 0 -1.825 0)
+			(at 0 -1.825 180)
 			(layer "F.SilkS")
 			(uuid "80019b7a-bdc5-4635-91eb-bece98b9e25e")
 			(effects
@@ -8148,7 +8148,7 @@
 		(at 95.2 83.56)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R50"
-			(at 0 1.585 0)
+			(at 0 1.585 180)
 			(layer "F.SilkS")
 			(uuid "28fba301-efb6-41b9-a168-2270c2bf7187")
 			(effects
@@ -8360,7 +8360,7 @@
 		(at 64 79.675 90)
 		(descr "100nF (104) ±10% 50V")
 		(property "Reference" "C15"
-			(at -2.364999 0 0)
+			(at -2.364999 0 180)
 			(layer "F.SilkS")
 			(uuid "073ca3b2-118a-49c0-be3a-4e56cad3a90c")
 			(effects
@@ -8616,7 +8616,7 @@
 		(at 4 83.56)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R20"
-			(at 0 1.585 0)
+			(at 0 1.585 180)
 			(layer "F.SilkS")
 			(uuid "20ea3b2e-c914-4efe-aba3-13c001ac498d")
 			(effects
@@ -8827,7 +8827,7 @@
 		(uuid "309cef42-5d6e-4f41-9fdc-f384ed45ba37")
 		(at 83.4 23.795)
 		(property "Reference" "D21"
-			(at 0 2.815 0)
+			(at 0 2.815 180)
 			(layer "F.SilkS")
 			(uuid "0c4b1155-8228-40f5-a276-afc9c214d196")
 			(effects
@@ -9054,7 +9054,7 @@
 		(uuid "315503eb-21ac-4198-9cda-a373cf6b1d01")
 		(at 58 49.06)
 		(property "Reference" "Q12"
-			(at -5.385001 -0.875 0)
+			(at -5.385001 -0.875 180)
 			(layer "F.SilkS")
 			(uuid "16696da4-30c3-4912-99bc-4029e652ebbb")
 			(effects
@@ -9284,7 +9284,7 @@
 		(uuid "34306245-d6b3-4c8a-a2d6-08c7a9dcf843")
 		(at 99.1 18.665)
 		(property "Reference" "F7"
-			(at 0 -3.515 0)
+			(at 0 -3.515 180)
 			(layer "F.SilkS")
 			(uuid "96434396-3160-44f9-96a7-895e81181610")
 			(effects
@@ -9517,7 +9517,7 @@
 		(uuid "34d16a26-1832-4c1d-8873-7e6e136c3601")
 		(at 9 51.85)
 		(property "Reference" "U1"
-			(at -2.76 0 0)
+			(at -2.76 0 180)
 			(layer "F.SilkS")
 			(uuid "55f5f36f-1b5c-4ffa-886d-d8be72d1a899")
 			(effects
@@ -9806,7 +9806,7 @@
 		(at 85 73.155)
 		(descr "100nF (104) ±10% 50V")
 		(property "Reference" "C25"
-			(at 0 -2.435 0)
+			(at 0 -2.435 180)
 			(layer "F.SilkS")
 			(uuid "2e10ff15-16ea-425c-a480-acaf404b7b2f")
 			(effects
@@ -10061,7 +10061,7 @@
 		(uuid "3605c82a-850c-4df2-bbbf-761b5ab81f6e")
 		(at 44 37.23)
 		(property "Reference" "Q9"
-			(at -5.04 -0.875 0)
+			(at -5.04 -0.875 180)
 			(layer "F.SilkS")
 			(uuid "272d8700-b1ea-423b-b7b9-c08a2290a265")
 			(effects
@@ -10292,7 +10292,7 @@
 		(at 69 97.827)
 		(descr "10uF (106) ±10% 25V")
 		(property "Reference" "C12"
-			(at 0 2.175 0)
+			(at 0 2.175 180)
 			(layer "F.SilkS")
 			(uuid "561aaef6-c460-43c7-b53b-c072c3b46ec5")
 			(effects
@@ -10548,7 +10548,7 @@
 		(at 7 42.175)
 		(descr "MMBT3904 1AM 100-300")
 		(property "Reference" "Q3"
-			(at -2.54 0 0)
+			(at -2.54 0 180)
 			(layer "F.SilkS")
 			(uuid "fa1e4f5b-eb58-442f-82dc-92bb8d7eb7de")
 			(effects
@@ -10768,7 +10768,7 @@
 		(at 65 97.587)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R4"
-			(at 0 1.585 0)
+			(at 0 1.585 180)
 			(layer "F.SilkS")
 			(uuid "1f206aca-a955-4130-9e09-cfda24d9e535")
 			(effects
@@ -10979,7 +10979,7 @@
 		(uuid "37473d79-96d1-4f92-b218-79cfaa2e95b5")
 		(at 83.4 56.315)
 		(property "Reference" "D23"
-			(at 0 2.815 0)
+			(at 0 2.815 180)
 			(layer "F.SilkS")
 			(uuid "a88aec05-9732-45c9-ab70-53bb343cf427")
 			(effects
@@ -11207,7 +11207,7 @@
 		(at 40 83.56)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R38"
-			(at 2.85 1.585 0)
+			(at 2.85 1.585 180)
 			(layer "F.SilkS")
 			(uuid "259ba336-aa21-4113-9b65-18a3802fc866")
 			(effects
@@ -11418,7 +11418,7 @@
 		(uuid "3e73711a-ac65-4e85-bb34-1c5288602ec1")
 		(at 7 37.095)
 		(property "Reference" "DZ1"
-			(at -3.48 0 0)
+			(at -3.48 0 180)
 			(layer "F.SilkS")
 			(uuid "e5c049bb-5105-4b21-965b-f62649d33294")
 			(effects
@@ -11646,7 +11646,7 @@
 		(at 67 132.5)
 		(descr "100nF (104) ±10% 50V")
 		(property "Reference" "C31"
-			(at 0 -1.685 0)
+			(at 0 -1.685 180)
 			(layer "F.SilkS")
 			(uuid "cee15049-a8fc-4a2e-8dd7-4d365d774a1e")
 			(effects
@@ -11902,7 +11902,7 @@
 		(at 77 79.765)
 		(descr "MMBT3904 1AM 100-300")
 		(property "Reference" "Q6"
-			(at 0 2.455 0)
+			(at 0 2.455 180)
 			(layer "F.SilkS")
 			(uuid "d7424b89-2881-4986-b07d-c7ea43bb5c84")
 			(effects
@@ -12122,7 +12122,7 @@
 		(at 13.6 83.56)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R27"
-			(at 2.85 1.585 0)
+			(at 2.85 1.585 180)
 			(layer "F.SilkS")
 			(uuid "113913e7-4884-4277-b3a2-0b932e51764a")
 			(effects
@@ -12334,7 +12334,7 @@
 		(at 12 97.587)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R52"
-			(at 0 1.585 0)
+			(at 0 1.585 180)
 			(layer "F.SilkS")
 			(uuid "f94cc46c-f018-4ad9-9d8f-2c8e5732c2fe")
 			(effects
@@ -12547,7 +12547,7 @@
 		(descr "SMD pad as test Point, diameter 1.5mm")
 		(tags "test point SMD pad")
 		(property "Reference" "TP5"
-			(at 0 -2.075 0)
+			(at 0 -2.075 180)
 			(layer "F.SilkS")
 			(uuid "d7b3155c-08df-4c10-9f11-deca29e10281")
 			(effects
@@ -12644,7 +12644,7 @@
 		(at 59 132.5)
 		(descr "100nF (104) ±10% 50V")
 		(property "Reference" "C29"
-			(at 0 -1.685 0)
+			(at 0 -1.685 180)
 			(layer "F.SilkS")
 			(uuid "ad16294a-49d9-4a81-ba59-c14859a4eb5a")
 			(effects
@@ -12899,7 +12899,7 @@
 		(uuid "4a8812df-067e-4669-9af5-38ddff606570")
 		(at 42 117.817)
 		(property "Reference" "D3"
-			(at 0 -2.815 0)
+			(at 0 -2.815 180)
 			(layer "F.SilkS")
 			(uuid "3ef3cfd5-52eb-4450-ae81-6a3d3c16c3c9")
 			(effects
@@ -13126,7 +13126,7 @@
 		(uuid "4aefd83d-4826-4ee8-bc1f-13c277327971")
 		(at 54 91.247)
 		(property "Reference" "C4"
-			(at 7.06 -5.155 0)
+			(at 7.06 -5.155 180)
 			(layer "F.SilkS")
 			(uuid "09d57a24-7705-44f6-8605-98b1ad99ab45")
 			(effects
@@ -13425,7 +13425,7 @@
 		(uuid "4ee69515-f97f-432e-b69d-5331139d6324")
 		(at 41.4 23.795)
 		(property "Reference" "D9"
-			(at 0 2.815 0)
+			(at 0 2.815 180)
 			(layer "F.SilkS")
 			(uuid "bd11f703-f37b-4565-ae34-705e7f980ada")
 			(effects
@@ -13652,7 +13652,7 @@
 		(uuid "53db307d-467f-4d79-946c-78ea8ed62ee0")
 		(at 7.6 29.3145 90)
 		(property "Reference" "Q1"
-			(at 5.4745 0 0)
+			(at 5.4745 0 180)
 			(layer "F.SilkS")
 			(uuid "13f5938d-957b-4f9c-856b-88f68beab755")
 			(effects
@@ -13851,7 +13851,7 @@
 		(uuid "553ccf1f-a124-4d3e-9ee9-8bebfb7c9bc8")
 		(at 100 8 180)
 		(property "Reference" "J8"
-			(at 0 4.975 0)
+			(at 0 4.975 180)
 			(layer "F.SilkS")
 			(uuid "916c7875-4dc8-4977-acf1-ac9beddadfe5")
 			(effects
@@ -14115,7 +14115,7 @@
 		(uuid "55e00386-632b-4f3c-8502-df4814cfb1f7")
 		(at 32.6 28.225)
 		(property "Reference" "D6"
-			(at 0 -2.815 0)
+			(at 0 -2.815 180)
 			(layer "F.SilkS")
 			(uuid "3efc87ff-f95d-4778-9003-553d5e9f3ff2")
 			(effects
@@ -14343,7 +14343,7 @@
 		(at 20 83.56)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R33"
-			(at 2.85 0 0)
+			(at 2.85 0 180)
 			(layer "F.SilkS")
 			(uuid "76f0a8ae-c1cb-4d76-af6d-4678b7678c41")
 			(effects
@@ -14554,7 +14554,7 @@
 		(uuid "570ef96e-31ae-47dc-a896-598f4492797f")
 		(at 11 57.315)
 		(property "Reference" "D1"
-			(at 0 2.815 0)
+			(at 0 2.815 180)
 			(layer "F.SilkS")
 			(uuid "7bafa246-2129-400a-8a42-00859379bad2")
 			(effects
@@ -14782,7 +14782,7 @@
 		(at 14.5 39.335)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R3"
-			(at -2.505 0 0)
+			(at -2.505 0 180)
 			(layer "F.SilkS")
 			(uuid "343364cd-2fb2-405f-8e6e-f752fdf2d9e6")
 			(effects
@@ -14994,7 +14994,7 @@
 		(at 92 80.56)
 		(descr "0805")
 		(property "Reference" "LED11"
-			(at -4.42 0.014999 0)
+			(at -4.42 0.014999 180)
 			(layer "F.SilkS")
 			(uuid "481c0567-52ea-4be2-a195-da392f003025")
 			(effects
@@ -15276,7 +15276,7 @@
 		(at 29 73.155)
 		(descr "100nF (104) ±10% 50V")
 		(property "Reference" "C17"
-			(at 0 1.684999 0)
+			(at 0 1.684999 180)
 			(layer "F.SilkS")
 			(uuid "054fe3db-63ad-4cb9-a39d-52e473f97763")
 			(effects
@@ -15531,7 +15531,7 @@
 		(uuid "596bd817-010e-4fcf-9962-95eecd17c3a5")
 		(at 12 91.247)
 		(property "Reference" "C1"
-			(at 7.41 -5.505001 0)
+			(at 7.41 -5.505001 180)
 			(layer "F.SilkS")
 			(uuid "b988360a-be76-431d-b8cc-488966501865")
 			(effects
@@ -15830,7 +15830,7 @@
 		(uuid "597d9fb8-a29e-45e6-8535-b4f74233845e")
 		(at 34 81.901)
 		(property "Reference" "U6"
-			(at -4.900001 0 0)
+			(at -4.900001 0 180)
 			(layer "F.SilkS")
 			(uuid "328088e6-4ff5-447e-8816-cd417abef70b")
 			(effects
@@ -16180,7 +16180,7 @@
 		(uuid "5a3f9c6e-c912-483c-8974-8cc5381cf0c2")
 		(at 30 37.23)
 		(property "Reference" "Q7"
-			(at -5.040001 -0.875 0)
+			(at -5.040001 -0.875 180)
 			(layer "F.SilkS")
 			(uuid "266783ea-3830-4df4-9689-52cdf7e949c1")
 			(effects
@@ -16410,7 +16410,7 @@
 		(uuid "5b2d8a90-fbbf-4662-ada8-24211f6b34e1")
 		(at 74.6 28.225)
 		(property "Reference" "D18"
-			(at 0 -2.815 0)
+			(at 0 -2.815 180)
 			(layer "F.SilkS")
 			(uuid "383d28cf-a8c8-493c-88ca-e5bc49d8c43b")
 			(effects
@@ -16638,7 +16638,7 @@
 		(at 49 124.812)
 		(descr "10uF (106) ±10% 25V")
 		(property "Reference" "C41"
-			(at 0 1.825 0)
+			(at 0 1.825 180)
 			(layer "F.SilkS")
 			(uuid "908cb999-4e21-4f99-a7d4-b47116dd4bad")
 			(effects
@@ -16895,7 +16895,7 @@
 		(descr "Mounting Hole 3.2mm, M3, no annular, generated by kicad-footprint-generator mountinghole.py")
 		(tags "mountinghole M3")
 		(property "Reference" "H1"
-			(at 0 -4.325 0)
+			(at 0 -4.325 180)
 			(layer "F.SilkS")
 			(uuid "0fb6e2d9-942a-4812-8b73-543328da5776")
 			(effects
@@ -17000,7 +17000,7 @@
 		(at 41.64 77.96)
 		(descr "0805")
 		(property "Reference" "LED9"
-			(at -6.625 4.565 0)
+			(at -6.625 4.565 180)
 			(layer "F.SilkS")
 			(uuid "90e82a37-9fb4-47bf-a14c-5ec7f950a284")
 			(effects
@@ -17282,7 +17282,7 @@
 		(at 67 135)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R61"
-			(at 2.85 -1.585001 0)
+			(at 2.85 -1.585001 180)
 			(layer "F.SilkS")
 			(uuid "87562481-27c7-43bb-976f-498e7d516ef1")
 			(effects
@@ -17494,7 +17494,7 @@
 		(at 48.2 73.055)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R23"
-			(at 0 1.585 0)
+			(at 0 1.585 180)
 			(layer "F.SilkS")
 			(uuid "074220b5-8ed5-4576-a92d-dc733a9405b8")
 			(effects
@@ -17705,7 +17705,7 @@
 		(uuid "63d4282e-246a-4de5-a26f-7871fae884eb")
 		(at 69.4 23.795)
 		(property "Reference" "D17"
-			(at 0 2.815 0)
+			(at 0 2.815 180)
 			(layer "F.SilkS")
 			(uuid "1737851a-ed32-41d8-b6c9-8887f1e857cf")
 			(effects
@@ -17933,7 +17933,7 @@
 		(at 78 116.587)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R11"
-			(at 0 -1.585 0)
+			(at 0 -1.585 180)
 			(layer "F.SilkS")
 			(uuid "3144328a-a36e-41bf-b757-6d818edaa915")
 			(effects
@@ -18144,7 +18144,7 @@
 		(uuid "67ae8a95-d781-4dac-9c12-6da06f11b9dd")
 		(at 69.4 56.315)
 		(property "Reference" "D19"
-			(at 0 2.815 0)
+			(at 0 2.815 180)
 			(layer "F.SilkS")
 			(uuid "c668c0da-a237-402e-b8b6-f45f97c99e75")
 			(effects
@@ -18371,7 +18371,7 @@
 		(uuid "6852cd42-e0e7-4077-ba81-41b01e20241c")
 		(at 14 109.027)
 		(property "Reference" "L1"
-			(at 0 -7.175 0)
+			(at 0 -7.175 180)
 			(layer "F.SilkS")
 			(uuid "cc367330-a258-49f7-bd26-2f4386909583")
 			(effects
@@ -18648,7 +18648,7 @@
 		(uuid "6a5bfa80-d4bd-4cdd-b34d-1c5dcadb58c6")
 		(at 58 37.23)
 		(property "Reference" "Q11"
-			(at -5.385001 -0.875 0)
+			(at -5.385001 -0.875 180)
 			(layer "F.SilkS")
 			(uuid "6a02d6b7-52cc-45a6-a1a7-b5f5666a4c33")
 			(effects
@@ -18879,7 +18879,7 @@
 		(at 86 78.895)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R15"
-			(at 0 -1.585 0)
+			(at 0 -1.585 180)
 			(layer "F.SilkS")
 			(uuid "ac10c984-337d-4b00-9c41-3437091cb70c")
 			(effects
@@ -19091,7 +19091,7 @@
 		(at 95.8 73.055)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R46"
-			(at -2.85 0 0)
+			(at -2.85 0 180)
 			(layer "F.SilkS")
 			(uuid "5268977a-023d-4cbd-9ddf-a1555ac39a76")
 			(effects
@@ -19303,7 +19303,7 @@
 		(at 31 116.587)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R63"
-			(at 0 -1.585 0)
+			(at 0 -1.585 180)
 			(layer "F.SilkS")
 			(uuid "ae052c13-2a2e-4af4-9655-708e738f803a")
 			(effects
@@ -19515,7 +19515,7 @@
 		(at 71 73.155)
 		(descr "100nF (104) ±10% 50V")
 		(property "Reference" "C23"
-			(at 0 1.684999 0)
+			(at 0 1.684999 180)
 			(layer "F.SilkS")
 			(uuid "a0ce54e9-435b-479a-ad61-5ee0f8499d16")
 			(effects
@@ -19771,7 +19771,7 @@
 		(at 46 135)
 		(descr "100nF (104) ±10% 50V")
 		(property "Reference" "C43"
-			(at 0 1.685 0)
+			(at 0 1.685 180)
 			(layer "F.SilkS")
 			(uuid "75f2bafe-f602-42bf-8a24-f28b9b8d992f")
 			(effects
@@ -20027,7 +20027,7 @@
 		(at 7.2 83.56)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R21"
-			(at -0.000001 1.585 0)
+			(at -0.000001 1.585 180)
 			(layer "F.SilkS")
 			(uuid "2f387d75-2374-4f67-8b2e-050fd7147d66")
 			(effects
@@ -20238,7 +20238,7 @@
 		(uuid "75786d8b-6d7a-4050-9822-7eb47bf4b1ee")
 		(at 58 8 180)
 		(property "Reference" "J5"
-			(at 0 4.975 0)
+			(at 0 4.975 180)
 			(layer "F.SilkS")
 			(uuid "902a6a4e-efbe-4c08-804f-c7fee4cfe179")
 			(effects
@@ -20503,7 +20503,7 @@
 		(at 99 73.155)
 		(descr "100nF (104) ±10% 50V")
 		(property "Reference" "C27"
-			(at 0 -2.435 0)
+			(at 0 -2.435 180)
 			(layer "F.SilkS")
 			(uuid "19989985-f1ab-45cc-95c3-26d902e4d236")
 			(effects
@@ -20759,7 +20759,7 @@
 		(at 63 135)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R60"
-			(at 0 4.135 0)
+			(at 0 4.135 180)
 			(layer "F.SilkS")
 			(uuid "ddf9d76f-16b0-4b79-95f1-e3dce57c9845")
 			(effects
@@ -20971,7 +20971,7 @@
 		(at 25.8 73.055)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R16"
-			(at -2.85 0 0)
+			(at -2.85 0 180)
 			(layer "F.SilkS")
 			(uuid "e5a63f7b-fb45-4a1d-b838-94719acf6912")
 			(effects
@@ -21183,7 +21183,7 @@
 		(at 55 132.5)
 		(descr "100nF (104) ±10% 50V")
 		(property "Reference" "C28"
-			(at 0 -1.685 0)
+			(at 0 -1.685 180)
 			(layer "F.SilkS")
 			(uuid "1e32e1d4-dbf4-4032-bb87-4ab82753b5e5")
 			(effects
@@ -21438,7 +21438,7 @@
 		(uuid "802fc89a-dff6-4ece-8dfe-6ff39deb9ad5")
 		(at 30 18.665)
 		(property "Reference" "F2"
-			(at 0 -3.515 0)
+			(at 0 -3.515 180)
 			(layer "F.SilkS")
 			(uuid "992d1da5-41bb-4d6f-8845-81faf92c7b79")
 			(effects
@@ -21672,7 +21672,7 @@
 		(at 90.2 73.055)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R41"
-			(at 0 1.585 0)
+			(at 0 1.585 180)
 			(layer "F.SilkS")
 			(uuid "a09412aa-8a5c-41cc-9e3e-46fc7181ccff")
 			(effects
@@ -21883,7 +21883,7 @@
 		(uuid "815bea82-1983-4572-9031-8b747d971b44")
 		(at 102.6 60.745)
 		(property "Reference" "D28"
-			(at 0 -2.815 0)
+			(at 0 -2.815 180)
 			(layer "F.SilkS")
 			(uuid "66ae962a-0134-466d-a859-9d1ec5b529e5")
 			(effects
@@ -22111,7 +22111,7 @@
 		(at 92 83.56)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R45"
-			(at 0 1.585 0)
+			(at 0 1.585 180)
 			(layer "F.SilkS")
 			(uuid "f620591b-9451-4960-a329-6173dd8ba984")
 			(effects
@@ -22323,7 +22323,7 @@
 		(at 16.8 83.56)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R32"
-			(at -5.4 4.135 0)
+			(at -5.4 4.135 180)
 			(layer "F.SilkS")
 			(uuid "dab6a799-799c-437f-a223-ff67b717a8ea")
 			(effects
@@ -22535,7 +22535,7 @@
 		(at 4 80.56)
 		(descr "0805")
 		(property "Reference" "LED2"
-			(at -0.115 -1.985 0)
+			(at -0.115 -1.985 180)
 			(layer "F.SilkS")
 			(uuid "99fb1222-3971-480e-92ef-9b42bc88e550")
 			(effects
@@ -22816,7 +22816,7 @@
 		(uuid "82cc9b2e-0646-4203-8361-d8b0e02d7a81")
 		(at 42 125.802)
 		(property "Reference" "D4"
-			(at 0 2.814999 0)
+			(at 0 2.814999 180)
 			(layer "F.SilkS")
 			(uuid "98585537-a8ea-42c3-9400-15e99a693ffa")
 			(effects
@@ -23043,7 +23043,7 @@
 		(uuid "836c9bd9-9e0e-407b-8506-c54d3cf0132e")
 		(at 36 142 180)
 		(property "Reference" "J11"
-			(at -8.125 0.167501 0)
+			(at -8.125 0.167501 180)
 			(layer "F.SilkS")
 			(uuid "ccd80e05-5ff4-44fe-98ea-7ceb0962c4ad")
 			(effects
@@ -23350,7 +23350,7 @@
 		(uuid "84f2cf7d-f1b8-4d8a-95d0-263368ef0f0b")
 		(at 42 99.527)
 		(property "Reference" "SW2"
-			(at 4.885 -3.525 0)
+			(at 4.885 -3.525 180)
 			(layer "F.SilkS")
 			(uuid "a2a2c01d-c76b-4cb8-aaf0-0d40c55ef3f9")
 			(effects
@@ -23725,7 +23725,7 @@
 		(at 90.2 76.125)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R43"
-			(at 0 1.585 0)
+			(at 0 1.585 180)
 			(layer "F.SilkS")
 			(uuid "f3b28438-1690-46ca-b6e0-1f04b4ab3b8b")
 			(effects
@@ -23937,7 +23937,7 @@
 		(at 39 103.437)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R66"
-			(at -2.850001 0 0)
+			(at -2.850001 0 180)
 			(layer "F.SilkS")
 			(uuid "bc8ddcf2-af9d-4609-b43d-6ec33d7198ce")
 			(effects
@@ -24148,7 +24148,7 @@
 		(uuid "8835a770-47c3-489d-8ce7-66da66e40d96")
 		(at 27.4 23.795)
 		(property "Reference" "D5"
-			(at 0 2.815 0)
+			(at 0 2.815 180)
 			(layer "F.SilkS")
 			(uuid "050c342f-5681-4d0a-801e-9ba765226015")
 			(effects
@@ -24376,7 +24376,7 @@
 		(at 74 97.587)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R5"
-			(at 0 -1.585 0)
+			(at 0 -1.585 180)
 			(layer "F.SilkS")
 			(uuid "dca8ef95-fae0-4d65-8de7-6e4fb8126396")
 			(effects
@@ -24588,7 +24588,7 @@
 		(at 31 124.572)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R64"
-			(at 0 -1.585 0)
+			(at 0 -1.585 180)
 			(layer "F.SilkS")
 			(uuid "502b07eb-d155-4ab0-90fd-291192286514")
 			(effects
@@ -24800,7 +24800,7 @@
 		(at 67.8 73.055)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R34"
-			(at 0 1.585 0)
+			(at 0 1.585 180)
 			(layer "F.SilkS")
 			(uuid "53f88b41-4edb-42a2-85a6-545fddbb1882")
 			(effects
@@ -25012,7 +25012,7 @@
 		(at 14.5 36.825)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R2"
-			(at -2.505 0 0)
+			(at -2.505 0 180)
 			(layer "F.SilkS")
 			(uuid "d492202a-a1b0-417d-b678-e2b5e1d97e7f")
 			(effects
@@ -25223,7 +25223,7 @@
 		(uuid "8ff2349c-c95f-44ba-8ece-a41bb5dc3a0b")
 		(at 22 141 180)
 		(property "Reference" "J10"
-			(at -7.81 3.375 0)
+			(at -7.81 3.375 180)
 			(layer "F.SilkS")
 			(uuid "c8ab23a6-5990-451c-b73e-a0b6e190f577")
 			(effects
@@ -25597,7 +25597,7 @@
 		(at 55 137.5)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R54"
-			(at 0 1.585 0)
+			(at 0 1.585 180)
 			(layer "F.SilkS")
 			(uuid "98bc6402-a15e-4864-b6dc-24bb9e7a527d")
 			(effects
@@ -25809,7 +25809,7 @@
 		(at 16 97.587)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R53"
-			(at 2.85 -1.585 0)
+			(at 2.85 -1.585 180)
 			(layer "F.SilkS")
 			(uuid "f33e7093-52e6-45c7-b65b-7421c81d986a")
 			(effects
@@ -26020,7 +26020,7 @@
 		(uuid "9996f219-1b58-4270-917f-12f2a93652b0")
 		(at 30 49.06)
 		(property "Reference" "Q8"
-			(at -5.040001 -0.875 0)
+			(at -5.040001 -0.875 180)
 			(layer "F.SilkS")
 			(uuid "40836d1e-b441-4e81-95c7-e9777a6802fd")
 			(effects
@@ -26251,7 +26251,7 @@
 		(at 43.2 83.56)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R39"
-			(at 2.85 1.585 0)
+			(at 2.85 1.585 180)
 			(layer "F.SilkS")
 			(uuid "14ac258d-c12d-4db5-b39d-73ef3ac6aabf")
 			(effects
@@ -26463,7 +26463,7 @@
 		(at 57 73.155)
 		(descr "100nF (104) ±10% 50V")
 		(property "Reference" "C21"
-			(at 0 1.684999 0)
+			(at 0 1.684999 180)
 			(layer "F.SilkS")
 			(uuid "15efd2f8-1370-4417-b6d7-ece26b3a6375")
 			(effects
@@ -26719,7 +26719,7 @@
 		(at 34.2 76.125)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R19"
-			(at -2.850001 0 0)
+			(at -2.850001 0 180)
 			(layer "F.SilkS")
 			(uuid "f4844dd7-4b4e-44b4-a84c-1e32a2f74c2c")
 			(effects
@@ -26930,7 +26930,7 @@
 		(uuid "a2040986-1305-4ba3-bc1e-3e18234037af")
 		(at 88.6 60.745)
 		(property "Reference" "D24"
-			(at 0 -2.815 0)
+			(at 0 -2.815 180)
 			(layer "F.SilkS")
 			(uuid "b1acd532-ac4b-464c-be31-ac80fb91831f")
 			(effects
@@ -27158,7 +27158,7 @@
 		(at 81.8 76.125)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R42"
-			(at -2.85 0 0)
+			(at -2.85 0 180)
 			(layer "F.SilkS")
 			(uuid "754e2047-cada-4b05-81c6-a1e017ecd94e")
 			(effects
@@ -27370,7 +27370,7 @@
 		(at 26 79.675 90)
 		(descr "100nF (104) ±10% 50V")
 		(property "Reference" "C14"
-			(at 0 2.22 0)
+			(at 0 2.22 180)
 			(layer "F.SilkS")
 			(uuid "6c78e3ae-48fe-44aa-bad0-45a44f796fa3")
 			(effects
@@ -27625,7 +27625,7 @@
 		(uuid "a47ee8ed-6300-4ac9-b2b3-2ccfdcf29042")
 		(at 51 99.527)
 		(property "Reference" "SW1"
-			(at 0 3.524999 0)
+			(at 0 3.524999 180)
 			(layer "F.SilkS")
 			(uuid "7a4efeed-4b58-4e98-ab29-a627df0018a0")
 			(effects
@@ -28000,7 +28000,7 @@
 		(at 59 137.5)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R55"
-			(at 0 2.835 0)
+			(at 0 2.835 180)
 			(layer "F.SilkS")
 			(uuid "6411acab-0493-4712-be4e-725822205faa")
 			(effects
@@ -28212,7 +28212,7 @@
 		(at 63 137.5)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R56"
-			(at 2.849999 1.585 0)
+			(at 2.849999 1.585 180)
 			(layer "F.SilkS")
 			(uuid "46c535ac-5193-459e-a69b-17e566ade498")
 			(effects
@@ -28425,7 +28425,7 @@
 		(descr "Mounting Hole 3.2mm, M3, no annular, generated by kicad-footprint-generator mountinghole.py")
 		(tags "mountinghole M3")
 		(property "Reference" "H4"
-			(at 0 -4.325 0)
+			(at 0 -4.325 180)
 			(layer "F.SilkS")
 			(uuid "3c79d293-986d-495a-8905-86a6c116c846")
 			(effects
@@ -28530,7 +28530,7 @@
 		(at 74 117.457)
 		(descr "S8050 (200-350)")
 		(property "Reference" "Q4"
-			(at 0 -2.455 0)
+			(at 0 -2.455 180)
 			(layer "F.SilkS")
 			(uuid "6fedfcda-2400-45ff-a74b-d243e5a8b732")
 			(effects
@@ -28750,7 +28750,7 @@
 		(at 43 73.155)
 		(descr "100nF (104) ±10% 50V")
 		(property "Reference" "C19"
-			(at 0 1.684999 0)
+			(at 0 1.684999 180)
 			(layer "F.SilkS")
 			(uuid "b49e450f-92c6-436f-841f-40c7c0580266")
 			(effects
@@ -29005,7 +29005,7 @@
 		(uuid "adc433c4-5823-4eef-8d22-81c0db2db9bc")
 		(at 57 67.515)
 		(property "Reference" "C20"
-			(at 8.655 -6.405 0)
+			(at 8.655 -6.405 180)
 			(layer "F.SilkS")
 			(uuid "4bf1fceb-75ca-40d7-84f5-9466eba9f31d")
 			(effects
@@ -29305,7 +29305,7 @@
 		(at 48.2 76.125)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R25"
-			(at 0 1.585 0)
+			(at 0 1.585 180)
 			(layer "F.SilkS")
 			(uuid "7cec7bf4-390e-4618-9614-c2368a3a99a3")
 			(effects
@@ -29517,7 +29517,7 @@
 		(at 58 116.687)
 		(descr "100nF (104) ±10% 50V")
 		(property "Reference" "C13"
-			(at 0 -1.685 0)
+			(at 0 -1.685 180)
 			(layer "F.SilkS")
 			(uuid "f5235e2f-a209-4e0e-a872-5d6a42411c08")
 			(effects
@@ -29773,7 +29773,7 @@
 		(at 59 135)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R59"
-			(at 0 4.135 0)
+			(at 0 4.135 180)
 			(layer "F.SilkS")
 			(uuid "dcf7a595-171a-41cf-abb9-b5ec3ad4dcab")
 			(effects
@@ -29985,7 +29985,7 @@
 		(at 7 39.335)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R1"
-			(at -2.505 0 0)
+			(at -2.505 0 180)
 			(layer "F.SilkS")
 			(uuid "8caddd85-b45b-43aa-8513-094c392ffaa6")
 			(effects
@@ -30196,7 +30196,7 @@
 		(uuid "b0e67888-0810-4b8d-b302-160b09f46acf")
 		(at 72 37.23)
 		(property "Reference" "Q13"
-			(at -5.385 -0.875 0)
+			(at -5.385 -0.875 180)
 			(layer "F.SilkS")
 			(uuid "1543e159-8511-4ec6-a1c1-ce278a34ea40")
 			(effects
@@ -30427,7 +30427,7 @@
 		(at 82 97.687)
 		(descr "100nF (104) ±10% 50V")
 		(property "Reference" "C11"
-			(at 0 1.685 0)
+			(at 0 1.685 180)
 			(layer "F.SilkS")
 			(uuid "61e5e852-7059-4f27-901f-8a4165592afe")
 			(effects
@@ -30682,7 +30682,7 @@
 		(uuid "b1991212-5aa3-40d0-ad6e-e8821ba8809b")
 		(at 56 81.901)
 		(property "Reference" "U7"
-			(at -4.9 0 0)
+			(at -4.9 0 180)
 			(layer "F.SilkS")
 			(uuid "c9b7ef77-cd60-4c3d-9b25-e854d63c6417")
 			(effects
@@ -31029,7 +31029,7 @@
 		(at 76.2 76.125)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R37"
-			(at -2.85 0 0)
+			(at -2.85 0 180)
 			(layer "F.SilkS")
 			(uuid "d182aabd-e174-482d-bcdb-92028e72df81")
 			(effects
@@ -31240,7 +31240,7 @@
 		(uuid "b7e14173-f5c8-4439-beaf-277a89b64937")
 		(at 96 133 180)
 		(property "Reference" "U4"
-			(at -3.2775 10.9 0)
+			(at -3.2775 10.9 180)
 			(layer "F.SilkS")
 			(uuid "3013936c-9707-442d-81ae-be0782870a60")
 			(effects
@@ -31810,7 +31810,7 @@
 		(at 63 132.5)
 		(descr "100nF (104) ±10% 50V")
 		(property "Reference" "C30"
-			(at 0 -1.685 0)
+			(at 0 -1.685 180)
 			(layer "F.SilkS")
 			(uuid "de713c47-e758-4013-9eef-083f82d6f4db")
 			(effects
@@ -32065,7 +32065,7 @@
 		(uuid "bbec52df-d206-4434-9654-f434495ef516")
 		(at 86 18.665)
 		(property "Reference" "F6"
-			(at 0 -3.515 0)
+			(at 0 -3.515 180)
 			(layer "F.SilkS")
 			(uuid "859c6d20-00fa-4f18-9f89-2a464296a502")
 			(effects
@@ -32299,7 +32299,7 @@
 		(at 39 110.937)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R67"
-			(at 0 -1.585 0)
+			(at 0 -1.585 180)
 			(layer "F.SilkS")
 			(uuid "ce90c78c-0b75-4480-b31b-3bd0db891282")
 			(effects
@@ -32512,7 +32512,7 @@
 		(descr "SMD pad as test Point, diameter 1.5mm")
 		(tags "test point SMD pad")
 		(property "Reference" "TP6"
-			(at -2.522 0 0)
+			(at -2.522 0 180)
 			(layer "F.SilkS")
 			(uuid "a16cf8f4-6d53-4705-8045-86a0800edb0a")
 			(effects
@@ -32609,7 +32609,7 @@
 		(at 61 97.587)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R8"
-			(at 0 -1.585 0)
+			(at 0 -1.585 180)
 			(layer "F.SilkS")
 			(uuid "e2a7404b-ecbb-42fb-8291-c449db25c876")
 			(effects
@@ -32820,7 +32820,7 @@
 		(uuid "c18c2fb0-1353-4358-890a-16e55c3c8dbc")
 		(at 71 67.515)
 		(property "Reference" "C22"
-			(at 8.654999 -6.405 0)
+			(at 8.654999 -6.405 180)
 			(layer "F.SilkS")
 			(uuid "7f0f88cf-ab2d-4442-b59b-443dedd87550")
 			(effects
@@ -33120,7 +33120,7 @@
 		(at 10.4 77.96)
 		(descr "0805")
 		(property "Reference" "LED4"
-			(at -0.115 -1.985 0)
+			(at -0.115 -1.985 180)
 			(layer "F.SilkS")
 			(uuid "58539e24-62f6-491c-b1d8-5c90cad76b41")
 			(effects
@@ -33401,7 +33401,7 @@
 		(uuid "c2866356-7604-41ac-a8f7-51aca3546645")
 		(at 86 49.06)
 		(property "Reference" "Q16"
-			(at -5.385 -0.875 0)
+			(at -5.385 -0.875 180)
 			(layer "F.SilkS")
 			(uuid "ef119c03-5202-49d2-af79-fdbe210050f0")
 			(effects
@@ -33632,7 +33632,7 @@
 		(at 16 49.685)
 		(descr "100nF (104) ±10% 50V")
 		(property "Reference" "C6"
-			(at 0 -1.685 0)
+			(at 0 -1.685 180)
 			(layer "F.SilkS")
 			(uuid "cc9f4d1e-6a72-44e6-9f34-174b2797c315")
 			(effects
@@ -33887,7 +33887,7 @@
 		(uuid "c67cc69f-df15-4824-915b-1cf8d4907687")
 		(at 72 49.06)
 		(property "Reference" "Q14"
-			(at -5.385 -0.875 0)
+			(at -5.385 -0.875 180)
 			(layer "F.SilkS")
 			(uuid "3d1005c1-8c36-4340-8b5f-199b093fd2d1")
 			(effects
@@ -34118,7 +34118,7 @@
 		(at 27 98.367 90)
 		(descr "100nF (104) ±10% 50V")
 		(property "Reference" "C34"
-			(at -2.365 0 0)
+			(at -2.365 0 180)
 			(layer "F.SilkS")
 			(uuid "4cc6ad57-2c29-4c0e-abc7-abd6c39a5bd3")
 			(effects
@@ -34374,7 +34374,7 @@
 		(at 72 78.895)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R13"
-			(at 0 1.584999 0)
+			(at 0 1.584999 180)
 			(layer "F.SilkS")
 			(uuid "eb99dd6c-a889-4cf4-8109-a939e22a6272")
 			(effects
@@ -34585,7 +34585,7 @@
 		(uuid "c8fbc153-4d60-45b3-b50c-3ebac733e7ac")
 		(at 26 91.247)
 		(property "Reference" "C2"
-			(at 0 -7.005001 0)
+			(at 0 -7.005001 180)
 			(layer "F.SilkS")
 			(uuid "f29bae9a-9792-44c8-ae1a-ee5db489e2df")
 			(effects
@@ -34884,7 +34884,7 @@
 		(uuid "ca3c9161-5816-404e-bc70-e1da907484ab")
 		(at 46.6 28.225)
 		(property "Reference" "D10"
-			(at 0 -2.815 0)
+			(at 0 -2.815 180)
 			(layer "F.SilkS")
 			(uuid "d801cabb-8ae2-489b-a137-8ebf80bfce34")
 			(effects
@@ -35113,7 +35113,7 @@
 		(descr "SMD pad as test Point, diameter 1.5mm")
 		(tags "test point SMD pad")
 		(property "Reference" "TP3"
-			(at 0 -2.075 0)
+			(at 0 -2.075 180)
 			(layer "F.SilkS")
 			(uuid "921fc57a-7e8c-450d-a3c2-3fa81be97920")
 			(effects
@@ -35209,7 +35209,7 @@
 		(uuid "cad9f360-0ae2-49cb-b1fb-d9bff72be8ee")
 		(at 102.6 28.225)
 		(property "Reference" "D26"
-			(at 0 -2.815 0)
+			(at 0 -2.815 180)
 			(layer "F.SilkS")
 			(uuid "42fbb0dd-4999-4851-9f64-a2acb835c00f")
 			(effects
@@ -35436,7 +35436,7 @@
 		(uuid "cadd5d80-613f-4863-b5a2-1f6b19572b1c")
 		(at 88.6 28.225)
 		(property "Reference" "D22"
-			(at 0 -2.815 0)
+			(at 0 -2.815 180)
 			(layer "F.SilkS")
 			(uuid "49af545d-b1c7-47a2-9337-0a82b29078ad")
 			(effects
@@ -35664,7 +35664,7 @@
 		(at 50 132.5)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R9"
-			(at 0 -1.585001 0)
+			(at 0 -1.585001 180)
 			(layer "F.SilkS")
 			(uuid "c43dea09-72f7-4956-b270-b104cd2087d3")
 			(effects
@@ -35875,7 +35875,7 @@
 		(uuid "cb7e3c74-83a0-4a69-8b16-44c3cf6eb6e4")
 		(at 32 106.491)
 		(property "Reference" "U2"
-			(at -0.167501 -4.639 0)
+			(at -0.167501 -4.639 180)
 			(layer "F.SilkS")
 			(uuid "5c50acdd-facf-4fdd-b12c-ab9c44b06206")
 			(effects
@@ -36180,7 +36180,7 @@
 		(uuid "cbb5c7d1-8005-4e77-aa40-8cea2fac86dc")
 		(at 14.4 29.3145 90)
 		(property "Reference" "Q2"
-			(at 5.4745 -0.000001 0)
+			(at 5.4745 -0.000001 180)
 			(layer "F.SilkS")
 			(uuid "f86a56d7-c1da-4cda-9601-b5383512eec5")
 			(effects
@@ -36380,7 +36380,7 @@
 		(at 43 103.537)
 		(descr "100nF (104) ±10% 50V")
 		(property "Reference" "C39"
-			(at 0 1.685 0)
+			(at 0 1.685 180)
 			(layer "F.SilkS")
 			(uuid "c09c803a-5b97-49ca-abd9-75e4c4ee6899")
 			(effects
@@ -36635,7 +36635,7 @@
 		(uuid "cde2b788-9a79-4fd6-a660-27ff8977dcc0")
 		(at 60.6 60.745)
 		(property "Reference" "D16"
-			(at 0 -2.815 0)
+			(at 0 -2.815 180)
 			(layer "F.SilkS")
 			(uuid "36cbb284-356b-4e9a-9941-eb10838f6201")
 			(effects
@@ -36862,7 +36862,7 @@
 		(uuid "ce8dc1d7-365f-4729-8c78-e079443aa76c")
 		(at 46.6 60.745)
 		(property "Reference" "D12"
-			(at 0 -2.815 0)
+			(at 0 -2.815 180)
 			(layer "F.SilkS")
 			(uuid "e47eedf1-6d3b-4c41-a541-028849a8a97f")
 			(effects
@@ -37090,7 +37090,7 @@
 		(at 67.8 76.125)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R36"
-			(at 0 1.585 0)
+			(at 0 1.585 180)
 			(layer "F.SilkS")
 			(uuid "98117b5e-e10c-4cbc-8da9-28d53c9685fd")
 			(effects
@@ -37301,7 +37301,7 @@
 		(uuid "cf32f0bc-cd3f-4689-b642-2b4c304b40bc")
 		(at 30 8 180)
 		(property "Reference" "J3"
-			(at 7.275001 0.5 0)
+			(at 7.275001 0.5 180)
 			(layer "F.SilkS")
 			(uuid "5813419d-4602-4e09-8c50-efc8c8502cbe")
 			(effects
@@ -37565,7 +37565,7 @@
 		(uuid "d17efe9c-2c41-4ae1-8f75-33f2bae29249")
 		(at 100 49.06)
 		(property "Reference" "Q18"
-			(at -5.385 -0.875 0)
+			(at -5.385 -0.875 180)
 			(layer "F.SilkS")
 			(uuid "f5e1b21c-e3c7-4b65-bff2-4db06a6f8fa8")
 			(effects
@@ -37795,7 +37795,7 @@
 		(uuid "d346730b-ba27-4b06-bd88-f7c54ca2d5b6")
 		(at 86 37.23)
 		(property "Reference" "Q15"
-			(at -5.385 -0.875 0)
+			(at -5.385 -0.875 180)
 			(layer "F.SilkS")
 			(uuid "8fa864c2-0f68-4050-9ab8-e3c89fdb32f1")
 			(effects
@@ -38026,7 +38026,7 @@
 		(at 67 137.5)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R57"
-			(at -4.100001 2.835 0)
+			(at -4.100001 2.835 180)
 			(layer "F.SilkS")
 			(uuid "3b6be49b-ec32-4eca-a6f4-c8fd0263999f")
 			(effects
@@ -38237,7 +38237,7 @@
 		(uuid "d4e621f6-14f0-4c07-8b3b-043f180a6e26")
 		(at 97.4 23.795)
 		(property "Reference" "D25"
-			(at 0 2.815 0)
+			(at 0 2.815 180)
 			(layer "F.SilkS")
 			(uuid "3dcf80d3-db58-45d6-8d90-2032d863d94e")
 			(effects
@@ -38465,7 +38465,7 @@
 		(at 47 111.037)
 		(descr "100nF (104) ±10% 50V")
 		(property "Reference" "C38"
-			(at 0 -1.685 0)
+			(at 0 -1.685 180)
 			(layer "F.SilkS")
 			(uuid "fe65483f-625c-420d-ac90-21cc82c5cfde")
 			(effects
@@ -38720,7 +38720,7 @@
 		(uuid "d5b3457c-d68e-4073-83d5-c02b25b45d27")
 		(at 24 117.817)
 		(property "Reference" "D2"
-			(at 0 -2.815 0)
+			(at 0 -2.815 180)
 			(layer "F.SilkS")
 			(uuid "775dd8f9-ca77-47e7-94a7-7d278a272b76")
 			(effects
@@ -38947,7 +38947,7 @@
 		(uuid "d6f61091-06a6-4ade-9f2b-7a30f5b01b60")
 		(at 24 104.357)
 		(property "Reference" "C33"
-			(at 0 2.505 0)
+			(at 0 2.505 180)
 			(layer "F.SilkS")
 			(uuid "f0c1c1c6-d779-4c68-a537-c756c00aa526")
 			(effects
@@ -39204,7 +39204,7 @@
 		(descr "SMD pad as test Point, diameter 1.5mm")
 		(tags "test point SMD pad")
 		(property "Reference" "TP1"
-			(at 0 -2.075 0)
+			(at 0 -2.075 180)
 			(layer "F.SilkS")
 			(uuid "003dbd72-7145-42a1-a7c6-952241f4a832")
 			(effects
@@ -39300,7 +39300,7 @@
 		(uuid "d7b008d8-cc98-4a9c-b8e2-5022c05859cf")
 		(at 76 141)
 		(property "Reference" "J2"
-			(at 0 -4.020088 0)
+			(at 0 -4.020088 180)
 			(layer "F.SilkS")
 			(uuid "5d1b1fcf-e18e-4b68-ba92-601f7595accc")
 			(effects
@@ -39707,7 +39707,7 @@
 		(uuid "d9216eef-48f5-432f-ab3d-630b825565f7")
 		(at 44 49.06)
 		(property "Reference" "Q10"
-			(at -5.385001 -0.875 0)
+			(at -5.385001 -0.875 180)
 			(layer "F.SilkS")
 			(uuid "e155c953-fb08-4d5d-a922-6adf2b1811cc")
 			(effects
@@ -39938,7 +39938,7 @@
 		(at 62.2 76.125)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R31"
-			(at -2.850001 0 0)
+			(at -2.850001 0 180)
 			(layer "F.SilkS")
 			(uuid "1946f9a1-196b-4111-aa69-a47354b89bff")
 			(effects
@@ -40150,7 +40150,7 @@
 		(at 62.2 73.055)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R29"
-			(at 2.85 0 0)
+			(at 2.85 0 180)
 			(layer "F.SilkS")
 			(uuid "6548aba2-6e68-4449-8e05-11bc9ca103f2")
 			(effects
@@ -40361,7 +40361,7 @@
 		(uuid "dc7056bd-633f-40d6-a213-b55f82096508")
 		(at 27.4 56.315)
 		(property "Reference" "D7"
-			(at 0 2.815 0)
+			(at 0 2.815 180)
 			(layer "F.SilkS")
 			(uuid "c4a8b464-72ea-43df-9c8e-5765f9128072")
 			(effects
@@ -40589,7 +40589,7 @@
 		(at 104.2 73.055)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R47"
-			(at -2.85 1.585 0)
+			(at -2.85 1.585 180)
 			(layer "F.SilkS")
 			(uuid "5907d0bd-fd1a-4f57-87b9-92ea92900909")
 			(effects
@@ -40800,7 +40800,7 @@
 		(uuid "dd828df6-15bb-442e-a108-4fd9978648fb")
 		(at 44 18.665)
 		(property "Reference" "F3"
-			(at 0 -3.515 0)
+			(at 0 -3.515 180)
 			(layer "F.SilkS")
 			(uuid "46c11411-326a-442f-bee1-91b88d7f98c8")
 			(effects
@@ -41033,7 +41033,7 @@
 		(uuid "de1a7885-f1f3-49ed-8eae-5582ce211b3e")
 		(at 36 125.492)
 		(property "Reference" "C37"
-			(at 0 -2.505 0)
+			(at 0 -2.505 180)
 			(layer "F.SilkS")
 			(uuid "9461a531-4465-45df-949c-436dd892b741")
 			(effects
@@ -41288,7 +41288,7 @@
 		(uuid "de34480e-2cbf-4439-8878-eb8e3f901d4b")
 		(at 58 18.665)
 		(property "Reference" "F4"
-			(at 0 -3.515 0)
+			(at 0 -3.515 180)
 			(layer "F.SilkS")
 			(uuid "7c48add7-8417-42b9-ae4a-8d6913ec8bcd")
 			(effects
@@ -41521,7 +41521,7 @@
 		(uuid "de5e01dd-d9a0-4920-858f-f592f97da5cb")
 		(at 32.6 60.745)
 		(property "Reference" "D8"
-			(at 0 -2.815 0)
+			(at 0 -2.815 180)
 			(layer "F.SilkS")
 			(uuid "17a74ba3-dd78-499c-8fce-4faa1f7532e8")
 			(effects
@@ -41748,7 +41748,7 @@
 		(uuid "df90f32b-563b-453c-947c-4e89fe430037")
 		(at 99 67.515)
 		(property "Reference" "C26"
-			(at 8.654999 -6.405 0)
+			(at 8.654999 -6.405 180)
 			(layer "F.SilkS")
 			(uuid "0ab6f2b4-c54d-48b9-bb23-de09e9cae1be")
 			(effects
@@ -42049,7 +42049,7 @@
 		(descr "SMD pad as test Point, diameter 1.5mm")
 		(tags "test point SMD pad")
 		(property "Reference" "TP2"
-			(at 0 -2.075 0)
+			(at 0 -2.075 180)
 			(layer "F.SilkS")
 			(uuid "953b22d2-d2de-4cc3-89c9-1f6d3eba7d48")
 			(effects
@@ -42146,7 +42146,7 @@
 		(at 69.6 136.5 -90)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R10"
-			(at 0 -2.119999 0)
+			(at 0 -2.119999 180)
 			(layer "F.SilkS")
 			(uuid "efff01ab-960f-4c63-aab0-cdc1d1d22bec")
 			(effects
@@ -42358,7 +42358,7 @@
 		(at 8.76 80.56)
 		(descr "0805")
 		(property "Reference" "LED3"
-			(at -5.325001 -3.235 0)
+			(at -5.325001 -3.235 180)
 			(layer "F.SilkS")
 			(uuid "11d3cd49-2386-4fd9-b4dc-023920619983")
 			(effects
@@ -42640,7 +42640,7 @@
 		(at 82 78.895)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R14"
-			(at 0 1.584999 0)
+			(at 0 1.584999 180)
 			(layer "F.SilkS")
 			(uuid "f093fe6e-bedc-41a5-b722-8d0b4368432e")
 			(effects
@@ -42852,7 +42852,7 @@
 		(at 78 124.572)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R12"
-			(at 0 1.585 0)
+			(at 0 1.585 180)
 			(layer "F.SilkS")
 			(uuid "c21bcb86-e36b-467e-82db-99672a34e60a")
 			(effects
@@ -43063,7 +43063,7 @@
 		(uuid "e3de616e-7124-493a-8c47-9cfbbb2786b5")
 		(at 85 67.515)
 		(property "Reference" "C24"
-			(at 8.654999 -6.405 0)
+			(at 8.654999 -6.405 180)
 			(layer "F.SilkS")
 			(uuid "3c31118f-5403-42e8-87ec-223cdbcc27bf")
 			(effects
@@ -43362,7 +43362,7 @@
 		(uuid "e9120dd2-3424-42de-80ba-a815794e6501")
 		(at 60.6 28.225)
 		(property "Reference" "D14"
-			(at 0 -2.815 0)
+			(at 0 -2.815 180)
 			(layer "F.SilkS")
 			(uuid "2d5b945e-1226-4da4-9b25-1a1a462e132f")
 			(effects
@@ -43590,7 +43590,7 @@
 		(at 46.4 80.56)
 		(descr "0805")
 		(property "Reference" "LED10"
-			(at 4.19 0.014999 0)
+			(at 4.19 0.014999 180)
 			(layer "F.SilkS")
 			(uuid "e7566738-b922-45bc-8797-9af21c8c512a")
 			(effects
@@ -43871,7 +43871,7 @@
 		(uuid "e9dda93b-6145-4043-997c-167b246c9471")
 		(at 29 67.515)
 		(property "Reference" "C16"
-			(at -7.405 0 0)
+			(at -7.405 0 180)
 			(layer "F.SilkS")
 			(uuid "6fe2796a-fd96-43d5-9f64-be317782d879")
 			(effects
@@ -44172,7 +44172,7 @@
 		(descr "Mounting Hole 3.2mm, M3, no annular, generated by kicad-footprint-generator mountinghole.py")
 		(tags "mountinghole M3")
 		(property "Reference" "H2"
-			(at 0 4.324999 0)
+			(at 0 4.324999 180)
 			(layer "F.SilkS")
 			(uuid "290f02e2-9e6f-440f-8b14-dc028745b933")
 			(effects
@@ -44277,7 +44277,7 @@
 		(at 6 98.957)
 		(descr "1.10A 33V")
 		(property "Reference" "PTC1"
-			(at 0 2.954999 0)
+			(at 0 2.954999 180)
 			(layer "F.SilkS")
 			(uuid "7886ac27-056d-4bea-a97f-507c2b00e1d3")
 			(effects
@@ -44510,7 +44510,7 @@
 		(uuid "ee00fce7-7e9f-4eed-9d1f-3b4b8bc959c7")
 		(at 68 91.247)
 		(property "Reference" "C5"
-			(at 0 -5.155 0)
+			(at 0 -5.155 180)
 			(layer "F.SilkS")
 			(uuid "fa168357-aa79-4c19-87e3-2cad40eee1a4")
 			(effects
@@ -44809,7 +44809,7 @@
 		(uuid "efe2d4ff-58ac-421a-9ca5-84c25c9fef03")
 		(at 100 37.23)
 		(property "Reference" "Q17"
-			(at -5.385 -0.875 0)
+			(at -5.385 -0.875 180)
 			(layer "F.SilkS")
 			(uuid "721779be-a528-4359-86b2-b9f55fd191f2")
 			(effects
@@ -45040,7 +45040,7 @@
 		(at 53.8 76.125)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R30"
-			(at -2.85 0 0)
+			(at -2.85 0 180)
 			(layer "F.SilkS")
 			(uuid "39b72175-052d-41fb-b775-29407bef6086")
 			(effects
@@ -45252,7 +45252,7 @@
 		(at 53.8 73.055)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R28"
-			(at -2.85 0 0)
+			(at -2.85 0 180)
 			(layer "F.SilkS")
 			(uuid "613e4529-05a0-4bd0-ac87-99c321a43dff")
 			(effects
@@ -45463,7 +45463,7 @@
 		(uuid "f38b41d9-9225-4aa9-842a-7a68dd1342e3")
 		(at 50 119.257)
 		(property "Reference" "U3"
-			(at 0.04 -4.255 0)
+			(at 0.04 -4.255 180)
 			(layer "F.SilkS")
 			(uuid "313f15f0-dcba-4c09-95ae-625a82903ab8")
 			(effects
@@ -45680,7 +45680,7 @@
 		(at 76.2 73.055)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R35"
-			(at 2.85 0 0)
+			(at 2.85 0 180)
 			(layer "F.SilkS")
 			(uuid "8ae9304a-049a-40ec-aa7b-644eda246b77")
 			(effects
@@ -45891,7 +45891,7 @@
 		(uuid "f4897aee-2dfb-4f79-b5b2-8a1f61ae79f7")
 		(at 41.4 56.315)
 		(property "Reference" "D11"
-			(at 0 2.815 0)
+			(at 0 2.815 180)
 			(layer "F.SilkS")
 			(uuid "66526a72-2745-46a0-8bcf-889cb91199ac")
 			(effects
@@ -46118,7 +46118,7 @@
 		(uuid "f4c54b69-5c15-4bb8-930f-e8846d67afd4")
 		(at 10 141 180)
 		(property "Reference" "J9"
-			(at 4.29 0.175 0)
+			(at 4.29 0.175 180)
 			(layer "F.SilkS")
 			(uuid "5581a76f-5373-4fff-bc52-0fba36fa1b04")
 			(effects
@@ -46369,7 +46369,7 @@
 		(descr "Mounting Hole 3.2mm, M3, no annular, generated by kicad-footprint-generator mountinghole.py")
 		(tags "mountinghole M3")
 		(property "Reference" "H3"
-			(at 0 -4.325 0)
+			(at 0 -4.325 180)
 			(layer "F.SilkS")
 			(uuid "0adcc147-9ac1-4ef0-a2d7-64b851e754e4")
 			(effects
@@ -46473,7 +46473,7 @@
 		(uuid "fad21268-98d0-4ca9-b11e-38450f25da28")
 		(at 72 8 180)
 		(property "Reference" "J6"
-			(at 0 4.975 0)
+			(at 0 4.975 180)
 			(layer "F.SilkS")
 			(uuid "ddd04832-c589-4db6-9bf9-73aad8a7d467")
 			(effects
@@ -46739,7 +46739,7 @@
 		(descr "SMD pad as test Point, diameter 1.5mm")
 		(tags "test point SMD pad")
 		(property "Reference" "TP4"
-			(at 0 -2.075 0)
+			(at 0 -2.075 180)
 			(layer "F.SilkS")
 			(uuid "42f0d3dd-62a6-418c-b857-2101ba0404c6")
 			(effects
@@ -46836,7 +46836,7 @@
 		(at 10.4 83.56)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R26"
-			(at 0 1.585 0)
+			(at 0 1.585 180)
 			(layer "F.SilkS")
 			(uuid "d39b20be-1d8c-45ce-955e-8e06b2a43d14")
 			(effects
@@ -47048,7 +47048,7 @@
 		(at 34.2 73.055)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R17"
-			(at 0 1.585 0)
+			(at 0 1.585 180)
 			(layer "F.SilkS")
 			(uuid "05085cd3-0478-423c-bbd1-88eb39f92a8a")
 			(effects
@@ -47259,7 +47259,7 @@
 		(uuid "fd7d781e-23a4-48e9-9057-4b6772ed3abb")
 		(at 66 119.5945)
 		(property "Reference" "U5"
-			(at -0.1625 -4.5925 0)
+			(at -0.1625 -4.5925 180)
 			(layer "F.SilkS")
 			(uuid "c6640a57-4c93-4b89-881e-9f7d597f531e")
 			(effects
@@ -47575,7 +47575,7 @@
 		(at 78 97.827)
 		(descr "10uF (106) ±10% 25V")
 		(property "Reference" "C10"
-			(at 0 -1.825 0)
+			(at 0 -1.825 180)
 			(layer "F.SilkS")
 			(uuid "35068a74-417c-46bc-82ab-419146845b2a")
 			(effects
@@ -47830,7 +47830,7 @@
 		(uuid "fed6ec4e-37b2-4865-84e1-47c087d9b559")
 		(at 44 8 180)
 		(property "Reference" "J4"
-			(at 0 4.975 0)
+			(at 0 4.975 180)
 			(layer "F.SilkS")
 			(uuid "b6a07151-9ec0-4bbc-83e8-8edd136fa07b")
 			(effects
@@ -48095,7 +48095,7 @@
 		(at 18.36 80.56)
 		(descr "0805")
 		(property "Reference" "LED6"
-			(at -4.075 -1.985 0)
+			(at -4.075 -1.985 180)
 			(layer "F.SilkS")
 			(uuid "987553ca-c270-46b0-82ec-fda729785f84")
 			(effects
@@ -48377,7 +48377,7 @@
 		(at 36 97.587)
 		(descr "1KΩ (1001) ±1%")
 		(property "Reference" "R65"
-			(at 0 1.585 0)
+			(at 0 1.585 180)
 			(layer "F.SilkS")
 			(uuid "10a559df-46a5-4bd2-86f8-8c2e74e713ac")
 			(effects
@@ -48624,7 +48624,7 @@
 		(uuid "49088cb0-5cba-4b2f-b812-7a31f9624524")
 	)
 	(gr_text "WW"
-		(at 26.19 13.9 0)
+		(at 26.19 13.9 180)
 		(layer "F.SilkS")
 		(uuid "d9d60893-f828-4b83-a2b8-a4c14b3cfb5a")
 		(effects
@@ -48635,7 +48635,7 @@
 		)
 	)
 	(gr_text "CW"
-		(at 30 13.9 0)
+		(at 30 13.9 180)
 		(layer "F.SilkS")
 		(uuid "12bfa240-c2dd-43cf-a934-5c45ab2eb732")
 		(effects
@@ -48646,7 +48646,7 @@
 		)
 	)
 	(gr_text "V+"
-		(at 33.81 13.9 0)
+		(at 33.81 13.9 180)
 		(layer "F.SilkS")
 		(uuid "dfa45a09-fbf9-4060-92d4-2f26aeb55a1d")
 		(effects
@@ -48657,7 +48657,7 @@
 		)
 	)
 	(gr_text "WW"
-		(at 40.19 13.9 0)
+		(at 40.19 13.9 180)
 		(layer "F.SilkS")
 		(uuid "edfcd107-6f02-41f2-bda8-3c2e228b9291")
 		(effects
@@ -48668,7 +48668,7 @@
 		)
 	)
 	(gr_text "CW"
-		(at 44 13.9 0)
+		(at 44 13.9 180)
 		(layer "F.SilkS")
 		(uuid "eafd4c36-a248-4f8d-adb0-ba0b4f01b5e1")
 		(effects
@@ -48679,7 +48679,7 @@
 		)
 	)
 	(gr_text "V+"
-		(at 47.81 13.9 0)
+		(at 47.81 13.9 180)
 		(layer "F.SilkS")
 		(uuid "9202a5ca-5ed6-443b-be02-33b78637fad8")
 		(effects
@@ -48690,7 +48690,7 @@
 		)
 	)
 	(gr_text "WW"
-		(at 54.19 13.9 0)
+		(at 54.19 13.9 180)
 		(layer "F.SilkS")
 		(uuid "c6db84c4-4bf8-46cc-89d3-7e97818b689a")
 		(effects
@@ -48701,7 +48701,7 @@
 		)
 	)
 	(gr_text "CW"
-		(at 58 13.9 0)
+		(at 58 13.9 180)
 		(layer "F.SilkS")
 		(uuid "599ae3c6-604f-4f54-b2cc-da11399788a8")
 		(effects
@@ -48712,7 +48712,7 @@
 		)
 	)
 	(gr_text "V+"
-		(at 61.81 13.9 0)
+		(at 61.81 13.9 180)
 		(layer "F.SilkS")
 		(uuid "6e3f6ab3-f7ed-40e1-b99f-6a4562f2b2e4")
 		(effects
@@ -48723,7 +48723,7 @@
 		)
 	)
 	(gr_text "5V"
-		(at 68.1 128.5 0)
+		(at 68.1 128.5 180)
 		(layer "F.SilkS")
 		(uuid "0ef9591c-e758-4b1a-b461-f008249ee290")
 		(effects
@@ -48734,7 +48734,7 @@
 		)
 	)
 	(gr_text "WW"
-		(at 68.19 13.9 0)
+		(at 68.19 13.9 180)
 		(layer "F.SilkS")
 		(uuid "a539ece0-663b-46c0-980e-67e55af78641")
 		(effects
@@ -48745,7 +48745,7 @@
 		)
 	)
 	(gr_text "CW"
-		(at 72 13.9 0)
+		(at 72 13.9 180)
 		(layer "F.SilkS")
 		(uuid "9281ba41-bef2-4047-802d-8d695c4623e3")
 		(effects
@@ -48756,7 +48756,7 @@
 		)
 	)
 	(gr_text "V+"
-		(at 75.81 13.9 0)
+		(at 75.81 13.9 180)
 		(layer "F.SilkS")
 		(uuid "3ff304a6-ad70-4971-8430-ab3f57c5d551")
 		(effects
@@ -48767,7 +48767,7 @@
 		)
 	)
 	(gr_text "WW"
-		(at 82.19 13.9 0)
+		(at 82.19 13.9 180)
 		(layer "F.SilkS")
 		(uuid "db911c3f-27cb-4443-8cf4-3a52c5fdf143")
 		(effects
@@ -48778,7 +48778,7 @@
 		)
 	)
 	(gr_text "CW"
-		(at 86 13.9 0)
+		(at 86 13.9 180)
 		(layer "F.SilkS")
 		(uuid "e7c0f6c5-734b-493f-8e81-2e854af27530")
 		(effects
@@ -48789,7 +48789,7 @@
 		)
 	)
 	(gr_text "V+"
-		(at 89.81 13.9 0)
+		(at 89.81 13.9 180)
 		(layer "F.SilkS")
 		(uuid "a0e3f540-99dd-4bf6-9f76-b16cccb75b59")
 		(effects
@@ -48800,7 +48800,7 @@
 		)
 	)
 	(gr_text "WW"
-		(at 96.19 13.9 0)
+		(at 96.19 13.9 180)
 		(layer "F.SilkS")
 		(uuid "e02f4846-ffd3-4afe-9d08-ea9155cfd409")
 		(effects
@@ -48811,7 +48811,7 @@
 		)
 	)
 	(gr_text "CW"
-		(at 100 13.9 0)
+		(at 100 13.9 180)
 		(layer "F.SilkS")
 		(uuid "7c5ed042-7ac5-41f9-8e96-bbe7f07ddd48")
 		(effects
@@ -48822,7 +48822,7 @@
 		)
 	)
 	(gr_text "V+"
-		(at 103.81 13.9 0)
+		(at 103.81 13.9 180)
 		(layer "F.SilkS")
 		(uuid "a253c122-1bf4-481a-8c72-d4fe088a7a38")
 		(effects
@@ -48833,7 +48833,7 @@
 		)
 	)
 	(gr_text "DC 24V IN  MAX 12A"
-		(at 11 14.5 0)
+		(at 11 14.5 180)
 		(layer "F.SilkS")
 		(uuid "693bca24-9521-4699-85a3-f0152eefed63")
 		(effects
@@ -48844,7 +48844,7 @@
 		)
 	)
 	(gr_text "I2C 3.3V"
-		(at 10 137.15 0)
+		(at 10 137.15 180)
 		(layer "F.SilkS")
 		(uuid "4d3bd2f3-f4bd-4e4b-a758-1cb351608087")
 		(effects
@@ -48855,7 +48855,7 @@
 		)
 	)
 	(gr_text "UART 5V"
-		(at 21.995 137.575 0)
+		(at 21.995 137.575 180)
 		(layer "F.SilkS")
 		(uuid "817e674a-5432-4600-a79a-eacc7bf19c02")
 		(effects
@@ -48866,7 +48866,7 @@
 		)
 	)
 	(gr_text "SW1-4 DRY"
-		(at 36.0175 137.61 0)
+		(at 36.0175 137.61 180)
 		(layer "F.SilkS")
 		(uuid "60bb3b07-6af9-43d3-8454-78f04284cb86")
 		(effects
@@ -48877,7 +48877,7 @@
 		)
 	)
 	(gr_text "FUSE 4A-T x6 / MAIN 15A"
-		(at 107.6 30 90)
+		(at 107.6 30 270)
 		(layer "F.SilkS")
 		(uuid "21404f6f-46be-427d-be8d-45ced8542447")
 		(effects
@@ -48888,7 +48888,7 @@
 		)
 	)
 	(gr_text "CCT-DRIVER v1.0 2026-08"
-		(at 107.6 75 90)
+		(at 107.6 75 270)
 		(layer "F.SilkS")
 		(uuid "ec9d8483-2693-46ce-ac78-f06a296a52eb")
 		(effects
@@ -48899,7 +48899,7 @@
 		)
 	)
 	(gr_text "CH1"
-		(at 30 1.7 0)
+		(at 30 1.7 180)
 		(layer "F.SilkS")
 		(uuid "12e2ae62-4118-46d0-aff1-47fc5f5b7c1c")
 		(effects
@@ -48910,7 +48910,7 @@
 		)
 	)
 	(gr_text "CH2"
-		(at 44 1.7 0)
+		(at 44 1.7 180)
 		(layer "F.SilkS")
 		(uuid "dfd4ed72-3ca9-492c-a9be-e6520d540335")
 		(effects
@@ -48921,7 +48921,7 @@
 		)
 	)
 	(gr_text "CH3"
-		(at 58 1.7 0)
+		(at 58 1.7 180)
 		(layer "F.SilkS")
 		(uuid "e9a41b1c-3bff-45d3-b879-03648d9f8066")
 		(effects
@@ -48932,7 +48932,7 @@
 		)
 	)
 	(gr_text "CH4"
-		(at 72 1.7 0)
+		(at 72 1.7 180)
 		(layer "F.SilkS")
 		(uuid "af283ce4-5870-40b8-8f6a-225109dbe754")
 		(effects
@@ -48943,7 +48943,7 @@
 		)
 	)
 	(gr_text "CH5"
-		(at 86 1.7 0)
+		(at 86 1.7 180)
 		(layer "F.SilkS")
 		(uuid "21d38d3d-2637-4eff-9f58-7909f6aa4406")
 		(effects
@@ -48954,7 +48954,7 @@
 		)
 	)
 	(gr_text "CH6"
-		(at 100 1.7 0)
+		(at 100 1.7 180)
 		(layer "F.SilkS")
 		(uuid "ccd961c0-32c7-4999-93c8-a78c4ebfb978")
 		(effects
@@ -48965,7 +48965,7 @@
 		)
 	)
 	(gr_text "-"
-		(at 7.19 11.3 0)
+		(at 7.19 11.3 180)
 		(layer "F.SilkS")
 		(uuid "729f39ad-eb14-4617-a7d9-2fed98e34b45")
 		(effects
@@ -48976,7 +48976,7 @@
 		)
 	)
 	(gr_text "+"
-		(at 14.81 11.3 0)
+		(at 14.81 11.3 180)
 		(layer "F.SilkS")
 		(uuid "4bb65d92-ab83-4983-92ea-dffa765e15bc")
 		(effects
