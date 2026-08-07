@@ -92,6 +92,10 @@ for (px, py) in [(70, 45), (120, 45), (170, 45), (70, 75), (120, 75), (170, 75)]
 DX, DY = 60, 95
 for (hx, hy) in PCB_HOLES:
     b += circle(DX + hx + 5, DY + hy + 5, M3)
+# 扎带孔对(φ3.5 ×2,间距 6):驱动板区两侧走传感器线,下进上出
+for ty in (115, 155, 195, 235):
+    for tx in (51, 189):
+        b += circle(tx, ty, 1.75) + circle(tx + 6 if tx < 120 else tx - 6, ty, 1.75)
 # 参考角标(刻线可选):画驱动板轮廓四角 L 形短线,方便对位
 for (cx, cy) in [(DX, DY), (DX+120, DY), (DX, DY+155), (DX+120, DY+155)]:
     dx = 5 if cx == DX else -5

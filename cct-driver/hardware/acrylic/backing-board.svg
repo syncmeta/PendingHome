@@ -32,6 +32,22 @@
 <circle cx="171" cy="180" r="1.6"/>
 <circle cx="69" cy="233" r="1.6"/>
 <circle cx="171" cy="215" r="1.6"/>
+<circle cx="51" cy="115" r="1.75"/>
+<circle cx="57" cy="115" r="1.75"/>
+<circle cx="189" cy="115" r="1.75"/>
+<circle cx="183" cy="115" r="1.75"/>
+<circle cx="51" cy="155" r="1.75"/>
+<circle cx="57" cy="155" r="1.75"/>
+<circle cx="189" cy="155" r="1.75"/>
+<circle cx="183" cy="155" r="1.75"/>
+<circle cx="51" cy="195" r="1.75"/>
+<circle cx="57" cy="195" r="1.75"/>
+<circle cx="189" cy="195" r="1.75"/>
+<circle cx="183" cy="195" r="1.75"/>
+<circle cx="51" cy="235" r="1.75"/>
+<circle cx="57" cy="235" r="1.75"/>
+<circle cx="189" cy="235" r="1.75"/>
+<circle cx="183" cy="235" r="1.75"/>
 <path d="M 60 100 L 60 95 L 65 95"/>
 <path d="M 180 100 L 180 95 L 175 95"/>
 <path d="M 60 245 L 60 250 L 65 250"/>
