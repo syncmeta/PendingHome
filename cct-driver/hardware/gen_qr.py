@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
-"""板上丝印二维码:亮模块=白丝印填充方块,暗模块=露出绿阻焊。
-自动搜索净空区(无焊盘/无过孔/无元件本体/无既有丝印文本)。"""
+"""板上丝印二维码。
+INVERT=False:亮模块=白丝印,暗模块=露绿阻焊(标准配色,通用可扫)
+INVERT=True :暗模块=白丝印,亮模块=露绿阻焊(反色,静区留绿不印)
+自动搜索净空区(无焊盘/无过孔/无元件本体/无既有丝印文本)。
+重复运行会先清除 QR 区内既有丝印方块。"""
 import gc
 gc.disable()
 import pcbnew
 from pcbnew import VECTOR2I, FromMM
 
+INVERT = True      # 反色
 MOD = 0.4          # 模块尺寸 mm
 QUIET = 2          # 静区模块数
 board = pcbnew.LoadBoard("cct-main.kicad_pcb")
@@ -53,10 +57,21 @@ for gy in range(2, 132, 1):
         if clear(gx, gy):
             cands.append((gx, gy))
 assert cands, "没有净空区!"
-ax, ay = 96, 66   # 偏好:右中(板名附近)
+ax, ay = 96, 86   # 首版落点,保持不变
+if (ax, ay) in cands or True:
+    qx, qy = ax, ay
 cands.sort(key=lambda p: (p[0]-ax)**2 + (p[1]-ay)**2)
-qx, qy = cands[0]
 print(f"放置于 ({qx},{qy}) - ({qx+SIZE:.1f},{qy+SIZE:.1f}),候选 {len(cands)} 处")
+
+old = 0
+for d in list(board.GetDrawings()):
+    if d.GetClass()!="PCB_SHAPE" or d.GetLayer()!=FSILK: continue
+    if d.GetShape()!=pcbnew.SHAPE_T_RECT: continue
+    s,e = d.GetStart(), d.GetEnd()
+    x1,y1 = mm(s.x), mm(s.y)
+    if qx-0.1 <= x1 <= qx+SIZE+0.1 and qy-0.1 <= y1 <= qy+SIZE+0.1:
+        board.Remove(d); old += 1
+print(f"清除旧 QR 方块 {old} 个")
 
 def frect(x1, y1, x2, y2):
     s = pcbnew.PCB_SHAPE(board)
@@ -68,19 +83,23 @@ def frect(x1, y1, x2, y2):
     s.SetLayer(FSILK)
     board.Add(s)
 
-# 静区(四条边框带)+ 亮模块,横向游程合并
 ox, oy = qx + QUIET * MOD, qy + QUIET * MOD          # 矩阵原点
-frect(qx, qy, qx + SIZE, oy)                          # 上静区
-frect(qx, oy + N * MOD, qx + SIZE, qy + SIZE)         # 下静区
-frect(qx, oy, ox, oy + N * MOD)                       # 左静区
-frect(ox + N * MOD, oy, qx + SIZE, oy + N * MOD)      # 右静区
-shapes = 4
+shapes = 0
+if not INVERT:
+    # 标准:静区与亮模块印白丝印
+    frect(qx, qy, qx + SIZE, oy)
+    frect(qx, oy + N * MOD, qx + SIZE, qy + SIZE)
+    frect(qx, oy, ox, oy + N * MOD)
+    frect(ox + N * MOD, oy, qx + SIZE, oy + N * MOD)
+    shapes += 4
+# 需要印丝印的模块:标准=亮模块(False),反色=暗模块(True)
+want = INVERT
 for r in range(N):
     c = 0
     while c < N:
-        if not matrix[r][c]:          # 亮模块
+        if matrix[r][c] == want:
             c0 = c
-            while c < N and not matrix[r][c]:
+            while c < N and matrix[r][c] == want:
                 c += 1
             frect(ox + c0 * MOD, oy + r * MOD, ox + c * MOD, oy + (r + 1) * MOD)
             shapes += 1
