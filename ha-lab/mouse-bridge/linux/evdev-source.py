@@ -6,6 +6,7 @@
 
     ./evdev-source.py --list                     列出所有鼠标及其设备标识
     ./evdev-source.py --device 046d:c534 ...     只上报这些鼠标
+    ./evdev-source.py --device 2717:003b@1-1.5   两个接收器型号一样时，连插口一起指定
     ./evdev-source.py --device ... --grab        独占鼠标（不再移动光标）
 
 不依赖任何第三方库 —— 直接读 /dev/input/event* 的原始结构。T630 上装个系统就能跑，
@@ -20,6 +21,7 @@ import fcntl
 import glob
 import json
 import os
+import re
 import select
 import struct
 import sys
@@ -66,6 +68,39 @@ def device_name(event_path: str) -> str:
         return "(无名)"
 
 
+def usb_port(event_path: str) -> str:
+    """这个设备插在哪个 USB 口上，形如 "1-1.5"（跟 /sys/bus/usb/devices 下的名字一致）。
+
+    为什么需要它：两只小米鼠标的接收器**在系统里长得一模一样** —— 同样的
+    2717:003b、同样的名字、而且都没有序列号（USB 描述符里一个可区分的字段都没有）。
+    只靠"厂商:型号"分不出谁是谁，插口是唯一能区分的东西。
+
+    代价说清楚：这个标识跟的是**插口**不是鼠标。把接收器换个 USB 口插，
+    绑定就跟着换了。所以插好之后别乱动，或者在机箱上贴个标。
+
+    认不出来（比如不是 USB 设备）时返回空串。
+    """
+    name = os.path.basename(event_path)
+    real = os.path.realpath("/sys/class/input/%s/device" % name)
+    # 路径形如 .../usb1/1-1/1-1.5/1-1.5:1.1/0003:2717:003B.0002/input/input15
+    # 从右往左找第一个「数字-数字[.数字...]」的段，那就是 USB 设备本身。
+    for part in reversed(real.split(os.sep)):
+        if re.fullmatch(r"\d+-\d+(\.\d+)*", part):
+            return part
+    return ""
+
+
+def selectors_for(event_path: str):
+    """这个节点能被哪些写法选中，从宽到窄。
+
+    "2717:003b"          —— 只认型号，插哪个口都算（只有一只时最省心）
+    "2717:003b@1-1.5"    —— 连插口一起认（有两只一样的接收器时必须用这个）
+    """
+    dev = device_id(event_path)
+    port = usb_port(event_path)
+    return [dev] + (["%s@%s" % (dev, port)] if port else [])
+
+
 def is_mouse(event_path: str) -> bool:
     """有鼠标左键 + 滚轮的才算鼠标，避开键盘和一堆虚拟设备。
 
@@ -92,9 +127,25 @@ def list_mice():
     if not found:
         print("没找到鼠标。（读 /dev/input 需要 root 或 input 组权限）")
         return
-    print("设备标识      设备节点            名称")
+
+    # 型号相同的有几个 —— 决定了要不要连插口一起写。
+    seen = {}
     for p in found:
-        print("%s   %-18s %s" % (device_id(p), p, device_name(p)))
+        seen[device_id(p)] = seen.get(device_id(p), 0) + 1
+
+    print("设备标识              设备节点            名称")
+    for p in found:
+        dev = device_id(p)
+        # 只有一个的写宽的（换口也认），有重名的必须写窄的（否则分不出谁是谁）。
+        pick = selectors_for(p)[-1] if seen[dev] > 1 else dev
+        print("%-21s %-18s %s" % (pick, p, device_name(p)))
+
+    dupes = [d for d, n in seen.items() if n > 1]
+    if dupes:
+        print("\n⚠️  %s 有不止一个 —— 它们的 USB 描述符完全相同（连序列号都没有），"
+              % "、".join(dupes))
+        print("    只能靠插口区分。上面已经给出带 @插口 的写法，照抄进 config.json。")
+        print("    注意：换一个 USB 口插，标识就变了。插好别乱动。")
     print("\n把要用的那两个标识填进 config.json 的 mice 里。")
 
 
@@ -103,10 +154,25 @@ def emit(obj):
     sys.stdout.flush()   # 下游是管道，不刷会攒着不发，按键像失灵
 
 
+def match(event_path: str, wanted):
+    """这个节点被 wanted 里的哪个写法选中了？没选中返回 None。
+
+    返回的是**配置里的那个写法**，因为它要原样出现在事件的 device 字段里 ——
+    下游 logic.py 拿它去查绑定，必须跟 config.json 的 key 一模一样。
+
+    窄的优先：同时写了 "2717:003b" 和 "2717:003b@1-1.5" 时，插在 1-1.5 上的那只
+    算后者，别的口上的才算前者。
+    """
+    for sel in reversed(selectors_for(event_path)):
+        if sel in wanted:
+            return sel
+    return None
+
+
 def run(wanted, grab):
     paths = [p for p in sorted(glob.glob("/dev/input/event*")) if is_mouse(p)]
-    if wanted:
-        paths = [p for p in paths if device_id(p) in wanted]
+    matched = {p: (match(p, wanted) if wanted else device_id(p)) for p in paths}
+    paths = [p for p in paths if matched[p] is not None]
     if not paths:
         print("没有匹配的鼠标，先用 --list 看看有哪些。", file=sys.stderr)
         return 1
@@ -123,8 +189,8 @@ def run(wanted, grab):
                 fcntl.ioctl(f, EVIOCGRAB, 1)
             except OSError as e:
                 print("独占 %s 失败：%s" % (p, e), file=sys.stderr)
-        files[f.fileno()] = (f, device_id(p))
-        print("在读 %s (%s) %s" % (p, device_id(p), device_name(p)), file=sys.stderr)
+        files[f.fileno()] = (f, matched[p])
+        print("在读 %s (%s) %s" % (p, matched[p], device_name(p)), file=sys.stderr)
 
     print("Ctrl-C 退出", file=sys.stderr)
     try:
@@ -170,7 +236,8 @@ def main():
     p = argparse.ArgumentParser(description="读 Linux 鼠标事件，吐 JSON")
     p.add_argument("--list", action="store_true", help="列出所有鼠标")
     p.add_argument("--device", action="append", default=[],
-                   help="只上报这个设备标识（可重复）")
+                   help="只上报这个设备标识（可重复）。"
+                        "两种写法：厂商:型号，或 厂商:型号@USB插口")
     p.add_argument("--grab", action="store_true",
                    help="独占鼠标：不再移动光标，变成纯遥控器")
     args = p.parse_args()
