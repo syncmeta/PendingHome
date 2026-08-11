@@ -1,0 +1,12 @@
+# 接收器插拔时，让鼠标桥重新枚举一遍设备。
+#
+# 为什么需要：evdev-source 只在启动那一刻扫一次 /dev/input。拔掉接收器会读到
+# EOF、进程退出、systemd 重启它 —— 这条路本来就通。但**插上**没有任何信号，
+# 而且更阴的是：如果重启那一刻只有一部分接收器在位（开机时 USB 还没枚举完，
+# 或者人正在换口插），它就只认到那几个，剩下的一直没人读，表现是"有的鼠标
+# 按了没反应"，日志里还一切正常。
+#
+# 小米这几个接收器的 idVendor 都是 2717。--no-block 是必须的：udev 的 RUN
+# 有超时，同步等 systemctl 会拖死 udev 事件队列。
+ACTION=="add|remove", SUBSYSTEM=="usb", ATTR{idVendor}=="2717", \
+  RUN+="/bin/systemctl --no-block restart mouse-bridge.service"

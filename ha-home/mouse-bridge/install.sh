@@ -15,7 +15,8 @@ ENV_FILE="/etc/ha-home/mouse-bridge.env"
 START=0
 [[ "${1:-}" == "--start" ]] && START=1
 
-for f in bridge.py logic.py ha_client.py config.json run.sh linux/evdev-source.py; do
+for f in bridge.py logic.py ha_client.py config.json run.sh linux/evdev-source.py \
+         mouse-bridge.service 99-mouse-bridge.rules; do
   [[ -f "${HERE}/${f}" ]] || { echo "❌ 缺 ${HERE}/${f} —— 先在 Mac 上跑 ha-home/deploy.sh" >&2; exit 1; }
 done
 
@@ -66,11 +67,19 @@ else
 fi
 
 echo
-echo "==> 5/5 装 systemd 单元"
+echo "==> 5/6 装 systemd 单元"
 sudo install -m 0644 "${HERE}/mouse-bridge.service" /etc/systemd/system/mouse-bridge.service
 sudo systemctl daemon-reload
 sudo systemctl enable mouse-bridge >/dev/null
 echo "    已设为开机自启"
+
+echo
+echo "==> 6/6 装 udev 规则（接收器插拔后自动重新枚举）"
+# 少了这条，插上新接收器不会被发现，得手动重启服务；开机时 USB 还没枚举完
+# 就更糟 —— 只认到一部分鼠标，其余的静默失灵。规则说明见文件里的注释。
+sudo install -m 0644 "${HERE}/99-mouse-bridge.rules" /etc/udev/rules.d/99-mouse-bridge.rules
+sudo udevadm control --reload-rules
+echo "    已装并重载"
 
 echo
 echo "========================================================"
