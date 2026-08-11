@@ -26,15 +26,18 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LAB="$(cd "${HERE}/../ha-lab" && pwd)"
 
 echo "==> 推 ha-home → ${TARGET}:~/ha-home/"
+# COPYFILE_DISABLE=1：macOS 的 tar 默认会把扩展属性打包成 ._xxx 伴生文件，
+#   解到 Linux 上就是一堆垃圾（还会盖住同名文件的权限判断），关掉。
 # --exclude '*.tgz'：备份包里有凭据，单独手动传，别混在例行部署里。
-tar -czf - -C "${HERE}" \
-    --exclude '*.tgz' --exclude '.DS_Store' \
+# --exclude './image'：装机镜像 1.6G，是用来写盘的、不是给机器自己的，别随手推过去。
+COPYFILE_DISABLE=1 tar -czf - -C "${HERE}" \
+    --exclude '*.tgz' --exclude '.DS_Store' --exclude './image' \
     . | ssh "${TARGET}" 'mkdir -p ~/ha-home && tar -xzf - -C ~/ha-home'
 
 echo "==> 推鼠标桥源码 ${LAB}/mouse-bridge → ${TARGET}:~/ha-home/mouse-bridge/"
 # 只带平台无关的那几个文件 + Linux 事件源 + 配置。macos/ 那份 Swift 用不上。
-tar -czf - -C "${LAB}/mouse-bridge" \
-    bridge.py logic.py ha_client.py test_logic.py \
+COPYFILE_DISABLE=1 tar -czf - -C "${LAB}/mouse-bridge" \
+    bridge.py logic.py ha_client.py test_logic.py test_color_temp_range.py \
     config.json config.example.json linux \
     | ssh "${TARGET}" 'tar -xzf - -C ~/ha-home/mouse-bridge'
 
