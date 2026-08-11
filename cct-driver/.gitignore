@@ -1,2 +1,12 @@
 .venv/
 hardware/.history/
+
+# KiCad 打开工程时生成的锁文件与本地日志
+*.lck
+~*.lck
+hardware/logs/
+
+# easyeda2kicad 的下载缓存，可重新拉取
+.easyeda_cache/
+
+.DS_Store
