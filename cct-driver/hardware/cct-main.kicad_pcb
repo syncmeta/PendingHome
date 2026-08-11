@@ -39545,9 +39545,10 @@
 		)
 		(pad "A1B12" smd custom
 			(at -3.2 -2.47)
-			(size 0.005 0.005)
+			(size 0.2 0.2)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net "GND")
+			(solder_mask_margin -0.05)
 			(thermal_bridge_angle 90)
 			(options
 				(clearance outline)
@@ -39568,9 +39569,10 @@
 		)
 		(pad "A4B9" smd custom
 			(at -2.4 -2.47)
-			(size 0.005 0.005)
+			(size 0.2 0.2)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net "USB_VBUS")
+			(solder_mask_margin -0.05)
 			(thermal_bridge_angle 90)
 			(options
 				(clearance outline)
@@ -39618,9 +39620,10 @@
 		)
 		(pad "B1A12" smd custom
 			(at 3.2 -2.47)
-			(size 0.005 0.005)
+			(size 0.2 0.2)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net "GND")
+			(solder_mask_margin -0.05)
 			(thermal_bridge_angle 90)
 			(options
 				(clearance outline)
@@ -39641,9 +39644,10 @@
 		)
 		(pad "B4A9" smd custom
 			(at 2.4 -2.47)
-			(size 0.005 0.005)
+			(size 0.2 0.2)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(net "USB_VBUS")
+			(solder_mask_margin -0.05)
 			(thermal_bridge_angle 90)
 			(options
 				(clearance outline)
