@@ -48596,7 +48596,7 @@
 		)
 		(fill yes)
 		(layer "F.SilkS")
-		(uuid "ec35a3c0-afd4-4cdc-a749-5d8ab0d8bf85")
+		(uuid "59165286-1fdd-437a-b870-3907b5ef7595")
 	)
 	(gr_line
 		(start 0 0)
@@ -48894,10 +48894,10 @@
 	(gr_text "cct-driver.local"
 		(at 101.8 97.4 180)
 		(layer "F.SilkS")
-		(uuid "8508b50b-5d1f-45fc-a61b-0b051d78dcb4")
+		(uuid "5ab2d781-3161-49fd-8950-833d44ec93e1")
 		(effects
 			(font
-				(size 0.7 0.7)
+				(size 0.8 0.8)
 				(thickness 0.13)
 			)
 		)
