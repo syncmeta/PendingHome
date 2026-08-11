@@ -98,12 +98,20 @@ with open(HERE / "bom.csv", "w", newline="") as f:
         d = desc.get(refs[0], "")
         w.writerow([cid, len(refs), " ".join(refs), d, fpn])
 
+# 嘉立创物料匹配只认标准封装代号,KiCad 的描述式封装名会被判成"与所选器件不符"。
+# 这里只改 bom-jlc.csv 的 Footprint 字段;bom.csv 保留 KiCad 原名以便追溯。
+JLC_FP_ALIAS = {
+    "LED-SMD_L1.6-W0.8-R-RD": "0603",   # LED1  (C2286,红光 0603)
+    "LED0805-R-RD":           "0805",   # LED2-13 (C2297,翠绿 0805)
+}
+
 with open(HERE / "bom-jlc.csv", "w", newline="") as f:
     w = csv.writer(f)
     w.writerow(["Comment", "Designator", "Footprint", "LCSC Part #"])
     for (cid, fpn), refs in sorted(groups.items()):
         d = desc.get(refs[0], "")[:40]
-        w.writerow([d or cid, ",".join(refs), fpn, cid if cid.startswith("C") else ""])
+        w.writerow([d or cid, ",".join(refs), JLC_FP_ALIAS.get(fpn, fpn),
+                    cid if cid.startswith("C") else ""])
 
 print(f"元件 {len(fp_name)},分组 {len(groups)}")
 print("缺 C 号:", missing_c if missing_c else "无")
