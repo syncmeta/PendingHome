@@ -81,11 +81,15 @@ class HAClient:
         """相对调节亮度。HA 自己会夹在 0~100，灯是关的会顺带点亮。"""
         self._call("turn_on", {"entity_id": entity_id, "brightness_step_pct": pct})
 
-    def step_color_temp(self, entity_id: str, delta_kelvin: int):
+    def step_color_temp(self, entity_id: str, delta_kelvin: int, limits=None):
         """相对调节色温。
 
         HA 没有色温的相对调节服务，只能先读当前值再写绝对值。
         灯关着或还没上报色温时，从可用区间的中点起步，避免跳到极端值。
+
+        limits 是可选的 (最低K, 最高K) 覆盖，跟实体自报的区间取交集。
+        用途：HomeKit 接进来的小米吸顶灯把上限报成 20000K，实际灯只到 6100K，
+        不夹住的话滚轮会一路滚到两万，用户看不到任何变化还以为坏了。
         """
         state = self.get_state(entity_id)
         attrs = state.get("attributes") or {}
@@ -93,6 +97,9 @@ class HAClient:
         hi = attrs.get("max_color_temp_kelvin")
         if lo is None or hi is None:
             raise HAError("%s 没有色温区间，可能并不支持色温" % entity_id)
+        if limits:
+            lo = max(lo, limits[0])
+            hi = min(hi, limits[1])
 
         current = attrs.get("color_temp_kelvin")
         if current is None:

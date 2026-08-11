@@ -82,6 +82,19 @@ def build_bindings(cfg: dict, ha: HAClient) -> Dict[str, Binding]:
     return bindings
 
 
+def color_temp_limits(cfg: dict, entity_id: str):
+    """这盏灯在配置里有没有写死色温区间。没写就返回 None，用实体自报的。
+
+    需要它是因为有些实体自报的区间不老实（HomeKit 那份小米吸顶灯报到 20000K，
+    灯实际只到 6100K）。写在配置里而不是代码里，换灯时不用改代码。
+    """
+    for spec in cfg.get("mice", {}).values():
+        if spec.get("entity_id") == entity_id and spec.get("color_temp_kelvin_range"):
+            lo, hi = spec["color_temp_kelvin_range"]
+            return int(lo), int(hi)
+    return None
+
+
 def execute(intent, ha: HAClient, cfg: dict):
     """把一个意图变成实际的 HA 调用。"""
     wheel_cfg = cfg.get("wheel", {})
@@ -95,7 +108,8 @@ def execute(intent, ha: HAClient, cfg: dict):
             log("  亮度 %+d%% %s" % (pct, intent.entity_id))
         else:
             delta = intent.ticks * int(wheel_cfg.get("color_temp_step_kelvin", 200))
-            ha.step_color_temp(intent.entity_id, delta)
+            ha.step_color_temp(intent.entity_id, delta,
+                               limits=color_temp_limits(cfg, intent.entity_id))
             log("  色温 %+dK %s" % (delta, intent.entity_id))
 
 

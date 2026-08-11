@@ -1,14 +1,16 @@
 {
   "_说明": "复制成 config.json 再改。令牌不写在这儿，走环境变量。",
 
-  "ha_url": "http://192.168.1.16:8123",
+  "ha_url": "http://127.0.0.1:8123",
   "token_env": "HA_TOKEN",
 
-  "_mice说明": "key 是鼠标的设备标识，用 macos/mouse-source --list 查。两个鼠标型号不同，所以这个标识唯一且换 USB 口也不变。",
+  "_mice说明": "key 是鼠标的设备标识，用 macos/mouse-source --list（或 Linux 上 linux/evdev-source.py --list）查。两个鼠标型号不同，所以这个标识唯一且换 USB 口也不变。",
+  "_色温区间说明": "color_temp_kelvin_range 可选，只在实体自报的色温区间不可信时才写。踩过的坑：HomeKit 接进来的小米吸顶灯把上限报成 20000K，实际灯只到 6100K，不夹住的话滚轮一路滚到两万、灯早就不动了，用起来像坏了。",
   "mice": {
     "2717:003b": {
       "entity_id": "light.把这里换成真的实体ID",
-      "label": "书桌灯"
+      "label": "书桌灯",
+      "color_temp_kelvin_range": [2600, 6100]
     },
     "2717:501f": {
       "entity_id": "light.把这里换成真的实体ID",
