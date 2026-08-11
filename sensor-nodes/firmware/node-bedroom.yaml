@@ -1,0 +1,20 @@
+# node-bedroom —— 卧室 CO2 节点
+#
+# 只有 SCD41。这是三个节点里读数最会飙的一个:关门睡觉一夜,
+# 卧室 CO2 上到 1500~2500ppm 很常见 —— 这正是装它的理由。
+# 放在床头附近、但别贴着脸(直接吹到呼气会读出假高值),离床 1~2 米高度齐床面即可。
+#
+# 供电:USB-C 常通。接线见 ../README.md。
+#
+# ⚠️ 刷完机第一件事:把节点拿到室外放 5 分钟,再按 HA 里的
+#    「SCD41 强制校准到 420ppm」。ASC 是关掉的(理由见 common/scd41.yaml 文件头),
+#    密闭卧室尤其不能开 ASC —— 它会把睡了一夜的高基线当零点,越缺氧显示得越正常。
+
+packages:
+  base: !include
+    file: common/base.yaml
+    vars:
+      device_name: node-bedroom
+      friendly_name: 卧室节点
+  i2c: !include common/i2c.yaml
+  scd41: !include common/scd41.yaml

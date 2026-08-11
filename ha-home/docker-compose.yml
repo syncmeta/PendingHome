@@ -1,0 +1,27 @@
+# Home Assistant —— 跑在家里那台实体机上（Debian 12 + Docker）
+#
+# 从 ../ha-lab/homeassistant/docker-compose.yml 平移过来，去掉了 Mac 试验台专用的
+# 代理覆盖层（那是为了让 Lima 虚拟机能拉动 ghcr.io 的镜像；实体机直连路由器，
+# 不需要那条 SSH 隧道）。国内拉镜像慢怎么办见 README 的「镜像拉不动」一节。
+#
+# network_mode: host 是刻意的：HA 的设备发现（mDNS/zeroconf、SSDP）要收局域网广播，
+# 必须和宿主共享网络栈。米家设备就靠这个被发现。代价是 ports: 不生效，
+# HA 直接占宿主的 8123。
+services:
+  homeassistant:
+    container_name: homeassistant
+    # 首次恢复迁移数据时请改成源机器的确切版本（见 README 阶段 5：版本只能升不能降）。
+    image: ghcr.io/home-assistant/home-assistant:stable
+    restart: unless-stopped
+    # 试验台上就是开着的，平移时保持一致。将来插 Zigbee/蓝牙 dongle 也要它。
+    # 不需要硬件直通的话可以删掉这行，HA 本身不依赖。
+    privileged: true
+    network_mode: host
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      - /opt/ha/config:/config
+      - /run/dbus:/run/dbus:ro
+      - /etc/localtime:/etc/localtime:ro
+    # 鼠标不从这里透传 —— 读 /dev/input 的是宿主上的 mouse-bridge 服务，
+    # 不是 HA 容器。见 mouse-bridge/README.md。

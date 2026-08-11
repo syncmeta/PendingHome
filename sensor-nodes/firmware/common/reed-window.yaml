@@ -1,0 +1,33 @@
+# 窗户开合检测 —— 有线门磁(干簧管)
+#
+# 采购清单 B3 选的是**成品有线门磁、常开型(NO)**:自带外壳、磁铁和背胶,
+# 比裸干簧管省事。两根线,一根接 GPIO3,一根接 GND。
+#
+# 判定逻辑(常开型):
+#   磁铁靠近(窗关)→ 触点闭合 → GPIO 被拉到 GND → 读低 → 实体 off = 关
+#   磁铁离开(窗开)→ 触点断开 → 内部上拉把脚拉高 → 读高 → 实体 on  = 开
+# device_class: window 约定 on = 开,所以不需要 inverted。
+#
+# ⚠️ 如果买到的是**常闭型(NC)**,或者装好后发现开合状态是反的,
+#    在下面的 pin: 里加一行 `inverted: true` 即可,不用改接线。
+#
+# 为什么用内部上拉而不是外接电阻:ESP32-C3 的 GPIO3 是普通 IO,内部上拉约 45kΩ,
+# 对这种低频干接点够用。走线超过 2~3 米、或者附近有强干扰时,再在 GPIO 和 3V3
+# 之间并一颗 10kΩ 外部上拉加强。
+
+binary_sensor:
+  - platform: gpio
+    name: "窗户"
+    id: window_reed
+    device_class: window
+    pin:
+      number: GPIO3
+      mode:
+        input: true
+        pullup: true
+    filters:
+      # 500ms 消抖。干簧管在磁铁将靠未靠的临界位置会连续抖动(风吹动窗扇就够了),
+      # 不消抖的话 HA 那边会收到一串开合事件,把通风提醒的逻辑刷乱。
+      # 窗户开合是分钟级的事,0.5s 延迟无所谓。
+      - delayed_on: 500ms
+      - delayed_off: 500ms

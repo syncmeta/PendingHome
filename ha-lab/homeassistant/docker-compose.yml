@@ -1,0 +1,19 @@
+# Home Assistant —— 跑在 Debian 12 虚拟机里
+# 由 scripts/02-ha-up.sh 同步到虚拟机的 /opt/ha/docker-compose.yml 后启动。
+#
+# network_mode: host 是刻意的：HA 的设备发现（mDNS/zeroconf、SSDP）需要能收到
+# 局域网广播，桥接网络里必须共享宿主（也就是虚拟机）的网络栈才行。
+# 小米/米家设备就靠这个被发现。代价是 ports: 不生效，HA 直接占虚拟机的 8123。
+services:
+  homeassistant:
+    container_name: homeassistant
+    image: ghcr.io/home-assistant/home-assistant:stable
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      - /opt/ha/config:/config
+      - /run/dbus:/run/dbus:ro
+      # 阶段二会用到：把鼠标的 evdev 设备透传进来时在这里加 devices:

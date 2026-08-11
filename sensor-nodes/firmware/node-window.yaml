@@ -1,0 +1,25 @@
+# node-window —— 窗边复合节点
+#
+# 全屋唯一一扇窗的窗边。这是三个节点里唯一的"复合"节点:
+#   SCD41    (0x62) CO2 + 温湿度
+#   AS7341   (0x39) 8 通道光谱 → 色温(主选)
+#   TCS34725 (0x29) RGB → 色温(对照组)
+#   有线门磁 (GPIO3) 窗户开合
+#
+# 三颗 I2C 传感器地址不冲突,并排挂在同一条总线上。
+# 供电:USB-C 常通。接线见 ../README.md。
+#
+# ⚠️ 刷完机第一件事:按 HA 里的「SCD41 强制校准到 420ppm」——见 common/scd41.yaml
+#    文件头。不做这一步 CO2 读数不可信。
+
+packages:
+  base: !include
+    file: common/base.yaml
+    vars:
+      device_name: node-window
+      friendly_name: 窗边节点
+  i2c: !include common/i2c.yaml
+  scd41: !include common/scd41.yaml
+  as7341: !include common/as7341.yaml
+  tcs34725: !include common/tcs34725.yaml
+  reed: !include common/reed-window.yaml

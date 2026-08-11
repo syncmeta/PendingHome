@@ -1,0 +1,79 @@
+# TCS34725 —— RGB 色温传感器(窗边节点,对照组)
+#
+# 这颗是 AS7341 的对照组。它用 RGB 三通道套 McCamy 经验公式反推色温,在窗外日光下
+# 尚可,在 LED/荧光灯这种光谱不连续的光源下会偏得很厉害。原型期两颗并排跑,拿真实
+# 窗光当裁判,定板时只留赢的那颗 —— 所以这里两颗都出实体,别急着删。
+#
+# integration_time: auto 是组件默认值,它会自动调积分时间(并接管 gain)来避开饱和。
+# 窗边从夜里到正午的动态范围有好几个数量级,固定档位一定会在某一端废掉,用 auto。
+
+sensor:
+  - platform: tcs34725
+    id: tcs34725_hub
+    address: 0x29
+    integration_time: auto
+    update_interval: 5s
+
+    # 装了漫射片、或者隔着玻璃测,照度会被压低。这个系数是那一层衰减的补偿。
+    # 1.0 = 无遮挡。⚠️ 需要标定:漫射片装好后,拿手机测光 App 或照度计在同一位置
+    # 对一次,把比值填进来。色温基本不受它影响,只有照度受。
+    glass_attenuation_factor: 1.0
+
+    color_temperature:
+      name: "窗外色温 (TCS34725)"
+      id: window_cct_tcs
+      accuracy_decimals: 0
+      filters:
+        # 顺序要紧:先扔掉明显是垃圾的读数,再进平均窗口。
+        # 反过来的话一个饱和/全黑的坏点会污染后面整整一分钟的平均值。
+        # 夜里没光、或者正对太阳饱和时,McCamy 公式会吐出几万 K 甚至负数。
+        - lambda: |-
+            if (std::isnan(x) || x < 1500.0f || x > 20000.0f) return {};
+            return x;
+        # 60s 滑动窗(5s × 12),每 10s 发一次。压掉云飘过时的抖动。
+        - sliding_window_moving_average:
+            window_size: 12
+            send_every: 2
+
+    illuminance:
+      name: "窗外照度 (TCS34725)"
+      id: window_lux_tcs
+      accuracy_decimals: 0
+      filters:
+        - filter_out: nan
+        - sliding_window_moving_average:
+            window_size: 12
+            send_every: 2
+
+    # Clear 通道占满量程的百分比。这是判断"是不是饱和了"的唯一直接依据:
+    # 长期贴近 100% 说明 auto 档位也压不住,得加漫射片或者把传感器挪开直射。
+    clear_channel:
+      name: "TCS34725 Clear 通道"
+      id: window_clear_tcs
+      accuracy_decimals: 1
+      entity_category: diagnostic
+      filters:
+        - sliding_window_moving_average:
+            window_size: 12
+            send_every: 12
+
+switch:
+  # ============================================================================
+  # 板载白光补光 LED —— 默认常关
+  # ============================================================================
+  # GY-33 / GY-TCS34725 这类模块板上带一颗白光 LED。它一亮就是传感器自己照自己,
+  # 色温读数直接作废。
+  #
+  # ⚠️ 这不是纯软件开关,取决于你买到的模块怎么接线:
+  #   - 模块把 LED 脚引出来了 → 按接线表接到 GPIO4(D2),这个实体就能控制它
+  #   - Adafruit 版默认用焊桥把 LED 脚吊高(即上电就亮)→ 必须先割断那道焊桥
+  #   - 只要你不打算做对照实验 → 最干净的做法是把 LED 脚直接焊到 GND,
+  #     连上电那 200ms(GPIO 还没被驱动、处于高阻)的一闪都省了
+  #
+  # 留这个 GPIO 开关是为了原型期能临时点亮做对照,不是为了日常用。
+  - platform: gpio
+    name: "TCS34725 补光灯"
+    id: tcs_led
+    pin: GPIO4
+    restore_mode: ALWAYS_OFF
+    entity_category: config

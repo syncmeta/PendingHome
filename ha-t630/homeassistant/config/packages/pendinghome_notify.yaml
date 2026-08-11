@@ -1,0 +1,50 @@
+# PendingHome · 通知出口
+#
+# 所有 PendingHome 自动化发通知都经过这一个脚本。这么做只有一个理由:
+# 换推送方式(HA 内通知 → 手机 App → Telegram → …)时只改这一处,
+# 不用去每条自动化里翻 action。
+#
+# ============================================================================
+# ⚠️ 需要替换:默认只在 HA 网页里创建一条持久通知,手机上收不到。
+# ============================================================================
+# 要推到手机,把下面 sequence 里的 action 换成(或增加)你的 notify 服务:
+#
+#   - action: notify.mobile_app_你的手机名
+#     data:
+#       title: "{{ title }}"
+#       message: "{{ message }}"
+#       data:
+#         tag: "{{ tag }}"          # 同 tag 的推送会互相覆盖,不会刷屏
+#
+# 手机名在「设置 → 设备与服务 → 实体」里搜 notify 就能看到,
+# 前提是手机上装了 Home Assistant companion App 并已登录。
+
+script:
+  ph_notify:
+    alias: "PendingHome 通知出口"
+    icon: mdi:bell-ring
+    # parallel:多个房间同时告警时不互相挤掉
+    mode: parallel
+    max: 10
+    fields:
+      title:
+        description: 通知标题
+        required: true
+        selector:
+          text:
+      message:
+        description: 通知正文
+        required: true
+        selector:
+          text:
+      tag:
+        description: 去重标识。同一个 tag 的通知会互相覆盖,避免同一件事刷屏。
+        required: false
+        selector:
+          text:
+    sequence:
+      - action: persistent_notification.create
+        data:
+          title: "{{ title }}"
+          message: "{{ message }}"
+          notification_id: "{{ tag | default('pendinghome', true) }}"

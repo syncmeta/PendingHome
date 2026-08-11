@@ -1,0 +1,189 @@
+# PendingHome · CO₂ 分级提醒 + 开窗联动
+#
+# ============================================================================
+# ⚠️ 需要替换的 entity_id —— 全文出现的就是下面这四个,改的时候整文件搜索替换
+# ============================================================================
+#   sensor.node_window_co2          窗边节点 CO₂
+#   sensor.node_living_co2          客厅节点 CO₂
+#   sensor.node_bedroom_co2         卧室节点 CO₂
+#   binary_sensor.node_window_window  窗户开合(有线门磁)
+#
+# 这些 ID 假定你已经按 sensor-nodes/firmware/README.md 的「实体重命名表」
+# 把 ESPHome 自动生成的 entity_id 改成了统一前缀。
+# 不想改名的话,就把上面四个换成 HA 里实际生成的 ID。
+# ============================================================================
+#
+# 分级逻辑:
+#   >1000ppm  提示通风(温和,只在窗户关着时说)
+#   >1500ppm  强提醒(每 15 分钟重复一次,直到降回 1400 以下)
+#   <800ppm   撤掉通知
+#
+# 「窗开着就别念叨」是硬性的:人已经在通风了,这时候再提醒只会让人把提醒关掉,
+# 于是真正该响的时候也不响了。所以 >1000 这一级必须带窗户关着的条件。
+# >1500 那一级照样会响 —— 都到这个数了,即使窗开着也说明通风量不够,
+# 只是措辞改成"加大通风"而不是"去开窗"。
+
+input_boolean:
+  ph_co2_snooze:
+    name: "CO₂ 提醒静音"
+    icon: mdi:bell-sleep
+
+template:
+  - sensor:
+      # 全屋最高 CO₂。所有自动化都盯这一个值,而不是分别盯三个传感器 ——
+      # 三个传感器各挂一套触发器的话,重复提醒和竞态会很难调。
+      - name: "全屋 CO₂ 最高值"
+        unique_id: ph_co2_max
+        unit_of_measurement: ppm
+        device_class: carbon_dioxide
+        state_class: measurement
+        availability: >
+          {% set ns = namespace(n=0) %}
+          {% for s in expand(
+               'sensor.node_window_co2',
+               'sensor.node_living_co2',
+               'sensor.node_bedroom_co2') %}
+            {% if s.state is is_number %}{% set ns.n = ns.n + 1 %}{% endif %}
+          {% endfor %}
+          {{ ns.n > 0 }}
+        state: >
+          {% set ns = namespace(v=-1) %}
+          {% for s in expand(
+               'sensor.node_window_co2',
+               'sensor.node_living_co2',
+               'sensor.node_bedroom_co2') %}
+            {% if s.state is is_number and s.state | float > ns.v %}
+              {% set ns.v = s.state | float %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.v | round(0) }}
+
+      # 当前最闷的那个房间叫什么。只用来把通知写得像句人话。
+      # 注意:这里必须用循环逐个比,不能用 max(attribute='state') ——
+      # 那个是按字符串比大小,'900' 会被判成比 '1500' 大。
+      - name: "CO₂ 最高的房间"
+        unique_id: ph_co2_worst_room
+        icon: mdi:home-alert
+        state: >
+          {% set ns = namespace(v=-1, n='未知') %}
+          {% for s in expand(
+               'sensor.node_window_co2',
+               'sensor.node_living_co2',
+               'sensor.node_bedroom_co2') %}
+            {% if s.state is is_number and s.state | float > ns.v %}
+              {% set ns.v = s.state | float %}
+              {% set ns.n = s.name %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.n }}
+
+automation:
+  # ---------------------------------------------------------------------------
+  # >1000ppm · 提示通风
+  # ---------------------------------------------------------------------------
+  - id: ph_co2_hint_1000
+    alias: "CO₂ >1000ppm · 提示通风"
+    description: 空气开始发闷,且窗户关着 —— 提醒开窗。窗开着就不说话。
+    mode: single
+    max_exceeded: silent
+    triggers:
+      - trigger: numeric_state
+        entity_id: sensor.ph_co2_max
+        above: 1000
+        below: 1500
+        for: "00:10:00"
+      # 第二个触发器堵一个洞:CO₂ 早就 1200 了、人开着窗,然后把窗关上。
+      # 只靠上面那个数值穿越触发器的话,这种情况永远等不到提醒 ——
+      # 因为 CO₂ 没有重新穿越 1000 这条线。
+      - trigger: state
+        entity_id: binary_sensor.node_window_window
+        to: "off"
+        for: "00:05:00"
+    conditions:
+      - condition: state
+        entity_id: input_boolean.ph_co2_snooze
+        state: "off"
+      - condition: numeric_state
+        entity_id: sensor.ph_co2_max
+        above: 1000
+        below: 1500
+      # 窗开着就别念叨
+      - condition: state
+        entity_id: binary_sensor.node_window_window
+        state: "off"
+    actions:
+      - action: script.ph_notify
+        data:
+          title: "空气有点闷"
+          message: >
+            {{ states('sensor.ph_co2_worst_room') }} CO₂
+            {{ states('sensor.ph_co2_max') }} ppm,窗户关着。开窗透透气。
+          tag: ph_co2
+
+  # ---------------------------------------------------------------------------
+  # >1500ppm · 强提醒
+  # ---------------------------------------------------------------------------
+  - id: ph_co2_alert_1500
+    alias: "CO₂ >1500ppm · 强提醒"
+    description: 明显超标,重复提醒直到降下来。窗开着也照样响,只是换个说法。
+    mode: single
+    max_exceeded: silent
+    triggers:
+      - trigger: numeric_state
+        entity_id: sensor.ph_co2_max
+        above: 1500
+        for: "00:05:00"
+    conditions:
+      - condition: state
+        entity_id: input_boolean.ph_co2_snooze
+        state: "off"
+    actions:
+      - repeat:
+          sequence:
+            - action: script.ph_notify
+              data:
+                title: "⚠️ CO₂ 过高"
+                message: >
+                  {{ states('sensor.ph_co2_worst_room') }} CO₂
+                  {{ states('sensor.ph_co2_max') }} ppm。
+                  {% if is_state('binary_sensor.node_window_window', 'on') %}
+                  窗户是开着的,但通风量不够 —— 开大一点,或者开门形成对流。
+                  {% else %}
+                  立刻开窗。
+                  {% endif %}
+                tag: ph_co2
+            - delay: "00:15:00"
+          while:
+            # 1400 而不是 1500:留 100ppm 迟滞。卡在阈值上反复横跳的话,
+            # 提醒会一停一起,比一直响还烦人。
+            - condition: numeric_state
+              entity_id: sensor.ph_co2_max
+              above: 1400
+            - condition: state
+              entity_id: input_boolean.ph_co2_snooze
+              state: "off"
+            # 兜底:最多重复 8 次(约 2 小时)。真到了 2 小时还没降下来,
+            # 说明这条提醒已经不起作用了,继续刷只会让人烦。
+            - condition: template
+              value_template: "{{ repeat.index <= 8 }}"
+
+  # ---------------------------------------------------------------------------
+  # 恢复 · 撤掉通知
+  # ---------------------------------------------------------------------------
+  - id: ph_co2_recovered
+    alias: "CO₂ 恢复正常 · 撤掉通知"
+    mode: single
+    triggers:
+      - trigger: numeric_state
+        entity_id: sensor.ph_co2_max
+        below: 800
+        for: "00:05:00"
+    actions:
+      # continue_on_error:本来就没有这条通知的时候(比如刚重启 HA),
+      # dismiss 会报错,不该因此让整条自动化算失败。
+      # ⚠️ 如果你把 ph_notify 改成了手机推送,这里也要跟着改成
+      #    notify.mobile_app_xxx + message: clear_notification + 同一个 tag。
+      - action: persistent_notification.dismiss
+        continue_on_error: true
+        data:
+          notification_id: ph_co2

@@ -1,0 +1,14 @@
+# XIAO ESP32-C3 的 I2C 总线
+#
+# 引脚是 XIAO 丝印上的 D4/D5(见 sensors/firmware/README.md 的接线表):
+#   D4 = GPIO6 = SDA
+#   D5 = GPIO7 = SCL
+#
+# 频率 100kHz:SCD4x 不支持 fast mode(数据手册上限就是 100kHz),别往上调。
+# 窗边节点是 SCD41(0x62) 和 TCS34725(0x29) 挂同一条总线,地址不冲突。
+# 用 Qwiic 线拉长超过 ~30cm 时如果 scan 不稳,降到 50kHz。
+i2c:
+  sda: GPIO6
+  scl: GPIO7
+  frequency: 100kHz
+  scan: true

@@ -1,0 +1,242 @@
+# AS7341 —— 8 通道光谱色温传感器(窗边节点,主选)
+#
+# ============================================================================
+# ⚠️ ESPHome 的 as7341 组件只给原始通道计数,不给色温也不给照度。
+#    色温是下面这个 template 传感器自己算出来的。
+# ============================================================================
+#
+# 算法:8 个窄带通道 → CIE 1931 XYZ → 色度坐标 xy → McCamy 公式 → CCT。
+# 每个通道用它中心波长处的 CIE 1931 2° 标准观察者 x̄/ȳ/z̄ 值做权重。
+#
+# 这个做法的诚实说明 —— 它是"够用的近似",不是标定过的测量:
+#   - 通道有 ~20nm 带宽,这里当成单点采样(已用 Δλ 加权补偿不等距,见下面 W[][])
+#   - 相邻通道之间有光谱空隙(尤其 680nm 之后),那部分能量丢了
+#   - 各通道的响应度不一样,而这里没有做归一化。AMS 的应用笔记 AN000633 给了
+#     出厂相关矩阵,要绝对精度就得换成那个矩阵 + 每颗单独标定
+#
+# 算法本身用黑体谱验算过(拿 Planck 公式生成 8 个通道的理论值,回代这段算法,
+# 看能不能还原出原始温度)。剩余系统偏差是**偏低**,且随色温升高变大:
+#     2700K → -2K    4000K → -63K    5500K → -176K    6500K → -270K    8000K → -455K
+# 也就是说日光段大约低估 3~5%。没有再去拟合修正 —— 那是拿黑体谱过拟合,
+# 而真实天光在 5000K 以上更接近 CIE D 系列而非黑体,修了反而是假精度。
+# 注意这验的是**算法**(权重、McCamy、各处钳位),不是传感器:响应度归一化的那部分
+# 误差在这个验算里看不见,只有拿真实窗光对比才能暴露。
+#
+# 原型期的任务是"跟 TCS34725 比谁更贴近窗外真实光色",这个精度足够分胜负。
+# 定板前如果选中 AS7341,再把系数换成 AMS 矩阵。
+#
+# 注:这里没有用 YAML 锚点来复用那段重复的 filters。滤波器块在各通道之间是照抄的,
+#     但锚点会让多个通道共享同一个列表对象,而配置校验是否原地改写这个对象没有保证。
+#     本机装不了 esphome、跑不了静态校验,所以这里选择啰嗦但确定的写法。
+
+sensor:
+  - platform: as7341
+    id: as7341_hub
+    address: 0x39
+    update_interval: 10s
+    # 默认档位。窗边直射阳光下如果 Clear 通道贴近 65535(饱和),把 gain 降到 X2/X1。
+    gain: X8
+    atime: 29
+    astep: 599
+
+    # 原始通道全部出实体:原型期就是要拿光谱形状说话(晴天/阴天/黄昏的差别在这里
+    # 看得见,而单一个 CCT 数字看不见)。归到 diagnostic 分类,不占主界面。
+    # 一周比对结束后如果嫌 recorder 太吵,见 README 的 recorder 排除写法。
+    #
+    # 每个通道都是 60s 平均(10s × 6)、每 60s 发一次。
+    # 色温在下面用平均后的光谱算 —— 先平均光谱再算色温,比先算色温再平均对:
+    # CCT 对色度是非线性的,平均一串 CCT 数字没有物理意义。
+    f1:
+      name: "AS7341 415nm"
+      id: as_f1
+      entity_category: diagnostic
+      filters:
+        - sliding_window_moving_average:
+            window_size: 6
+            send_every: 6
+    f2:
+      name: "AS7341 445nm"
+      id: as_f2
+      entity_category: diagnostic
+      filters:
+        - sliding_window_moving_average:
+            window_size: 6
+            send_every: 6
+    f3:
+      name: "AS7341 480nm"
+      id: as_f3
+      entity_category: diagnostic
+      filters:
+        - sliding_window_moving_average:
+            window_size: 6
+            send_every: 6
+    f4:
+      name: "AS7341 515nm"
+      id: as_f4
+      entity_category: diagnostic
+      filters:
+        - sliding_window_moving_average:
+            window_size: 6
+            send_every: 6
+    f5:
+      name: "AS7341 555nm"
+      id: as_f5
+      entity_category: diagnostic
+      filters:
+        - sliding_window_moving_average:
+            window_size: 6
+            send_every: 6
+    f6:
+      name: "AS7341 590nm"
+      id: as_f6
+      entity_category: diagnostic
+      filters:
+        - sliding_window_moving_average:
+            window_size: 6
+            send_every: 6
+    f7:
+      name: "AS7341 630nm"
+      id: as_f7
+      entity_category: diagnostic
+      filters:
+        - sliding_window_moving_average:
+            window_size: 6
+            send_every: 6
+    f8:
+      name: "AS7341 680nm"
+      id: as_f8
+      entity_category: diagnostic
+      filters:
+        - sliding_window_moving_average:
+            window_size: 6
+            send_every: 6
+    clear:
+      name: "AS7341 Clear"
+      id: as_clear
+      entity_category: diagnostic
+      filters:
+        - sliding_window_moving_average:
+            window_size: 6
+            send_every: 6
+    nir:
+      name: "AS7341 NIR"
+      id: as_nir
+      entity_category: diagnostic
+      filters:
+        - sliding_window_moving_average:
+            window_size: 6
+            send_every: 6
+      # nir 是这一轮里最后发布的通道,拿它当"整组光谱已就绪"的信号,
+      # 在这里触发色温与亮度的重算。这样两个派生量永远基于同一组同步的读数。
+      on_value:
+        - component.update: as7341_cct
+        - component.update: as7341_y
+
+  # ---------------------------------------------------------------------------
+  # 派生量 1:相关色温
+  # ---------------------------------------------------------------------------
+  # 没写 device_class:HA 的 sensor 没有"色温"这个设备类别,硬套一个只会让统计
+  # 和单位换算出错。留 unit + state_class 就够画图和做自动化了。
+  - platform: template
+    name: "窗外色温 (AS7341)"
+    id: as7341_cct
+    unit_of_measurement: K
+    state_class: measurement
+    accuracy_decimals: 0
+    icon: mdi:temperature-kelvin
+    # 只由上面的 on_value 驱动,不自己定时轮询。
+    update_interval: never
+    lambda: |-
+      // CIE 1931 2° 标准观察者在各通道中心波长处的 x̄, ȳ, z̄,
+      // 再乘以该通道所代表的波长宽度 Δλ(相邻中心波长的中点间距)。
+      //
+      // 那个 Δλ 不是可有可无的:8 个通道在光谱上不是等距的(间隔 30~45nm 不等),
+      // 不带宽度加权就等于拿一个不等距的采样去当等距的黎曼和,会系统性高估。
+      // 实测(拿黑体谱做输入验算)差别很大:
+      //     真实 2700K → 等权重 2932K,带宽加权 2698K
+      //     真实 6500K → 等权重 7361K,带宽加权 6230K
+      // 高色温端等权重会高估近 900K,对日光同步来说是致命的。
+      static const float W[8][3] = {
+        {0.0621f, 0.0018f, 0.2970f},  // F1 415nm  Δλ=30.0nm
+        {0.3017f, 0.0258f, 1.5449f},  // F2 445nm  Δλ=32.5nm
+        {0.0892f, 0.1297f, 0.7588f},  // F3 480nm  Δλ=35.0nm
+        {0.0291f, 0.6082f, 0.1117f},  // F4 515nm  Δλ=37.5nm
+        {0.5121f, 1.0000f, 0.0057f},  // F5 555nm  Δλ=37.5nm
+        {1.0263f, 0.7570f, 0.0011f},  // F6 590nm  Δλ=37.5nm
+        {0.7709f, 0.3180f, 0.0000f},  // F7 630nm  Δλ=45.0nm
+        {0.0499f, 0.0181f, 0.0000f},  // F8 680nm  Δλ=40.0nm
+      };
+      const float c[8] = {
+        id(as_f1).state, id(as_f2).state, id(as_f3).state, id(as_f4).state,
+        id(as_f5).state, id(as_f6).state, id(as_f7).state, id(as_f8).state,
+      };
+
+      // 饱和:16 位 ADC 顶到头,光谱形状已经被削平,色度无意义
+      if (!std::isnan(id(as_clear).state) && id(as_clear).state > 60000.0f) return {};
+
+      float X = 0.0f, Y = 0.0f, Z = 0.0f;
+      for (int i = 0; i < 8; i++) {
+        if (std::isnan(c[i])) return {};
+        X += W[i][0] * c[i];
+        Y += W[i][1] * c[i];
+        Z += W[i][2] * c[i];
+      }
+
+      const float sum = X + Y + Z;
+      // 太暗:夜里的暗电流噪声算出来的色度纯属随机数
+      if (sum <= 0.0f || Y < 50.0f) return {};
+
+      const float x = X / sum;
+      const float y = Y / sum;
+
+      // McCamy 1992:n =(x - 0.3320)/(0.1858 - y),CCT = 437n³ + 3601n² + 6861n + 5517
+      const float d = 0.1858f - y;
+      if (d > -1e-6f && d < 1e-6f) return {};   // 落在极点上,这一轮跳过
+      const float n = (x - 0.3320f) / d;
+      const float cct = ((437.0f * n + 3601.0f) * n + 6861.0f) * n + 5517.0f;
+
+      // McCamy 只在普朗克轨迹附近有效,离谱的结果直接丢掉而不是发出去骗人
+      if (std::isnan(cct) || cct < 1500.0f || cct > 20000.0f) return {};
+      return cct;
+
+  # ---------------------------------------------------------------------------
+  # 派生量 2:相对亮度(CIE Y)
+  # ---------------------------------------------------------------------------
+  # 单位是"计数",不是 lux —— 没标定过就别当照度用。存在的意义是和 TCS34725 的
+  # 照度读数一起看,判断两颗传感器对同一束光的反应是否一致。
+  - platform: template
+    name: "AS7341 相对亮度"
+    id: as7341_y
+    unit_of_measurement: counts
+    state_class: measurement
+    accuracy_decimals: 0
+    icon: mdi:brightness-6
+    entity_category: diagnostic
+    update_interval: never
+    lambda: |-
+      // 与色温那段同一套 ȳ·Δλ 权重,保持两个派生量口径一致
+      static const float WY[8] = {
+        0.0018f, 0.0258f, 0.1297f, 0.6082f,
+        1.0000f, 0.7570f, 0.3180f, 0.0181f,
+      };
+      const float c[8] = {
+        id(as_f1).state, id(as_f2).state, id(as_f3).state, id(as_f4).state,
+        id(as_f5).state, id(as_f6).state, id(as_f7).state, id(as_f8).state,
+      };
+      float Y = 0.0f;
+      for (int i = 0; i < 8; i++) {
+        if (std::isnan(c[i])) return {};
+        Y += WY[i] * c[i];
+      }
+      return Y;
+
+# ============================================================================
+# 板载白光 LED
+# ============================================================================
+# AS7341 的补光 LED 由芯片自己的 LDR 脚驱动,开关在芯片内部的 LED 寄存器
+# (LED_ACT 位)。ESPHome 的 as7341 组件从不写这个寄存器,而芯片复位后 LED_ACT
+# 默认为 0 —— 所以固件侧不需要、也没有办法做别的动作,LED 本来就是灭的。
+#
+# ⚠️ 但到货第一件事还是要拿眼睛确认一次:部分模块(如 Adafruit 4698)板上另有
+#    一道 LED 焊桥,短接了就绕过芯片直接点亮,软件管不着。亮着就割断它。
+#    这一条已写进 README 的到货检查清单。

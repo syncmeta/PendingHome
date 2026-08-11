@@ -1,0 +1,19 @@
+# node-living —— 客厅靠里的 CO2 节点
+#
+# 只有 SCD41。放在离窗最远、离空调出风口和门口都有距离的地方 ——
+# 这个点位的意义就是测"最不通风的那块空气"。
+#
+# 供电:USB-C 常通。接线见 ../README.md。
+#
+# ⚠️ 刷完机第一件事:把节点拿到室外放 5 分钟,再按 HA 里的
+#    「SCD41 强制校准到 420ppm」。ASC 是关掉的(理由见 common/scd41.yaml 文件头),
+#    不手动校准这一次,读数就一直带着出厂零点的偏差。
+
+packages:
+  base: !include
+    file: common/base.yaml
+    vars:
+      device_name: node-living
+      friendly_name: 客厅节点
+  i2c: !include common/i2c.yaml
+  scd41: !include common/scd41.yaml

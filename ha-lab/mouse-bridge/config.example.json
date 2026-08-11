@@ -1,0 +1,25 @@
+{
+  "_说明": "复制成 config.json 再改。令牌不写在这儿，走环境变量。",
+
+  "ha_url": "http://192.168.1.16:8123",
+  "token_env": "HA_TOKEN",
+
+  "_mice说明": "key 是鼠标的设备标识，用 macos/mouse-source --list 查。两个鼠标型号不同，所以这个标识唯一且换 USB 口也不变。",
+  "mice": {
+    "2717:003b": {
+      "entity_id": "light.把这里换成真的实体ID",
+      "label": "书桌灯"
+    },
+    "2717:501f": {
+      "entity_id": "light.把这里换成真的实体ID",
+      "label": "床头灯"
+    }
+  },
+
+  "_wheel说明": "滚轮一格调多少。coalesce_ms 是合并窗口——连续滚动攒这么久发一次，别一格一个请求。",
+  "wheel": {
+    "brightness_step_pct": 5,
+    "color_temp_step_kelvin": 200,
+    "coalesce_ms": 80
+  }
+}

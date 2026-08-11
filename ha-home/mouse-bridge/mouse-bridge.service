@@ -1,0 +1,37 @@
+[Unit]
+Description=鼠标 → Home Assistant 控灯桥
+Documentation=file:///opt/mouse-bridge/README.md
+# HA 起来之前桥连不上 8123，会在启动时报错退出、然后被反复重启。
+# 等 docker 起来能少几次无谓重启，但不做强依赖 —— HA 重启时桥不用跟着重启。
+After=network-online.target docker.service
+Wants=network-online.target
+# 不设启动失败次数上限。systemd 默认「10 秒内失败 5 次就永久放弃」，那样接收器
+# 拔掉一会儿再插回来，服务已经躺平不再重试了。这里要的正相反：一直重试，
+# 插回来就自己接上。代价只是没插鼠标时每 10 秒往日志里写一行。
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+# 专用账号，只靠 input 组拿到 /dev/input/event* 的读权限，不用 root。
+User=mousebridge
+Group=mousebridge
+SupplementaryGroups=input
+# 令牌只在这里出现，文件是 root:root 0600；systemd 以 root 读完再降权。
+EnvironmentFile=/etc/ha-home/mouse-bridge.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/mouse-bridge/run.sh
+Restart=always
+RestartSec=10
+
+# 收紧权限。注意**不能**加 PrivateDevices=true —— 那会把 /dev/input 挡在外面，
+# 桥就读不到鼠标了。这是这个单元唯一一处必须留口子的地方。
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+[Install]
+WantedBy=multi-user.target

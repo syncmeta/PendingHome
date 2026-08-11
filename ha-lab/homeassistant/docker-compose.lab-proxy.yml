@@ -1,0 +1,11 @@
+# Mac 试验台专用覆盖层。
+#
+# 小米集成首次载入设备时要从外网下载 MIOT 规格；这条网络直连会超时，
+# 所以让 HA 进程复用 scripts/proxy-tunnel.sh 建在 VM 回环地址上的代理。
+# 基础 compose 保持不带代理，搬到 T630 时只使用 docker-compose.yml 即可。
+services:
+  homeassistant:
+    environment:
+      HTTP_PROXY: http://127.0.0.1:10898
+      HTTPS_PROXY: http://127.0.0.1:10898
+      NO_PROXY: localhost,127.0.0.1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,::1

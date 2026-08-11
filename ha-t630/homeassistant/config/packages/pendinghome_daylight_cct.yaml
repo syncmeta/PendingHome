@@ -1,0 +1,179 @@
+# PendingHome · 日光同步(窗边色温 → CCT 灯带)
+#
+# ============================================================================
+# ⚠️ 需要替换的 entity_id
+# ============================================================================
+#   light.cct_daylight_group        ← 这个现在不存在,必须你自己建
+#   sensor.node_window_cct_as7341   窗边色温(AS7341,主选)
+#   sensor.node_window_cct_tcs34725 窗边色温(TCS34725,对照组)
+#   sensor.node_window_lux_tcs34725 窗边照度
+#
+# 灯为什么用「灯组」而不是直接写某一路:CCT 驱动板有 6 路,日光同步该管哪几路
+# 是装修完才知道的事。在 HA 里建一个灯组(设置 → 设备与服务 → 助手 → 新建助手
+# → 分组 → 灯光),把要跟日光走的那几路拖进去,命名为 cct_daylight_group。
+# 以后增减灯只改灯组,不用动这个文件。
+#
+# 原型期要对比两颗色温传感器时,把下面 variables 里的 cct_source 换成
+# TCS34725 那个,跑一天看灯的表现差多少。
+# ============================================================================
+
+
+# ============================================================================
+# 防正反馈门闩 —— 这一段是这个文件里最要紧的东西,改之前先读完
+# ============================================================================
+#
+# 要防的是什么:
+#   传感器多多少少会看到自己控制的那几盏灯。于是形成一个闭环 ——
+#   灯调暖 → 传感器读到的光变暖 → 自动化认为窗外变暖了 → 再调暖 → …
+#   一路跑到 2700K 撞底为止。反过来同理。这不是理论问题,是这类项目最常见的翻车方式。
+#
+# 这里用三道锁,任何一道单独都够用,叠起来是为了容错:
+#
+#   ① 门闩 input_boolean.ph_daylight_latch
+#      每次命令灯之前先上闩,等灯渐变完成 + 传感器的 60s 滤波窗口整个走完,才落闩。
+#      落闩之前的所有色温读数一律不采信。这就是"灯亮着的时候冻结色温读数",
+#      只不过冻结的是**危险窗口**(刚调完灯的那段时间),而不是永久冻结 ——
+#      永久冻结的话灯一开就再也不跟随日光了,日光同步这件事本身就没了。
+#
+#   ② 死区 deadband_k = 300K
+#      跟灯当前实际色温差不到 300K 就不动手。这一道锁掉的是环路增益:
+#      就算传感器真的看到了灯、产生了一点漂移,只要每一步的漂移量小于 300K,
+#      环路就走不下去,自己停住。
+#
+#   ③ 硬钳位 2700K–6500K
+#      灯带的物理色温范围(见 cct-driver/firmware/cct-driver.yaml)。
+#      不管前两道锁怎么失效,命令值永远出不了这个区间。
+#
+# 什么时候说明遮挡没做好:
+#   如果你发现灯一开、色温读数就跟着明显往灯的方向走(哪怕最后被死区拦住了),
+#   那是传感器直视灯带了。正确的修法是**物理遮挡**,让它只朝窗 ——
+#   不是把死区调大。死区调大只是把病症盖住,代价是日光同步的精度。
+# ============================================================================
+
+input_boolean:
+  ph_daylight_sync:
+    name: "日光同步 · 总开关"
+    icon: mdi:theme-light-dark
+
+  ph_daylight_latch:
+    name: "日光同步 · 门闩(冻结中)"
+    icon: mdi:lock-clock
+
+automation:
+  # ---------------------------------------------------------------------------
+  # 主同步
+  # ---------------------------------------------------------------------------
+  - id: ph_daylight_cct_sync
+    alias: "日光同步 · 窗边色温 → CCT 灯带"
+    description: 灯开着时,把色温跟到窗外日光。带门闩与死区防正反馈震荡。
+    mode: single
+    max_exceeded: silent
+
+    triggers:
+      - trigger: state
+        entity_id: sensor.node_window_cct_as7341
+      # 灯刚打开时立刻对一次,不用干等下一次色温更新(最长要等 60s)。
+      # for 5s 是等灯的 restore/渐变稳定下来再读它的当前色温。
+      - trigger: state
+        entity_id: light.cct_daylight_group
+        to: "on"
+        for: "00:00:05"
+
+    variables:
+      # ---- 可调参数,改完「开发者工具 → YAML → 重新加载自动化」即可生效 ----
+      cct_light: light.cct_daylight_group
+      cct_source: sensor.node_window_cct_as7341   # 对照实验时换成 _tcs34725
+      lux_source: sensor.node_window_lux_tcs34725
+      lamp_min_k: 2700        # 灯带物理下限
+      lamp_max_k: 6500        # 灯带物理上限
+      deadband_k: 300         # 死区:见文件头第 ② 道锁
+      settle_s: 90            # 门闩时长:灯渐变 + 传感器 60s 滤波窗口走完还有富余
+      min_lux: 30             # 低于这个照度就别跟了(夜里的色温读数是噪声)
+      transition_s: 5         # 灯的渐变时长,别太快,人眼会察觉突变
+
+      # ---- 下面是算出来的,不用改 ----
+      measured_k: "{{ states(cct_source) | float(0) }}"
+      # 钳位到灯带物理范围(第 ③ 道锁)
+      target_k: "{{ [lamp_min_k, [measured_k | round(0) | int, lamp_max_k] | min] | max }}"
+      # 拿灯**当前实际**色温做比较,而不是记一个"上次下发的值"。
+      # 好处:手动改过灯之后同步会自动把它拉回来,而且不需要额外存状态,
+      # HA 重启也不会错乱。
+      # 灯没上报色温时(灯组成员色温模式不一致、或刚开灯还没上报)这里是 0,
+      # 于是死区必然通过、强行下发一次 —— 这正是想要的行为。
+      current_k: "{{ state_attr(cct_light, 'color_temp_kelvin') | float(0) }}"
+
+    conditions:
+      - condition: state
+        entity_id: input_boolean.ph_daylight_sync
+        state: "on"
+
+      # === 门闩(第 ① 道锁)===
+      - condition: state
+        entity_id: input_boolean.ph_daylight_latch
+        state: "off"
+
+      # 灯关着就不管 —— 日光同步只负责"灯开着的时候色温是对的",
+      # 不负责开灯。开关灯是人或别的自动化的事。
+      - condition: template
+        value_template: "{{ is_state(cct_light, 'on') }}"
+
+      # 色温读数有效(固件侧已经把饱和/太暗的读数丢掉了,这里再挡一次
+      # unknown / unavailable / 刚重启还没数)
+      - condition: template
+        value_template: "{{ states(cct_source) is is_number }}"
+
+      # 天太暗就别跟。夜里窗外没光,色温读数是暗电流噪声,
+      # 跟着它走会让灯在半夜乱变。
+      - condition: template
+        value_template: "{{ states(lux_source) | float(0) >= min_lux }}"
+
+      # === 死区(第 ② 道锁)===
+      - condition: template
+        value_template: "{{ (target_k - current_k) | abs >= deadband_k }}"
+
+    actions:
+      # 顺序要紧:先上闩,再动灯。
+      # 反过来的话,从 light.turn_on 到上闩之间有一个几十毫秒的窗口,
+      # 传感器如果正好在那一瞬发新值,就漏进来了。
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.ph_daylight_latch
+
+      - action: light.turn_on
+        target:
+          entity_id: "{{ cct_light }}"
+        data:
+          color_temp_kelvin: "{{ target_k }}"
+          transition: "{{ transition_s }}"
+
+      # 冻结期:灯正在渐变,传感器的滑动平均窗口里还混着渐变过程中的旧光。
+      # 这段时间的读数全部不采信。
+      - delay:
+          seconds: "{{ settle_s }}"
+
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.ph_daylight_latch
+
+  # ---------------------------------------------------------------------------
+  # 门闩防卡死
+  # ---------------------------------------------------------------------------
+  # 上面那条自动化在 delay 中间被打断的话(HA 重启、重载自动化、手动停止),
+  # 落闩那一步就永远执行不到,门闩会一直卡在 on,日光同步从此静默失效 ——
+  # 而且不会报错,你只会觉得"这功能好像没用",查起来很费劲。
+  # 这条负责把它捞回来。
+  - id: ph_daylight_latch_failsafe
+    alias: "日光同步 · 门闩防卡死"
+    description: 门闩卡在 on 超过 10 分钟、或 HA 重启后,强制解锁。
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id: input_boolean.ph_daylight_latch
+        to: "on"
+        for: "00:10:00"
+      - trigger: homeassistant
+        event: start
+    actions:
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.ph_daylight_latch

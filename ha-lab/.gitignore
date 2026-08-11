@@ -1,0 +1,8 @@
+# 令牌等机密，绝不进版本库
+.env
+
+# 编译产物
+mouse-bridge/macos/mouse-source
+
+# 本地实际配置（从 config.example.json 复制）
+mouse-bridge/config.json

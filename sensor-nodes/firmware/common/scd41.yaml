@@ -1,0 +1,77 @@
+# SCD41 —— NDIR CO2 + 温湿度(三个节点都有)
+#
+# ============================================================================
+# ⚠️ 装机必做:手动 forced calibration。不做这一步读数就是错的。
+# ============================================================================
+# 三个节点的自动自校准(ASC)一律关闭 —— 包括窗边那个。
+#
+# 为什么全关:ASC 的前提是"传感器每周至少见一次约 420ppm 的室外空气",它拿最近
+# 一周的最低读数当零点。全屋只有一扇窗,卧室和客厅靠里的节点长期见不到真正的室外
+# 空气,ASC 会把偏高的基线当零点,读数越漂越低 —— 越缺氧显示得越正常,这是最坏的
+# 失效方向。窗边那个理论上够用,但开窗频率是靠人的习惯赌的,不值得为省一次校准去赌,
+# 干脆三个统一关掉、统一手动校准。
+#
+# 装机流程(每个节点各做一次,以后每年复校一次):
+#   1. 节点通电,把传感器拿到室外通风处(避开车流、避开人呼气,别放在墙角)
+#   2. 原地放 5 分钟以上,让读数走稳(SCD41 要求校准前在稳定浓度下连续测 3 分钟以上)
+#   3. 在 HA 里按下这个节点的「SCD41 强制校准到 420ppm」按钮
+#   4. 拿回室内装好
+# 420ppm 是 2026 年的室外本底值。校准完读数会跳一下,属正常。
+# ============================================================================
+
+sensor:
+  - platform: scd4x
+    id: scd41
+    address: 0x62
+    update_interval: 60s
+
+    # periodic:传感器内部每 5s 测一次,我们每 60s 取一次最新值。
+    # 如果实测发现自发热把温度顶高太多(SCD41 在 periodic 下典型自热 1~2°C),
+    # 改成 low_power_periodic(内部 30s 一次,自热约减半),update_interval 保持 60s。
+    measurement_mode: periodic
+
+    # 见文件头的大段说明。改成 true 之前先把上面读完。
+    automatic_self_calibration: false
+
+    # 传感器自身发热导致的温度偏移补偿。4°C 是 Sensirion 的出厂默认值,对应
+    # "芯片直接焊在小模块板上、外壳通风良好"的场景。装进外壳后拿一支靠谱的
+    # 温度计对一次,差多少就在这里加减多少。这个值偏了,CO2 读数会跟着偏。
+    temperature_offset: 4.0
+
+    # 海拔补偿:CO2 读数对气压敏感。填你家海拔(米)能提高绝对精度。
+    # 不填的话按海平面算,内陆城市会有个位数百分比的系统偏差。
+    # ⚠️ 需要替换:改成你所在地的海拔后取消注释。
+    # altitude_compensation: 50
+
+    co2:
+      name: "CO₂"
+      id: co2
+      accuracy_decimals: 0
+      filters:
+        - filter_out: nan
+
+    temperature:
+      name: "温度"
+      id: air_temperature
+      accuracy_decimals: 1
+      filters:
+        - filter_out: nan
+
+    humidity:
+      name: "湿度"
+      id: air_humidity
+      accuracy_decimals: 0
+      filters:
+        - filter_out: nan
+
+button:
+  # 装机校准用。误按一次不会毁掉传感器(可以在室外重做一次),但在室内按下去
+  # 会把当前的室内浓度硬认成 420ppm,之后读数会一直偏低,所以放在 config 分类里
+  # 而不是主界面。
+  - platform: template
+    name: "SCD41 强制校准到 420ppm"
+    entity_category: config
+    on_press:
+      - scd4x.perform_forced_calibration:
+          value: 420
+          id: scd41

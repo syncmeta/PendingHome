@@ -1,0 +1,24 @@
+# cct-driver 是独立仓库（见 README），不并入本库
+/cct-driver/
+
+# 凭据：HA 长期访问令牌、米家证书私钥、本地实际配置
+.env
+token.env
+secrets.yaml
+**/mouse-bridge/config.json
+
+# 迁移备份包（内含上面那些凭据）
+*.tgz
+
+# 磁盘镜像：又大又含凭据
+*.img
+*.img.gz
+
+# 构建产物
+.esphome/
+.venv/
+__pycache__/
+*.pyc
+ha-lab/mouse-bridge/macos/mouse-source
+
+.DS_Store

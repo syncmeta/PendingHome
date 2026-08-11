@@ -1,0 +1,36 @@
+# Lima 全局网络配置 —— 由 scripts/01-up.sh 安装到 ~/.lima/_config/networks.yaml
+#
+# 与 Lima 默认模板的两处差异：
+#   1. socketVMNet 指向 /opt/socket_vmnet/bin/socket_vmnet
+#      Lima 要求这个可执行文件（及其所有父目录）归 root 所有、用户不可写，
+#      因为它是通过 sudo 拉起的。Homebrew 装的那份在 /opt/homebrew 下，属主是普通
+#      用户，Lima 会直接拒绝。所以 00-sudo-setup.sh 会把它复制一份到 /opt/socket_vmnet。
+#   2. bridged.interface 改成 en7 —— 这台 Mac 接局域网(192.168.1.0/24)的实际网卡。
+#      换网卡/换机器时改这里，再重新跑 01-up.sh。
+paths:
+  socketVMNet: "/opt/socket_vmnet/bin/socket_vmnet"
+  varRun: /private/var/run/lima
+  sudoers: /private/etc/sudoers.d/lima
+
+group: admin
+
+networks:
+  user-v2:
+    mode: user-v2
+    gateway: 192.168.104.1
+    netmask: 255.255.255.0
+  shared:
+    mode: shared
+    gateway: 192.168.105.1
+    dhcpEnd: 192.168.105.254
+    netmask: 255.255.255.0
+  bridged:
+    # 桥接：虚拟机直接挂在物理局域网上，向家里路由器要 DHCP，
+    # 拿到独立的 192.168.1.x —— 这是模拟 t630 裸机的关键。
+    mode: bridged
+    interface: en7
+  host:
+    mode: host
+    gateway: 192.168.106.1
+    dhcpEnd: 192.168.106.254
+    netmask: 255.255.255.0

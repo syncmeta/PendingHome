@@ -1,0 +1,58 @@
+# 公共底座 —— 三个传感节点共用
+#
+# 由 node-*.yaml 通过 packages 引入,必须传入 vars:device_name / friendly_name。
+# wifi/api/ota/secrets 的写法与 cct-driver/firmware/ 保持一致(同一份 secrets 键名)。
+#
+# 硬件:Seeed XIAO ESP32-C3,USB-C 常通供电(CO2 要连续测,电池不现实)。
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+
+esp32:
+  board: seeed_xiao_esp32c3
+  framework:
+    type: esp-idf
+
+# XIAO ESP32-C3 没有 USB-UART 桥,USB 口直连芯片的 USB-Serial-JTAG 外设。
+# 不指定 hardware_uart 的话串口日志会走 GPIO21/20(排针上的 TX/RX),插 USB 看不到。
+# 首刷时想看日志就靠这行;之后正常走网络(esphome logs)。
+logger:
+  level: INFO
+  hardware_uart: USB_SERIAL_JTAG
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "${device_name} Fallback"
+
+captive_portal:
+
+sensor:
+  - platform: wifi_signal
+    name: "WiFi 信号"
+    update_interval: 60s
+    entity_category: diagnostic
+
+  - platform: uptime
+    name: "运行时长"
+    update_interval: 60s
+    entity_category: diagnostic
+
+binary_sensor:
+  - platform: status
+    name: "运行状态"
+
+button:
+  - platform: restart
+    name: "重启"
+    entity_category: diagnostic

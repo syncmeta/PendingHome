@@ -1,0 +1,150 @@
+# Debian 12 虚拟机 —— Home Assistant 试验台
+#
+# 定位：在 Mac 上模拟一台常开的 Linux 裸机（目标机器见 ../../ha-home/）。
+# 关键点是 networks 里的 bridged —— 虚拟机会挂到物理局域网上，
+# 自己向路由器要一个 192.168.1.x，而不是躲在 NAT 后面。
+# 这样 Home Assistant 的 mDNS / SSDP 设备发现（小米设备靠这个）才能正常工作。
+#
+# 用法见 ../README.md，不要直接 limactl start 这个文件，走 scripts/01-up.sh。
+
+base:
+- template:debian-12
+
+# Apple 虚拟化框架，比 QEMU 快很多。
+# 注意：这里跑的是 arm64 的 Debian，而 T630 是 x86_64。
+# 对本试验台要验的东西（Docker + HA + 局域网发现）没有影响，
+# 但将来往 T630 上搬时镜像要换 amd64 的那一份。
+vmType: vz
+
+cpus: 2
+memory: "4GiB"
+disk: "40GiB"
+
+networks:
+# 桥接网卡 —— 定义在 ~/.lima/_config/networks.yaml 里，实际桥到 Mac 的 en7。
+- lima: bridged
+
+# DNS 必须绕开宿主机 —— 这是踩过的坑，别改回默认。
+# Lima 默认开 hostResolver，虚拟机的域名解析会转给 Mac 去做。但 Mac 上挂着
+# Clash TUN，它对所有域名返回 198.18.x.x 这类 fake-IP —— 那只在 Mac 的 TUN
+# 内部有意义，桥接出去的虚拟机拿到这种地址根本没法路由，表现就是
+# 「ping 网关通、按 IP 访问通，但所有域名访问一律超时」。
+# 关掉 hostResolver 改用公共 DNS，虚拟机就拿到真实 IP 了。
+# T630 上没有这个问题（旁边没有跑 Clash 的 Mac），这几行留着也无害。
+hostResolver:
+  enabled: false
+dns:
+- 223.5.5.5
+- 119.29.29.29
+
+# Mac 上的 ha-lab/ 目录只读挂进来，方便把 compose 文件同步进虚拟机。
+# 注意 HA 的运行时数据不在这里，在虚拟机内的 /opt/ha/config（见 README 的「数据在哪」）。
+mounts:
+- location: "~/Untitled/PendingHome/ha-lab"
+  mountPoint: "/mnt/ha-lab"
+  writable: false
+
+# 8123 不做端口转发 —— 我们要的就是从局域网直连虚拟机的 IP。
+portForwards:
+- ignore: true
+  guestPortRange: [1, 65535]
+
+provision:
+# ---- 0. 抢在一切之前把 DNS 掰正 ----
+# 症状：ping 网关通、按 IP 访问通，但所有域名访问一律超时（拉镜像、访问小米云全挂）。
+# 原因：eth0 是 Lima 的 user 网卡，cloud-init 给它写死了 nameserver 192.168.5.2，
+# 那个地址最终转给 Mac 去解析，而 Mac 上挂着 Clash TUN —— 它对所有域名返回
+# 198.18.x.x 的 fake-IP。fake-IP 只在 Mac 的 TUN 内部有意义，桥接出去的虚拟机
+# 拿到这种地址根本没法路由。解析"成功"了，连不上，所以表现成超时而不是解析失败。
+# 对策：把 eth0 的 DNS 也改成公共 DNS，两块网卡就都拿真实 IP 了。
+# T630 上没有这个问题（旁边没有跑 Clash 的 Mac），这段留着也无害。
+- mode: system
+  script: |
+    #!/bin/bash
+    set -eux -o pipefail
+    # 走过的弯路，别重走：改 netplan（use-dns:false + nameservers）没用 ——
+    # cloud-init 生成的 50-cloud-init.yaml 把 192.168.5.2 静态写死在 eth0 上，
+    # 后来的 netplan 文件是追加而不是替换，systemd-resolved 仍然优先用它。
+    # 所以直接把 /etc/resolv.conf 固化成普通文件（原本是指向 resolved 的软链），
+    # glibc 直接读它，链路优先级就与我们无关了。
+    rm -f /etc/resolv.conf
+    cat >/etc/resolv.conf <<'EOF'
+    # 由 ha-lab 的 lima provision 固化，不要改回 systemd-resolved 的软链。
+    nameserver 223.5.5.5
+    nameserver 119.29.29.29
+    options timeout:2 attempts:2
+    EOF
+    chmod 644 /etc/resolv.conf
+
+# ---- 1. 确保桥接网卡真的起来并拿到 DHCP ----
+# Lima 会把额外网卡配成 lima0 并交给 systemd-networkd，但 Debian 云镜像默认用
+# 的是 cloud-init 生成的配置，两边偶尔会打架。这里显式补一份 networkd 配置兜底。
+- mode: system
+  script: |
+    #!/bin/bash
+    set -eux -o pipefail
+    mkdir -p /etc/systemd/network
+    cat >/etc/systemd/network/20-lima0.network <<'EOF'
+    [Match]
+    Name=lima0
+
+    [Link]
+    # 这条网络的实际路径 MTU 是 1480，不是以太网默认的 1500。
+    # 按 1500 发包时大包会被上游丢掉，而 ICMP「需要分片」的通知又没回来，
+    # 结果是 TCP 能建连、小请求正常，但批量下载卡死 —— 实测同一个文件
+    # MTU 1500 只有 266 KB/s，改 1480 后 887 KB/s。
+    # 换网络环境后要重新量：
+    #   for s in 1452 1456 1460 1464 1472; do
+    #     ping -c1 -M do -s $s 223.5.5.5 >/dev/null 2>&1 && echo "$s 通" || echo "$s 不通"
+    #   done
+    # 最大「通」的那个 payload + 28 就是这里该填的值。
+    MTUBytes=1480
+
+    [Network]
+    DHCP=yes
+
+    [DHCPv4]
+    UseDomains=yes
+    EOF
+    systemctl enable --now systemd-networkd
+    systemctl restart systemd-networkd
+
+# ---- 2. 装 Docker（官方源，不用 Debian 自带的旧版 docker.io）----
+- mode: system
+  script: |
+    #!/bin/bash
+    set -eux -o pipefail
+    command -v docker >/dev/null 2>&1 && exit 0
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+    apt-get install -y ca-certificates curl gnupg
+    install -m 0755 -d /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/debian/gpg \
+      -o /etc/apt/keyrings/docker.asc
+    chmod a+r /etc/apt/keyrings/docker.asc
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian bookworm stable" \
+      >/etc/apt/sources.list.d/docker.list
+    apt-get update
+    apt-get install -y docker-ce docker-ce-cli containerd.io \
+      docker-buildx-plugin docker-compose-plugin
+    systemctl enable --now docker
+
+# ---- 3. 把当前用户加进 docker 组，免得每条命令都 sudo ----
+- mode: system
+  script: |
+    #!/bin/bash
+    set -eux -o pipefail
+    usermod -aG docker "{{.User}}"
+
+# 起来之前先确认 Docker 可用，避免 01-up.sh 抢跑
+probes:
+- description: "docker to be installed"
+  script: |
+    #!/bin/bash
+    set -eux -o pipefail
+    if ! timeout 300s bash -c "until command -v docker >/dev/null 2>&1; do sleep 3; done"; then
+      echo >&2 "docker is not installed yet"
+      exit 1
+    fi
+  hint: |
+    看 /var/log/cloud-init-output.log 里 apt 装 docker 那段是不是失败了。

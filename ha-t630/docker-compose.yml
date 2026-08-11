@@ -1,0 +1,35 @@
+# 部署在惠普 t630(Debian 12 + Docker,系统装在 M.2 SSD)。
+# HomeKit 依赖 mDNS/Bonjour + 动态端口 => 两个容器都用 host 网络。
+# 数据都落在本目录下的独立子目录(homeassistant/ 和 scrypted/),便于整体备份/迁移。
+
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: homeassistant
+    restart: unless-stopped
+    network_mode: host                 # HomeKit / 设备发现需要
+    volumes:
+      - ./homeassistant/config:/config
+      - /run/dbus:/run/dbus:ro         # 蓝牙/部分集成需要,可留
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - TZ=Asia/Shanghai
+
+  scrypted:
+    image: ghcr.io/koush/scrypted:latest
+    container_name: scrypted
+    restart: unless-stopped
+    network_mode: host                 # HKSV / HomeKit 配对必须 host 网络
+    volumes:
+      - ./scrypted/volume:/server/volume   # 独立可搬走的数据目录(含 HomeKit 桥身份)
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - TZ=Asia/Shanghai
+      - SCRYPTED_INSTALL_ENVIRONMENT=docker
+    # ↓↓↓ 当前摄像头零转码,不需要硬件加速。将来若要 VAAPI 硬转,取消下面注释,
+    #     并在宿主机 apt install mesa-va-drivers,再 docker compose up -d 重建。
+    # devices:
+    #   - /dev/dri:/dev/dri
+    # group_add:
+    #   - video
+    #   - render

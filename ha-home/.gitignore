@@ -1,0 +1,15 @@
+# 迁移备份包里有凭据（米家证书私钥、HA 账号、长期访问令牌），绝不进版本库
+*.tgz
+migrate/*.tgz
+
+# 磁盘镜像：又大又含上面那些凭据
+*.img
+*.img.gz
+image/*.img
+image/*.img.gz
+
+# 令牌
+.env
+token.env
+
+.DS_Store
