@@ -4,7 +4,8 @@
   "ha_url": "http://127.0.0.1:8123",
   "token_env": "HA_TOKEN",
 
-  "_mice说明": "key 是鼠标的设备标识，用 macos/mouse-source --list（或 Linux 上 linux/evdev-source.py --list）查。两个鼠标型号不同，所以这个标识唯一且换 USB 口也不变。",
+  "_mice说明": "key 是鼠标的设备标识，用 macos/mouse-source --list（或 Linux 上 linux/evdev-source.py --list）查，照抄即可。",
+  "_两只同款说明": "两个接收器型号相同时（小米那两个连序列号都没有，一个可区分字段都没有），--list 会给出带插口的写法 2717:003b@1-1.5，必须用它才分得出谁是谁。代价：标识跟的是插口不是鼠标，接收器换个 USB 口插绑定就跟着变，插好别乱动。",
   "_色温区间说明": "color_temp_kelvin_range 可选，只在实体自报的色温区间不可信时才写。踩过的坑：HomeKit 接进来的小米吸顶灯把上限报成 20000K，实际灯只到 6100K，不夹住的话滚轮一路滚到两万、灯早就不动了，用起来像坏了。",
   "mice": {
     "2717:003b": {
