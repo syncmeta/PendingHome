@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""嘉立创订单追溯二维码的白油块(8×8mm 实心白丝印)+ 域名文字标注。
+"""嘉立创订单追溯二维码的白油块(8×8mm 实心白丝印)。
 
 背景:首板改用哑黑阻焊,嘉立创的订单二维码在黑底上扫不出来,要求文件里
 预留一块白油方块,它再往白底上喷深色二维码(下单页选「8*8mm」+
@@ -8,10 +8,12 @@
 本脚本取代 gen_qr.py:
   1. 清除原自制二维码(反色,174 个 F.SilkS 实心矩形)所在窗口的全部
      板级丝印矩形——包括本脚本上次生成的白油块,故可重复运行;
-  2. 在原二维码油墨区中心放一个 8×8mm 的 F.SilkS 实心矩形;
-  3. 二维码内容(http://cct-driver.local)改用普通丝印文字保留,放在
-     白油块下方(整板旋转 180° 安装后位于块的上方),字号与板上其他
-     功能标注一致(0.7mm),朝向同为 180°。
+     顺带清掉早先那行 `cct-driver.local` 明码文字(见下);
+  2. 在原二维码油墨区中心放一个 8×8mm 的 F.SilkS 实心矩形。
+
+2026-08-12:块下方那行 `cct-driver.local` 明码按要求删除,本脚本不再生成,
+只保留清理逻辑(重跑不会把它带回来)。空出来的位置现在放板名横排文字,
+由 gen_silk.py 生成,不在本脚本的清理窗口内(它左沿 85.86 < CLEAN 左界 95)。
 
 嘉立创对白油块的要求:加在大铜面或基材区域,避开走线/钻孔/阻焊开窗/
 字符。该区域是 GND 大铜面,无顶层走线、无过孔、无焊盘、无其他丝印;
@@ -26,10 +28,7 @@ BLOCK = 8.0                 # 白油块边长 mm(下单页选的 8*8mm)
 CX, CY = 101.8, 91.8        # 块中心 = 原二维码油墨区(96.8~106.8 / 86.8~96.8)中心
 CLEAR = 0.5                 # 白油块四周要求的最小净空 mm
 EDGE_MIN = 3.0              # 白油块离板边最小距离 mm
-TEXT = "cct-driver.local"   # 原二维码内容(http://cct-driver.local)
-TSIZE, TTHICK = 0.8, 0.13   # 同板上功能标注(如保险丝规格那条),且 ≥DRC 最小字高 0.8
-TANGLE = 180                # 全板丝印统一 180°(端子朝下,倒装上墙后正读)
-TY = 97.4                   # 文字中心 y(块下沿 95.8 之下,留 >0.5mm)
+TEXT = "cct-driver.local"   # 已废弃的明码文字,只用于清理(不再生成)
 CLEAN = (95.0, 85.0, 108.0, 99.0)   # 清理窗口 x1,y1,x2,y2(覆盖旧 QR 含静区)
 
 board = pcbnew.LoadBoard("cct-main.kicad_pcb")
@@ -38,19 +37,6 @@ FSILK = pcbnew.F_SilkS
 
 BX1, BY1 = CX - BLOCK / 2, CY - BLOCK / 2
 BX2, BY2 = CX + BLOCK / 2, CY + BLOCK / 2
-
-# 文字对象先建好并量出实际包围盒——GetBoundingBox() 要在动板(增删图元)之前
-# 调用,之后 swig 返回的 BOX2I 包装会失效。
-text = pcbnew.PCB_TEXT(board)
-text.SetText(TEXT)
-text.SetPosition(VECTOR2I(FromMM(CX), FromMM(TY)))
-text.SetTextSize(VECTOR2I(FromMM(TSIZE), FromMM(TSIZE)))
-text.SetTextThickness(FromMM(TTHICK))
-text.SetLayer(FSILK)
-text.SetTextAngleDegrees(TANGLE)
-_tb = text.GetBoundingBox()
-TX1, TY1 = mm(_tb.GetLeft()), mm(_tb.GetTop())
-TX2, TY2 = mm(_tb.GetRight()), mm(_tb.GetBottom())
 
 def in_clean(x1, y1, x2, y2):
     return CLEAN[0] <= x1 and CLEAN[1] <= y1 and x2 <= CLEAN[2] and y2 <= CLEAN[3]
@@ -159,18 +145,6 @@ s.SetFilled(True)
 s.SetWidth(0)
 s.SetLayer(FSILK)
 board.Add(s)
-
-# ---------- 5. 放域名文字 ----------
-print(f"文字 {TEXT!r} {TX1:.2f},{TY1:.2f} - {TX2:.2f},{TY2:.2f}")
-# 文字不得压进白油块及其 0.5mm 净空区
-tg = box_gap((TX1, TY1, TX2, TY2), BX1 - CLEAR, BY1 - CLEAR, BX2 + CLEAR, BY2 + CLEAR)
-assert tg >= 0, f"文字侵入白油块净空区 {tg:.2f}mm"
-# 文字与其他障碍(白油块自身不在障碍表内)保持 0.15mm
-twg, tlbl = nearest(TX1, TY1, TX2, TY2)
-print(f"文字最近障碍 {tlbl} 距 {twg:.2f}mm;离板边 "
-      f"{min(TX1 - ex1, TY1 - ey1, ex2 - TX2, ey2 - TY2):.2f}mm")
-assert twg >= 0.15, f"文字净空不足 {twg:.2f}mm({tlbl})"
-board.Add(text)
 
 pcbnew.SaveBoard("cct-main.kicad_pcb", board)
 print("✅ 已保存:白油块 1 个 + 文字 1 条")

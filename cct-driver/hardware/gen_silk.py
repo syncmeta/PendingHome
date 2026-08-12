@@ -105,8 +105,8 @@ label(19.2, 5.2, "+", 1.1, bold=True)
 label(2.9, 5.2, "-", 1.1, bold=True)
 # 保险丝(右缘竖排)
 label(107.6, 30.0, "FUSE 4A-T x6 / MAIN 15A", 0.8, angle=90)
-# 板名版本(右缘竖排)
-label(107.6, 75.0, "CCT-DRIVER v1.0 2026-08", 0.9, angle=90, bold=True)
+# 板名(白油块下方横排,180° 与全板一致;实测宽 21.87mm,最近障碍 TP4 位号 1.34mm)
+label(96.8, 98.0, "PendingHome CCT LED Driver 1", 0.9, angle=180, bold=True)
 # 底部接口
 for (ref_, txt) in [("J9","I2C 3.3V"), ("J10","UART 5V"), ("J11","SW1-4 DRY")]:
     pos = None
