@@ -48891,17 +48891,6 @@
 			)
 		)
 	)
-	(gr_text "cct-driver.local"
-		(at 101.8 97.4 180)
-		(layer "F.SilkS")
-		(uuid "5ab2d781-3161-49fd-8950-833d44ec93e1")
-		(effects
-			(font
-				(size 0.8 0.8)
-				(thickness 0.13)
-			)
-		)
-	)
 	(gr_text "FUSE 4A-T x6 / MAIN 15A"
 		(at 107.6 30 270)
 		(layer "F.SilkS")
@@ -48913,8 +48902,8 @@
 			)
 		)
 	)
-	(gr_text "CCT-DRIVER v1.0 2026-08"
-		(at 107.6 75 270)
+	(gr_text "PendingHome CCT LED Driver 1"
+		(at 96.8 98 180)
 		(layer "F.SilkS")
 		(uuid "ec9d8483-2693-46ce-ac78-f06a296a52eb")
 		(effects
