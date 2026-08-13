@@ -64,6 +64,34 @@ $EDITOR hardware/check-netclasses.py
 **用 GUI 前后的习惯**：开之前确认 `cct-main.kicad_pro` 已提交（工作区干净），
 关掉之后 `git diff hardware/cct-main.kicad_pro` 看一眼再决定要不要留。
 
+## ⚠️ 料号只有一个源头：`gen_sch.py`
+
+`hardware/gen_sch.py` 里的 `part(位号, C编号, {引脚: 网络})` 表是**全工程唯一的料号出处** ——
+`gen_bom.py` 直接解析它来出 BOM。板文件里每个封装虽然也带一份 Value 字段，但那只是
+`F.Fab` 层上给人看的文字，**不进任何出货 Gerber，也没有任何一步会自动更新它**。
+
+改完料号请顺手跑这两条：
+
+```bash
+KP=/Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework/Versions/Current/bin/python3
+$KP hardware/gen_sync_values.py     # 把板文件 Value 同步成 gen_sch.py 里的真实料号
+$KP hardware/gen_sch.py             # 重新生成原理图（顺便验证生成器还跑得动）
+```
+
+**为什么专门写这一条**：2026-08-07 把 6 个精密电阻 + 1 个 C0G 电容换成真实料号时，
+只改了 `gen_sch.py`。结果 ——
+
+- `gen_sch.py` 从那天起**一跑就报「库缺失 7 个」**（那 7 个料号的符号没下进符号库），
+  也就是说**原理图整整六天没法重新生成，而且没人发现** —— 因为没有任何一步会去碰它；
+- 板文件里那 7 个 Value 停在旧料号，重新生成原理图时 KiCad 的 schematic-parity
+  会逐个报 `Value (R62) doesn't match symbol value`。
+
+两件都已修好（符号别名表 + `gen_sync_values.py`）。**`gen_sch.py` 能不能跑通，
+本身就是一个健康检查** —— 改完原理图相关的东西，跑一次它，比什么都省事。
+
+> 📌 `--check` 模式只报告不写盘：`$KP hardware/gen_sync_values.py --check`，
+> 适合提交前自检。
+
 ## 生产文件
 
 下单用的三个文件都在 `hardware/`：
