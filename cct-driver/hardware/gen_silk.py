@@ -3,6 +3,12 @@
 1. 位号统一字号(常规 0.7,密集区 0.55),避障重摆(候选环搜索)
 2. 功能标注:通道号/引脚名/24V 输入/保险丝规格/接口名/板名版本/测试点网络名
 运行后需重新 DRC 检查丝印计数。
+
+⚠️ 坐标系:板文件的方向**就是上墙安装的方向**——接线端子(J1/J3–J8)在下方
+y≈137,传感器接口(J2/J9/J10/J11)在上方 y≈4。见 gen_rotate180.py。
+所以本脚本里所有文字一律用自然角度(横排 0°、左缘竖排 90°),
+**不要**再写 `angle=180` 之类的"预转补偿"——那是 2026-08-13 之前的老做法,
+而且对位号根本无效(KiCad 的 keep-upright 会把封装自带文字扶正)。
 """
 import gc, math
 gc.disable()
@@ -92,28 +98,29 @@ def pad_pos(ref, num):
                     return mm(pp.x), mm(pp.y)
     return None
 
-# 通道端子:CHn 与引脚名
+# 通道端子(板子下缘):CHn 与引脚名。CH1 在右、CH6 在左
 for i, J in enumerate(["J3","J4","J5","J6","J7","J8"]):
-    col = 30.0 + 14.0*i
-    label(col, 1.7, f"CH{i+1}", 1.0, bold=True)
-    label(col - 3.81, 13.9, "WW", 0.6)
-    label(col, 13.9, "CW", 0.6)
-    label(col + 3.81, 13.9, "V+", 0.6)
-# 24V 输入
-label(11.0, 14.5, "DC 24V IN  MAX 12A", 0.65, bold=True)
-label(19.2, 5.2, "+", 1.1, bold=True)
-label(2.9, 5.2, "-", 1.1, bold=True)
-# 保险丝(右缘竖排)
-label(107.6, 30.0, "FUSE 4A-T x6 / MAIN 15A", 0.8, angle=90)
-# 板名(白油块下方横排,180° 与全板一致;实测宽 21.87mm,最近障碍 TP4 位号 1.34mm)
-label(96.8, 98.0, "PendingHome CCT LED Driver 1", 0.9, angle=180, bold=True)
-# 底部接口
+    col = 80.0 - 14.0*i
+    label(col, 143.3, f"CH{i+1}", 1.0, bold=True)
+    label(col + 3.81, 131.1, "WW", 0.6)
+    label(col, 131.1, "CW", 0.6)
+    label(col - 3.81, 131.1, "V+", 0.6)
+# 24V 输入(下缘最右)
+label(99.0, 130.5, "DC 24V IN  MAX 12A", 0.65, bold=True)
+# 极性号对准 J1 的两个脚(间距 7.62,中心 99.0),与板上一致
+label(95.19, 133.7, "+", 1.1, bold=True)
+label(102.81, 133.7, "-", 1.1, bold=True)
+# 保险丝(左缘竖排)
+label(2.4, 115.0, "FUSE 4A-T x6 / MAIN 15A", 0.8, angle=90)
+# 板名(白油块下方横排;实测宽 21.87mm,最近障碍 TP4 位号 1.34mm)
+label(13.2, 47.0, "PendingHome CCT LED Driver 1", 0.9, bold=True)
+# 上缘接口:标注放在封装下方(朝板内)
 for (ref_, txt) in [("J9","I2C 3.3V"), ("J10","UART 5V"), ("J11","SW1-4 DRY")]:
     pos = None
     for fp in board.GetFootprints():
         if fp.GetReference() == ref_:
             bb = fp.GetBoundingBox(False)
-            pos = ((mm(bb.GetLeft())+mm(bb.GetRight()))/2, mm(bb.GetTop()) - 0.9)
+            pos = ((mm(bb.GetLeft())+mm(bb.GetRight()))/2, mm(bb.GetBottom()) + 0.9)
     if pos:
         label(pos[0], pos[1], txt, 0.7)
 # 测试点网络名
