@@ -150,26 +150,127 @@ python3 ws_cmd.py '{"type":"config_entries/get"}'   # 看 domain=zha 那条的 s
 > `unknown_error`，**看着像 API 坏了，其实是集成没起来**。先查
 > `config_entries/get` 再查设备，顺序反了会误判。
 
+## 静态绑定做完了，协调器回到 `.32`
+
+✅ **2026-08-13 11:49 实测。** 路由器上给 `12:00:00:AB:D1:C8` 做了 DHCP 静态
+地址分配、盒子断电重插之后：
+
+| 判据 | 结果 |
+|---|---|
+| ARP | `192.168.1.32` ← `12:0:0:ab:d1:c8`（`.28` 已空）|
+| TCP `192.168.1.32:6636` | 可连（在此之前 HA 报 `[Errno 113] No route to host`）|
+| ZHA 配置项 | `state=loaded`、`reason=null`（此前是 `setup_retry`）|
+
+**重连 ZHA 不用重启 HA**，命令行调一次服务就行：
+
+```bash
+curl -s -X POST -H "Authorization: Bearer $HA_TOKEN" -H "Content-Type: application/json" \
+     -d '{"entry_id":"01KZTW8EN38M2P4EK4E3TREQ2T"}' \
+     http://192.168.1.29:8123/api/services/homeassistant/reload_config_entry
+```
+
+> 盒子那会儿还有个附带症状：它赖在 `.28` 时，`6636` 端口**既不拒绝也不应答**
+> （TCP 连接超时，而 `80` 端口正常回 RST）。断电重插一次两个问题一起好，
+> 所以遇到"端口不响应"别急着怀疑固件，先重插。
+
+## LH79221 到底是什么：原始射频帧说了算
+
+⚠️ **2026-08-13 12:02 实测，推翻了上一节的"基本可以断定是人体感应器"。**
+
+打开 ZHA 的深度日志（`zigpy` / `zigpy.zcl` / `bellows` / `homeassistant.components.zha`
+全设 `debug`）之后，抓到了这只设备的原始 ZCL 帧：
+
+```
+[0x77DA:1:0x0500] IasZone:status_change_notification(zone_status=<ZoneStatus.Test: 256>)    → is_on: False
+[0x77DA:1:0x0500] IasZone:status_change_notification(zone_status=<ZoneStatus.Alarm_1: 1>)   → is_on: True
+```
+
+`Test`(bit 8) 是它上电自检报的，`Alarm_1`(bit 0) 才是"我被触发了"。设备本身
+**活得很好**：入网握手完整（`Device_annce` + `Basic` 属性 `model=LH79221`、
+`app_version=31`、`hw_version=100`），信号 LQI 244 / RSSI −38。
+
+所以**光凭 IAS Zone 指纹判不出它是传感器还是按钮** —— 这一族廉价无线按钮就是
+借 IAS Zone 的告警位来上报按压的，指纹和门窗磁、人体感应长得一模一样。
+人坚持说它是"单键自回弹的 Zigbee 无线开关"，与帧数据并不矛盾。
+
+**打开深度日志的办法**（运行时生效，重启 HA 即恢复，不改配置文件）：
+
+```bash
+curl -s -X POST -H "Authorization: Bearer $HA_TOKEN" -H "Content-Type: application/json" \
+     -d '{"zigpy":"debug","zigpy.zcl":"debug","bellows":"debug","homeassistant.components.zha":"debug"}' \
+     http://192.168.1.29:8123/api/services/logger/set_level
+# 然后拉日志看原始帧
+curl -s -H "Authorization: Bearer $HA_TOKEN" http://192.168.1.29:8123/api/error_log \
+  | grep '0x0500.*Decoded ZCL frame: IasZone'
+```
+
+### 为什么这类设备**不会**发 `zha_event`
+
+日志里这一行是关键：
+
+```
+[0x77DA:1:0x0500] No explicit handler for cluster command 0x00: status_change_notification(...)
+```
+
+zigpy 没有为 IAS Zone 的 `status_change_notification` 挂专门的命令处理器，
+ZHA 也就**不会**把它转成 `zha_event`。所以上一节那句"真按钮多半发 `zha_event`、
+触发器要改成 event 类型"**对这只设备不成立** —— 它的按键信息只存在于
+`binary_sensor` 的状态位里，事件总线上什么都没有。
+
+### 排查这类问题的一个坑：`state_reported` 订阅不了
+
+设备重复上报**同一个值**时，HA 只更新实体的 `last_reported`，不会触发
+`state_changed`。想在事件层看见这种"又说了一遍"，只能听 `state_reported` ——
+但 HA 的 websocket **拒绝无过滤订阅**它：
+
+```json
+{"type":"subscribe_events","event_type":"state_reported"}
+→ {"success": false, "error": {"code":"home_assistant_error",
+   "message":"Event filter is required for event state_reported"}}
+```
+
+所以靠 `subscribe_events` 盯按键**天生有盲区**，会把"设备发了但值没变"误判成
+"设备没发"。可靠的办法是轮询 REST 的 `/api/states/<entity>` 比对 `last_reported`，
+或者直接看上面那份 ZHA 深度日志的原始帧。
+
+### 上报历史（`/api/history/period`）
+
+| 时间 (CST) | 状态 | 备注 |
+|---|---|---|
+| 08-13 00:16:49 | `off` | 配对后基线 |
+| 08-13 00:17:39 | `on` | 人第一次按，收到 |
+| 08-13 01:04:05 | `unavailable` | 协调器 IP 漂移，Zigbee 全断 |
+| 08-13 11:04:39 | `off` | 协调器修好，设备回网 |
+| 08-13 11:11:14 | `on` | 人按，收到 |
+| 08-13 11:19:36 → 37 | `off` → `on` | 一秒内一个脉冲 |
+
+人在 00:20、00:51 明确说"按完了"，**历史里一条记录都没有**；11:19–11:49 连续
+盯了 30 分钟（事件订阅 + 每 1.5 秒轮询 `last_reported`）同样**零上报**。
+
+**读作**：它按完会 latch 在 `on` 上，此后重复同一个动作**至少在 HA 这一层
+看不到任何东西**。"第一下有反应、之后全死"是这么来的，不是自动化写错。
+
 ## 状态
 
-⏳ **两个断点，串在一起。**
+⏳ **协调器这条线通了，卡在设备行为上。**
 
-1. ❌ **协调器连不上** —— IP 漂了，见上一节。等路由器做完静态绑定。
-2. ❌ **真正的开关还没配上** —— 见下。
-
-- ✅ ZHA 集成配好了（网络也组好了），但**当前连不上协调器**
+- ✅ 协调器固定在 `192.168.1.32`（路由器静态绑定），ZHA `state=loaded`
 - ✅ 餐厅灯在 HA 里，实测可控
-- ✅ 自动化写好了，但**已停用** —— 见 `automations.dining-switch.yaml` 顶部说明
-- ❌ **那个能按的 Zigbee 开关还没配上**
+- ✅ `LH79221` 在网、信号好，按压走 IAS Zone `Alarm_1`，原始帧已抓到
+- ⏳ **未验证**：重复按压设备到底还发不发帧。这一条决定方案往哪边走
+- ✅ 自动化写好了，但**仍停用** —— 见 `automations.dining-switch.yaml` 顶部说明
 
-顺带一条旁证：`LH79221` 在 HA 里生成的实体叫 `update.lh79221_ren_ti`、
-`binary_sensor.lh79221` —— 名字里那个**「人体」**是设备自己报上来的，
-跟前面读出的 IAS Zone 指纹对得上。基本可以断定它是个人体感应器。
+**下一步取决于那个未验证项**（正挂着原始帧监听等人连按 3 下）：
 
-**为什么把自动化停掉**：它现在指着 `binary_sensor.lh79221`。万一那真是门窗磁
-或人体感应，开个门、走过去，餐厅灯就会**自己动** —— 那正是家规第一条
-（只做氛围和提示、不做自动开关灯）要禁的。身份没确认之前宁可停着。
+- **重复按会发帧** → 帧到了但 HA 状态不动，改 HA 侧：别盯 `state`，
+  改盯 `last_reported`（或用模板/事件过滤的方式接原始上报）。
+- **重复按不发帧** → 是设备自身 latch，得给它配一个 **ZHA quirk**：
+  把 `Alarm_1` 映射成带自动复位（`reset_s`）的实体，这样每按一次都产生
+  干净的 `off → on` 边沿，现有那条 `state` 触发器就能一直用下去。
+  quirk 放 `/opt/ha/config/custom_zha_quirks/`，在 `configuration.yaml` 里
+  用 `zha: custom_quirks_path:` 指过去，需要重启 HA。推文件走 `../deploy.sh`。
 
-**下一步**：确认 `LH79221` 到底是什么、以及那个真正要按的开关是哪个物件，
-把它配进来，再把触发器换成它。**真的按钮类设备多半发 `zha_event`**，
-那样触发器要从 `state` 类型改成 `event` 类型。
+**启用自动化之前仍然必须先定身份。** 只要还没排除"它是门窗磁 / 人体感应"，
+就不能启用 —— 开门或走过去会让餐厅灯自己动，违反家规第一条。
+现有帧数据（单个 `Alarm_1`，无 `Zone Status` 周期上报）跟按钮相符，但**没到
+可以拿家里的灯去赌的程度**；等那 3 下连按的数据到了再定。
