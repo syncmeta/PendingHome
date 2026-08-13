@@ -1,0 +1,55 @@
+# Zigbee 开关 → 餐厅灯
+#
+# 这是 HA 那台机器上 /opt/ha/config/automations.yaml 里那条自动化的**可读副本**。
+# 真正生效的是机器上那份（`configuration.yaml` 里 `automation: !include automations.yaml`），
+# 这份留在仓库里是为了能被 review、被 diff、被讲清楚。改了这份记得同步过去，
+# 反过来也一样。
+#
+# ⚠️ 这条自动化目前是**停用状态**（HA 里 automation.zigbee_kai_guan_can_ting_deng
+#   已 turn_off），因为它指着的那个设备**不是开关**。别急着启用，先看下面。
+#
+# 触发器为什么是 binary_sensor 而不是 zha_event：
+#   本来的设想是"这是个按一下弹回的单键开关，ZHA 把它映射成 binary_sensor，
+#   每按一下翻一次"，所以两个方向的翻转都抓。写死 from/to 是刻意的 ——
+#   不这么写的话，设备掉线再上线（unavailable → on/off）也会被当成一次按键。
+#
+#   但实测这个设想是错的，见下。
+#
+# 实测结果（2026-08-13 00:30 前后）：
+#   配进来的 `LH79221` 从 ZHA 读到的指纹是 **IAS Zone 安防传感器**
+#   （端点 device_type `0x0402`、输入簇 `0x0500`，ZHA 给的端点名就叫
+#   `IAS_ZONE`），身上**没有任何开关该有的簇**（OnOff / Multistate）。
+#   它是电池设备，在线、信号很好（LQI 156 / RSSI −61），但除了入网那一次
+#   `off → on` 之外**再没上报过任何状态**，人按它 HA 这边收不到东西。
+#
+#   也就是说：链路断在最上游，跟这条自动化无关。灯那头是好的，实测可控。
+#
+# 为什么停用而不是留着：
+#   如果这只 `LH79221` 其实是门窗磁 / 人体感应，那开门或走过去就会翻转
+#   `binary_sensor`，餐厅灯会**自己动**。那正是家规里"只做氛围和提示、
+#   不做自动开关灯"要禁的事。设备身份确认之前，宁可停着。
+#
+# 要启用之前必须先确认：那个人真正想按的 Zigbee 开关是哪个设备，
+#   把 `binary_sensor.lh79221` 换成它对应的触发器（真按钮多半发 zha_event，
+#   那样触发器要改成 event 类型，不是这里的 state 类型）。
+#
+# 家规：只响应人的按键，不做任何状态巡检、不定时纠正、不跟手动操作抢。
+#   mode: single 是为了连按时不叠加执行。
+
+- id: zigbee_switch_dining_light_toggle
+  alias: Zigbee 开关 → 餐厅灯
+  description: 按一下墙上那个 Zigbee 开关，餐厅灯翻一次。只在人按键时动。
+  mode: single
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.lh79221
+      from: "off"
+      to: "on"
+    - trigger: state
+      entity_id: binary_sensor.lh79221
+      from: "on"
+      to: "off"
+  actions:
+    - action: light.toggle
+      target:
+        entity_id: light.yeelink_cn_56292508_mono1_s_2_light
