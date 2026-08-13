@@ -289,14 +289,73 @@ event 的触发器都救不了**，这不是写法问题。
 正解是给它配一个 **ZHA quirk**，让 `Alarm_1` 之后自动把 zone_status 复位
 （`zhaquirks` 里的 `reset_s` 那套），这样每按一次都产生干净的 `off → on`。
 
-落地步骤：
+### quirk 已装好（2026-08-13 21:41，人批准重启 HA 后）
 
-1. quirk 放宿主机 `/opt/ha/config/custom_zha_quirks/`（容器里是 `/config/...`）
-2. `configuration.yaml` 加 `zha: custom_quirks_path: /config/custom_zha_quirks`
-3. 重启 HA
+源码在本目录 `custom_zha_quirks/lh79221.py`，**那份是唯一的可读副本**，
+生效的是宿主机上那份，改了记得两边同步。
 
-推文件走 `../deploy.sh`。**写 quirk 之前先核对主机上实际装的 `zhaquirks` 版本**
-—— `reset_s` 那套 API 在版本之间改过，凭记忆写等于埋雷。
+落地步骤（已执行）：
+
+```bash
+# 1. 推文件（/opt/ha/config 是 root 的，借容器写；docker exec 要带 -i 才接 stdin）
+ssh hey@192.168.1.29 'docker exec -i homeassistant sh -c \
+    "mkdir -p /config/custom_zha_quirks && cat > /config/custom_zha_quirks/lh79221.py"' \
+    < ha-home/zigbee/custom_zha_quirks/lh79221.py
+
+# 2. configuration.yaml 末尾加（改前先 cp 一份 .bak-before-zha-quirks）
+#    zha:
+#      custom_quirks_path: /config/custom_zha_quirks
+
+# 3. 重启前先校验，别拿重启当验证手段
+curl -s -X POST -H "Authorization: Bearer $HA_TOKEN" \
+     http://192.168.1.29:8123/api/config/core/check_config      # → {"result":"valid"}
+
+# 4. 重启
+curl -s -X POST -H "Authorization: Bearer $HA_TOKEN" \
+     http://192.168.1.29:8123/api/services/homeassistant/restart
+```
+
+装的时候核对过主机上的实际版本，**别凭记忆写**：
+
+| | |
+|---|---|
+| `zha-quirks` | **2.2.0** |
+| `zigpy` | **2.1.0** |
+| 经典 quirk 的基类 | `from zhaquirks.legacy import CustomDevice`（不是 `zigpy.quirks`）|
+| 复位机制 | `zhaquirks.MotionWithReset` —— 收到 `args[0] & 3` 就起 `call_later(reset_s, _turn_off)`，到点补一条 zone_status=0 |
+
+起来之后确认这两条，缺一不可：
+
+```bash
+# 日志里有这一行才说明自定义 quirk 被加载了
+ssh hey@192.168.1.29 'docker exec homeassistant grep -i quirk /config/home-assistant.log'
+# → WARNING [zhaquirks] Loaded custom quirks. Please contribute them to ...
+
+# 设备上真的套上了才算数（光加载不等于匹配上）
+python3 zha_devices.py    # 看 LH79221 那台的 quirk_applied / quirk_class
+```
+
+### `reset_s` 取值的依据：TSN 证明按压不是重传
+
+定 `reset_s` 之前必须先回答一个问题：一次按压到底发几帧？如果是重传，
+`reset_s` 就得**长**过重传间隔（否则一次按压被拆成好几次翻转）；如果一帧一次，
+就得**短**过人手连按的最小间隔（否则挨得近的两下被并成一下）。
+
+看 ZCL 帧头里的 TSN 就有答案 —— 14:44–14:45 那串连按：
+
+```
+14:44:02.013  '19 66 00 01 ...'      TSN 0x66
+14:44:03.940  '19 67 00 01 ...'      TSN 0x67
+14:44:29.972  '19 68 00 01 ...'      TSN 0x68
+...
+14:45:15.293  '19 70 00 01 ...'      TSN 0x70
+```
+
+**TSN 严格递增、一个不重**，所以每一帧都是独立的一次发送，不是重传。
+于是取小值：`reset_s = 1`（观测到的人手最小间隔约 0.8 秒，留了点余量）。
+
+> 顺带：心跳帧的 TSN 是 `0x73 → 0x76 → 0x79`，每次跳 3 —— 说明设备每个心跳
+> 周期内部发三帧，只有一帧落在这个簇上。
 
 ## 第三个独立故障点：餐厅灯自己会掉线
 
