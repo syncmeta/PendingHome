@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
 """亚克力图纸生成(激光切割 SVG,1:1 mm)。
 
-板框 110×145,安装孔(PCB 坐标):(4,66),(106,80),(4,133),(106,115),M3。
+板框 110×145,安装孔(PCB 坐标):(106,79),(4,65),(106,12),(4,30),M3。
 夹板 = 板框四周 +5mm → 120×155,孔位 = PCB 坐标 +(5,5)。
 
+⚠️ 坐标系:2026-08-13 整块 PCB 绕板心转了 180°(见 gen_rotate180.py),
+板文件的方向此后**就是上墙安装的方向 —— 接线端子在下方**。所以这里
+不再需要「三明治整体转 180° 安装,孔位取旋转后坐标」那套补偿:上下夹板
+直接用 PCB 坐标 +(5,5),背板驱动区直接用 PCB 坐标 +(65,165)。
+
+**实物一点没变**,变的只是图纸的画法:上下夹板等于把旧图整体转 180°
+(120×155 板身与孔位在 180° 旋转下自映射,孔距一模一样),背板则连图都没变。
+
 输出:
-  acrylic/driver-top.svg      顶板:4×M3 + 顶部接线窗(端子插头与出线穿过)
+  acrylic/driver-top.svg      顶板:4×M3 + 底部接线窗(端子插头与出线穿过)
   acrylic/driver-bottom.svg   底板:4×M3 + 20mm 网格 φ5.5 挂孔 + 2 葫芦孔
   acrylic/backing-board.svg   共用背板 240×380:驱动板区 + 电源腰形槽 + 绕线桩孔 + 挂孔/葫芦孔
   acrylic/winding-discs.svg   绕线桩顶盘 φ30 ×6
@@ -16,7 +24,7 @@ from pathlib import Path
 OUT = Path(__file__).parent / "acrylic"
 OUT.mkdir(exist_ok=True)
 
-PCB_HOLES = [(4, 66), (106, 80), (4, 133), (106, 115)]
+PCB_HOLES = [(106, 79), (4, 65), (106, 12), (4, 30)]
 M3 = 3.2 / 2          # M3 通孔半径
 PEG = 5.5 / 2         # 挂钩孔半径(宜家 SKÅDIS 钩 ~φ4.8 / 通用洞洞板钩)
 
@@ -36,7 +44,7 @@ def circle(cx, cy, r):
 def keyhole(cx, cy, flip=False):
     """葫芦孔:大孔 φ9 圆心在 (cx,cy),槽宽 4.5 延伸 8mm(默认向 -y;flip 向 +y)。
     挂 M4/M5 螺丝头(头径 ≤8.5 可穿大孔,杆 ≤4.2 滑入槽)。单一闭合轮廓。
-    倒装(端子朝下)的板:板整体转 180° 安装,槽在板文件坐标里要向 +y(flip=True)。"""
+    图纸方向 = 上墙方向,所以槽口一律朝上(向 -y),挂上去往下滑就锁住。"""
     R, rr = 4.5, 2.25
     import math
     dy = math.sqrt(R*R - rr*rr)
@@ -58,8 +66,8 @@ def slot(cx, cy, length, width, vertical=False):
 b = rect(0.01, 0.01, 119.98, 154.98, r=3)
 for (hx, hy) in PCB_HOLES:
     b += circle(hx + 5, hy + 5, M3)
-# 顶部接线窗:PCB y2~15 → 板 y7~20;x 覆盖 J1+J3-J8(PCB x3~109 → 板 8~114)
-b += rect(8, 7, 106, 13, r=2)
+# 底部接线窗:PCB y130~143 → 板 y135~148;x 覆盖 J1+J3-J8(PCB x1~107 → 板 6~112)
+b += rect(6, 135, 106, 13, r=2)
 svg("driver-top.svg", 120, 155, b)
 
 # ============ 2. 底板 120×155 ============
@@ -68,20 +76,20 @@ occupied = []
 for (hx, hy) in PCB_HOLES:
     b += circle(hx + 5, hy + 5, M3)
     occupied.append((hx + 5, hy + 5, 6))
-# 葫芦孔 ×2:倒装(端子朝下)后位于墙面上部;板坐标 y=137,槽向 +y
+# 葫芦孔 ×2:在板子上缘(挂墙的那一头),板坐标 y=18,槽口朝上
 for kx in (35, 85):
-    b += keyhole(kx, 137, flip=True)
-    occupied.append((kx, 141, 9))
+    b += keyhole(kx, 18)
+    occupied.append((kx, 14, 9))
 # 20mm 网格挂孔(兼容 SKÅDIS 40mm 钩距与通用单点挂钩),边距 ≥10
-for gy in range(20, 150, 20):
+for gy in range(15, 145, 20):
     for gx in range(20, 110, 20):
         if any((gx-ox)**2 + (gy-oy)**2 < (orad+PEG+2)**2 for (ox, oy, orad) in occupied):
             continue
         b += circle(gx, gy, PEG)
 svg("driver-bottom.svg", 120, 155, b)
 
-# ============ 3. 共用背板 240×380(端子朝下版) ============
-# 布局自上而下:葫芦孔 → 电源 LRS-350-24 → 驱动板三明治(倒装,端子朝下)→ 绕线区
+# ============ 3. 共用背板 240×380 ============
+# 布局自上而下:葫芦孔 → 电源 LRS-350-24 → 驱动板三明治(端子朝下)→ 绕线区
 # 所有线(电源出线、灯带线、下行的传感器线)从底部离开背板。
 W, H = 240, 380
 b = rect(0.01, 0.01, W-0.02, H-0.02, r=5)
@@ -100,11 +108,11 @@ for (cx, cy) in [(PX, PY), (PX+215, PY), (PX, PY+115), (PX+215, PY+115)]:
     dx = 5 if cx == PX else -5
     dy = 5 if cy == PY else -5
     b += f'<path d="M {cx} {cy+dy} L {cx} {cy} L {cx+dx} {cy}"/>\n'
-# —— 驱动板区(y 160~315):三明治整体转 180° 安装,孔位取旋转后坐标 ——
+# —— 驱动板区(y 160~315):PCB 坐标直接 +(65,165),不用再转 ——
 DX, DY = 60, 160
 for (hx, hy) in PCB_HOLES:
-    b += circle(DX + 5 + (110 - hx), DY + 5 + (145 - hy), M3)
-# 扎带孔对(φ3.5 ×2):传感器线(接口现朝上)沿两侧下行
+    b += circle(DX + 5 + hx, DY + 5 + hy, M3)
+# 扎带孔对(φ3.5 ×2):传感器线(接口在上)沿两侧下行
 for ty in (180, 220, 260, 300):
     for tx in (51, 189):
         b += circle(tx, ty, 1.75) + circle(tx + 6 if tx < 120 else tx - 6, ty, 1.75)
