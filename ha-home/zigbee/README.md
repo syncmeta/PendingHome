@@ -101,14 +101,70 @@ python3 ws_cmd.py '{"type":"zha/device","ieee":"00:15:8d:00:05:4e:2f:5a"}'
 看返回里的 `signature.endpoints.*.device_type`、`input_clusters` 和
 `endpoint_names` —— 设备自称是什么，比包装盒上印的字可靠。
 
+## 协调器的地址会漂，而 ZHA 不会自己跟上
+
+⚠️ **2026-08-13 记录。** 上面那张表里的 `192.168.1.32` **已经不作数了**。
+
+协调器的 IP 是路由器 DHCP 发的，会变。2026-08-13 01:04（HA 里
+`binary_sensor.lh79221` 转 `unavailable` 的那一刻）它从 `.32` 漂到了 `.28`，
+于是 ZHA 的配置项一直连不上、卡在 `setup_retry`：
+
+```
+zha | state=setup_retry | reason=[Errno 113] Connect call failed ('192.168.1.32', 6636)
+```
+
+**整个 Zigbee 在这期间是死的** —— 人按开关"没反应"，有一半是这个原因，
+不全是设备身份的问题。查的时候先看这一条，别一上来就怀疑设备。
+
+确认还是同一只盒子，不是换了硬件：
+
+| 判据 | 值 |
+|---|---|
+| mDNS 广播 | `ZBGW7688._zigbee-coordinator._tcp`，`serial_number=120000abd1c8`，`radio_type=ezsp` |
+| MAC | `12:00:00:ab:d1:c8` —— 跟序列号逐字节对上 |
+
+**ZHA 不会自愈,别等它。** 翻了一眼 HA 2026.8.1 里 ZHA 的配置流程
+(`homeassistant/components/zha/config_flow.py`),zeroconf 发现只有在配置项是
+`SOURCE_IGNORE`(被忽略的发现)时才会更新 device path;正常配置项一律
+`single_instance_allowed` 直接 abort。也没有 reconfigure 步骤。也就是说
+**IP 一漂,只能人工改配置项,或者根本别让它漂**。
+
+所以正确的解法是后者:**在路由器上给协调器做 DHCP 静态地址分配**
+(`12:00:00:AB:D1:C8` → `192.168.1.32`)。这样 HA 侧零改动、以后也不会再断。
+
+改 HA 侧那条路(把 `.storage/core.config_entries` 里的 path 改成新 IP,
+需要停 HA 再改)是治标 —— 下次还会漂。
+
+**排查这一段用得上的命令**：
+
+```bash
+# 协调器现在在哪个 IP（在同一局域网的任意机器上跑）
+dns-sd -Z _zigbee-coordinator._tcp local     # macOS
+avahi-browse -at --resolve | grep -A4 zigbee-coordinator   # Linux
+
+# ZHA 配置项是不是活着（HA_TOKEN 走环境变量）
+python3 ws_cmd.py '{"type":"config_entries/get"}'   # 看 domain=zha 那条的 state
+```
+
+> 注意 `zha/devices` 这条 websocket 命令在配置项没加载时会直接返回
+> `unknown_error`，**看着像 API 坏了，其实是集成没起来**。先查
+> `config_entries/get` 再查设备，顺序反了会误判。
+
 ## 状态
 
-⏳ **卡在设备身份上。**
+⏳ **两个断点，串在一起。**
 
-- ✅ ZHA 接好了，协调器在线（见上表）
+1. ❌ **协调器连不上** —— IP 漂了，见上一节。等路由器做完静态绑定。
+2. ❌ **真正的开关还没配上** —— 见下。
+
+- ✅ ZHA 集成配好了（网络也组好了），但**当前连不上协调器**
 - ✅ 餐厅灯在 HA 里，实测可控
 - ✅ 自动化写好了，但**已停用** —— 见 `automations.dining-switch.yaml` 顶部说明
 - ❌ **那个能按的 Zigbee 开关还没配上**
+
+顺带一条旁证：`LH79221` 在 HA 里生成的实体叫 `update.lh79221_ren_ti`、
+`binary_sensor.lh79221` —— 名字里那个**「人体」**是设备自己报上来的，
+跟前面读出的 IAS Zone 指纹对得上。基本可以断定它是个人体感应器。
 
 **为什么把自动化停掉**：它现在指着 `binary_sensor.lh79221`。万一那真是门窗磁
 或人体感应，开个门、走过去，餐厅灯就会**自己动** —— 那正是家规第一条
