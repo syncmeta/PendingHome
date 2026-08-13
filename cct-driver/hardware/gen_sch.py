@@ -175,6 +175,18 @@ for i in range(1, 5):
 # ============================================================================
 # 2. 引脚名别名 —— 规格书用名 → 符号库可能出现的名字(全大写比较)
 # ============================================================================
+
+# 借用符号形状的占位料号 → 借谁的形状(只影响原理图画出来的符号,不影响 Value / 网表 / BOM)
+CID_SYMBOL_ALIAS = {
+    "C25811":  "C25804",   # 200k  0603  R62(RT)
+    "C402870": "C25804",   # 102k  0603  R63(FB 上)
+    "C22892":  "C25804",   # 18.2k 0603  R64(FB 下)
+    "C25972":  "C25804",   # 4.75k 0603  R65(COMP)
+    "C23208":  "C25804",   # 590k  0603  R66(UVLO 上)
+    "C12447":  "C25804",   # 40.2k 0603  R67(UVLO 下)
+    "C107035": "C14663",   # 120pF C0G 0603  C40(COMP)
+}
+
 ALIASES = {
     "G": ["G", "GATE", "1"], "D": ["D", "DRAIN"], "S": ["S", "SOURCE"],
     "A": ["A", "ANODE", "+", "A1"], "K": ["K", "C", "CATHODE", "-", "K/C"],
@@ -258,6 +270,13 @@ def resolve_pin(symname, syms, want, cid=None):
 def gen():
     syms = parse_lib()
     cmap = build_cid_map(syms)
+    # 7 个"占位"料号(2026-08-07 加的 6 个精密电阻 + 1 个 C0G 电容)的符号没下进库里,
+    # 于是 gen_sch.py 从那天起就跑不动了(报"库缺失 7 个"),原理图一直没法重新生成。
+    # 它们都是普通两脚无源件,原理图上的**符号形状**与同封装同类件一模一样,这里只借形状:
+    # Value 字段写的仍是真实 C 编号(见下面 property "Value" "{cid}"),网表 / BOM / 封装都不受影响。
+    for cid, like in CID_SYMBOL_ALIAS.items():
+        if cid not in cmap and like in cmap:
+            cmap[cid] = cmap[like]
     missing = sorted({cid for _, cid, _ in P} - set(cmap))
     if missing:
         print(f"❌ 库缺失 {len(missing)} 个: {missing}")
