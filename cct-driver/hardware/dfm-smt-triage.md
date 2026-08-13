@@ -29,7 +29,7 @@ Gerber/钻孔文件、`hardware/cpl-jlc.csv`、`hardware/bom-jlc.csv`、
 > 180°，丝印类告警的落点会跟以前不一样。
 >
 > 另外 §6/§7 列的板级丝印清单还停在 2026-08-11：那之后板名改成了
-> `PendingHome CCT LED Driver 1` 并从右缘竖排挪到白油块下方横排、
+> `PendingHome CCT LED Driver 1` 并从右缘竖排挪走(8/13 又改成白油块右侧分两行)、
 > `cct-driver.local` 明码删掉了。所以 §7 里「竖排板名横穿 H2」那一处
 > **实际上已经不存在**，重跑 DFM 时不会再报。
 
