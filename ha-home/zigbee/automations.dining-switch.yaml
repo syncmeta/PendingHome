@@ -9,11 +9,32 @@
 #   已 turn_off），因为它指着的那个设备**不是开关**。别急着启用，先看下面。
 #
 # 触发器为什么是 binary_sensor 而不是 zha_event：
-#   本来的设想是"这是个按一下弹回的单键开关，ZHA 把它映射成 binary_sensor，
-#   每按一下翻一次"，所以两个方向的翻转都抓。写死 from/to 是刻意的 ——
-#   不这么写的话，设备掉线再上线（unavailable → on/off）也会被当成一次按键。
+#   这只设备的按键信息只存在于 binary_sensor 的状态位里，事件总线上什么都没有
+#   （zigpy 对 IAS Zone 的 status_change_notification 没有命令处理器，
+#   日志原文 `No explicit handler for cluster command 0x00`，ZHA 不会转成
+#   zha_event）。所以只能用 state 类型的触发器，改成 event 类型是死路。
 #
-#   但实测这个设想是错的，见下。
+# 为什么只抓 off → on 这一个方向（2026-08-13 13:23 抓帧后改的）：
+#   实测每按一次，设备是这么一套动作 ——
+#
+#     13:23:30.169  joined the network              设备上电、重新入网
+#     13:23:30.451  IasZone(zone_status=Test)       → binary_sensor = off
+#     13:23:31.291  IasZone(zone_status=Alarm_1)    → binary_sensor = on
+#     13:23:32.016  IasZone(zone_status=Alarm_1)    重发，同值
+#     13:23:35.165  IasZone(zone_status=Alarm_1)    重发，同值
+#
+#   `Test`(bit 8) 是它上电自检报的，`Alarm_1`(bit 0) 才是"我被按了"。
+#   也就是说**一次按压会产生两个边沿**：on→off（自检）和 off→on（按键）。
+#
+#   ⚠️ 这正是之前"按了没反应"的第二个原因（第一个是协调器 IP 漂了）：
+#   老版本两个方向都当按键，于是一次按压把灯 toggle 了两次，净效果为零。
+#   现在只认 off → on 那一个边沿，一次按压正好触发一次。
+#
+#   写死 from/to 仍然是刻意的：不这么写的话，设备掉线再上线
+#   （unavailable → on）也会被当成一次按键。
+#
+#   后面那两帧重发不会造成重复触发 —— 值没变，ZHA 干脆不写状态
+#   （连 last_reported 都不动），HA 这层根本看不见。
 #
 # 实测结果（2026-08-13 00:30 前后）：
 #   配进来的 `LH79221` 从 ZHA 读到的指纹是 **IAS Zone 安防传感器**
@@ -52,17 +73,17 @@
 
 - id: zigbee_switch_dining_light_toggle
   alias: Zigbee 开关 → 餐厅灯
-  description: 按一下墙上那个 Zigbee 开关，餐厅灯翻一次。只在人按键时动。
+  description: 按一下那个 Zigbee 开关，餐厅灯翻一次。只认 Alarm_1 那一个边沿，不认自检那一下。
   mode: single
+  # 设备会把 Alarm_1 重发几次。真要有边沿挤在一起时，宁可静默丢弃也不要在
+  # 日志里刷 "already running" 警告 —— 这条自动化的语义是「按一下翻一次」，
+  # 落下一次远比多翻一次好。
+  max_exceeded: silent
   triggers:
     - trigger: state
       entity_id: binary_sensor.lh79221
       from: "off"
       to: "on"
-    - trigger: state
-      entity_id: binary_sensor.lh79221
-      from: "on"
-      to: "off"
   actions:
     - action: light.toggle
       target:
