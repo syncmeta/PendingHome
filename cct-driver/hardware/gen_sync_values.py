@@ -37,20 +37,15 @@ HERE = Path(__file__).parent
 BOARD = str(HERE / "cct-main.kicad_pcb")
 CHECK_ONLY = "--check" in sys.argv
 
-# ---- 从 gen_sch.py 抽 (位号 → C 编号),与 gen_bom.py 用的是同一套解析 ----
-src = (HERE / "gen_sch.py").read_text()
-parts = {}
-for m in re.finditer(r'part\(\s*(f?)"([^"]+)"\s*,\s*"(C\d+)"', src):
-    fstr, ref, cid = m.groups()
-    if not fstr:
-        parts[ref] = cid
-for var, a, b, prefix, cid in re.findall(
-        r'for (\w+) in range\((\d+),\s*(\d+)\):\s*\n\s*part\(f"([A-Za-z]+)\{\w+\}"\s*,\s*"(C\d+)"', src):
-    for i in range(int(a), int(b)):
-        parts[f"{prefix}{i}"] = cid
-for refs, cid in re.findall(r'for \w+ in \(([^)]+)\):\s*\n\s*part\(\w+,\s*"(C\d+)"', src):
-    for r in re.findall(r'"([^"]+)"', refs):
-        parts[r] = cid
+# ---- 直接执行 gen_sch.py 的元件表,拿到准确的 (位号 → C 编号) ----
+# 早先这里是用正则去抠 part("R62","C25811",...) 的,但 6 个通道是在循环里写的
+# `part(Rlc, "C12447", ...)` —— **位号是变量,正则抠不到**,于是那 12 个指示灯电阻
+# 的料号一直同步不到板上。改成把 gen_sch.py 的头部(到 def gen 之前)执行一遍,
+# 直接读它的 P 表,准确且不会再因为写法变化而漏。
+_src = (HERE / "gen_sch.py").read_text().split("def gen()")[0]
+_ns = {"__file__": str(HERE / "gen_sch.py")}
+exec(compile(_src, "gen_sch.py", "exec"), _ns)
+parts = {ref: cid for ref, cid, _pins in _ns["P"]}
 print(f"gen_sch.py 里解析到 {len(parts)} 个元件的料号")
 
 board = pcbnew.LoadBoard(BOARD)
