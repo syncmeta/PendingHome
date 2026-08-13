@@ -10,23 +10,16 @@ from pathlib import Path
 
 HERE = Path(__file__).parent
 
-# 1. gen_sch.py 里的 (ref, cid)
-parts = {}   # ref -> cid
-src = (HERE / "gen_sch.py").read_text()
-for m in re.finditer(r'part\(\s*(f?)"([^"]+)"\s*,\s*"(C\d+)"', src):
-    fstr, ref, cid = m.groups()
-    if not fstr:
-        parts[ref] = cid
-# f-string 形式:part(f"C{i}", "C2836439", ...) 之类 —— 处理已知循环
-loops = re.findall(r'for (\w+) in range\((\d+),\s*(\d+)\):\s*\n\s*part\(f"([A-Za-z]+)\{\w+\}"\s*,\s*"(C\d+)"', src)
-for var, a, b, prefix, cid in loops:
-    for i in range(int(a), int(b)):
-        parts[f"{prefix}{i}"] = cid
-# for r in ("Q1","Q2") 形式
-for m in re.finditer(r'for \w+ in \(([^)]+)\):\s*\n\s*part\(\w+,\s*"(C\d+)"', src):
-    refs, cid = m.groups()
-    for r in re.findall(r'"([^"]+)"', refs):
-        parts[r] = cid
+# 1. gen_sch.py 里的 (ref, cid) —— 直接执行它的元件表,不要用正则去猜
+# 早先这里是三段正则:抠 part("R62","C25811",...)、抠 for i in range(..) 循环、
+# 抠 for r in ("Q1","Q2") 循环。但 6 个通道那段是 `part(Rlc, "C12447", ...)`,
+# **位号是变量,三段正则一个都抠不到** —— 于是 12 颗指示灯电阻在 BOM 里一直
+# 挂在旧料号 C23162(4.7k)下面,而板上已经是 C12447(40.2k)。拿那份 BOM 下单
+# 会真的贴错料。改成把 gen_sch.py 的头部执行一遍,直接读它的 P 表。
+_src = (HERE / "gen_sch.py").read_text().split("def gen()")[0]
+_ns = {"__file__": str(HERE / "gen_sch.py")}
+exec(compile(_src, "gen_sch.py", "exec"), _ns)
+parts = {ref: cid for ref, cid, _pins in _ns["P"]}
 
 # 2. netlist-spec.md 描述
 desc = {}
