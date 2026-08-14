@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-48.00 -16.00 224.00 197.00" width="1456" height="1280">
+<defs>
+<marker id="apwr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#dc2626"/></marker>
+<marker id="agnd" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#334155"/></marker>
+<marker id="asig" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#2563eb"/></marker>
+<pattern id="hatch" width="1.6" height="1.6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="1.6" stroke="#94a3b8" stroke-width="0.35"/></pattern>
+</defs>
+<rect x="-48.00" y="-16.00" width="224.00" height="197.00" fill="#ffffff"/>
+<text x="-46.000" y="-10.000" font-size="5.00" fill="#111" text-anchor="start" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">CCT LED 驱动板 · v2 楼层规划</text>
+<text x="-46.000" y="-4.800" font-size="2.60" fill="#475569" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">板框 130 × 145 mm(推荐)· 1:1 · 原点左上角 · 文件方向 = 上墙方向(端子在下)</text>
+<rect x="0.000" y="0.000" width="110.000" height="145.000" rx="0.00" fill="none" fill-opacity="1.00" stroke="#94a3b8" stroke-width="0.350" stroke-dasharray="2 1.5"/>
+<text x="109.000" y="-1.600" font-size="2.00" fill="#64748b" text-anchor="end" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">现版板框 110×145</text>
+<rect x="0.000" y="0.000" width="130.000" height="145.000" rx="2.00" fill="#f8fafc" fill-opacity="1.00" stroke="#0f172a" stroke-width="0.700"/>
+<text x="131.200" y="-1.600" font-size="2.20" fill="#0f172a" text-anchor="end" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">v2 板框 130×145</text>
+<rect x="0.000" y="0.000" width="40.000" height="62.000" rx="0.00" fill="#dbeafe" fill-opacity="0.85" stroke="#475569" stroke-width="0.300"/>
+<rect x="40.000" y="0.000" width="26.000" height="62.000" rx="0.00" fill="#e0e7ff" fill-opacity="0.85" stroke="#475569" stroke-width="0.300"/>
+<rect x="66.000" y="0.000" width="35.000" height="26.000" rx="0.00" fill="#e0f2fe" fill-opacity="0.85" stroke="#475569" stroke-width="0.300"/>
+<rect x="66.000" y="26.000" width="64.000" height="36.000" rx="0.00" fill="#fef3c7" fill-opacity="0.85" stroke="#475569" stroke-width="0.300"/>
+<rect x="4.000" y="62.000" width="97.000" height="9.000" rx="0.00" fill="#ddd6fe" fill-opacity="0.85" stroke="#475569" stroke-width="0.300"/>
+<rect x="8.500" y="73.000" width="91.500" height="12.000" rx="0.00" fill="#fecaca" fill-opacity="0.85" stroke="#475569" stroke-width="0.300"/>
+<rect x="101.000" y="62.000" width="29.000" height="83.000" rx="0.00" fill="#fed7aa" fill-opacity="0.85" stroke="#475569" stroke-width="0.300"/>
+<rect x="0.000" y="0.000" width="8.000" height="25.000" rx="0.00" fill="url(#hatch)" fill-opacity="1.00" stroke="#64748b" stroke-width="0.350" stroke-dasharray="1.5 1"/>
+<rect x="4.000" y="85.000" width="96.000" height="60.000" rx="0.00" fill="#dcfce7" fill-opacity="0.85" stroke="#475569" stroke-width="0.300"/>
+<line x1="84.000" y1="85.000" x2="84.000" y2="144.000" stroke="#16a34a" stroke-width="0.250" stroke-linecap="round" stroke-dasharray="1.2 1.2"/>
+<line x1="68.000" y1="85.000" x2="68.000" y2="144.000" stroke="#16a34a" stroke-width="0.250" stroke-linecap="round" stroke-dasharray="1.2 1.2"/>
+<line x1="52.000" y1="85.000" x2="52.000" y2="144.000" stroke="#16a34a" stroke-width="0.250" stroke-linecap="round" stroke-dasharray="1.2 1.2"/>
+<line x1="36.000" y1="85.000" x2="36.000" y2="144.000" stroke="#16a34a" stroke-width="0.250" stroke-linecap="round" stroke-dasharray="1.2 1.2"/>
+<line x1="20.000" y1="85.000" x2="20.000" y2="144.000" stroke="#16a34a" stroke-width="0.250" stroke-linecap="round" stroke-dasharray="1.2 1.2"/>
+<line x1="4.000" y1="85.000" x2="4.000" y2="144.000" stroke="#16a34a" stroke-width="0.250" stroke-linecap="round" stroke-dasharray="1.2 1.2"/>
+<line x1="100.000" y1="85.000" x2="100.000" y2="144.000" stroke="#16a34a" stroke-width="0.250" stroke-linecap="round" stroke-dasharray="1.2 1.2"/>
+<rect x="4.400" y="87.040" width="95.200" height="5.120" rx="0.00" fill="#86efac" fill-opacity="0.55" stroke="#15803d" stroke-width="0.200"/>
+<text x="2.600" y="90.400" font-size="2.00" fill="#14532d" text-anchor="end" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">支路保险丝  Fn</text>
+<rect x="4.400" y="100.165" width="95.200" height="8.390" rx="0.00" fill="#86efac" fill-opacity="0.55" stroke="#15803d" stroke-width="0.200"/>
+<text x="2.600" y="105.160" font-size="2.00" fill="#14532d" text-anchor="end" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">输出电解/去耦/指示灯</text>
+<rect x="4.400" y="110.755" width="95.200" height="3.690" rx="0.00" fill="#86efac" fill-opacity="0.55" stroke="#15803d" stroke-width="0.200"/>
+<text x="2.600" y="113.400" font-size="2.00" fill="#14532d" text-anchor="end" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">续流二极管  SS36B ×2</text>
+<rect x="4.400" y="116.655" width="95.200" height="3.690" rx="0.00" fill="#86efac" fill-opacity="0.55" stroke="#15803d" stroke-width="0.200"/>
+<text x="2.600" y="119.300" font-size="2.00" fill="#14532d" text-anchor="end" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">输出 TVS  SMBJ26A ×2</text>
+<rect x="4.400" y="122.545" width="95.200" height="0.890" rx="0.00" fill="#86efac" fill-opacity="0.55" stroke="#15803d" stroke-width="0.200"/>
+<text x="2.600" y="123.790" font-size="2.00" fill="#14532d" text-anchor="end" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">栅源下拉 10k ×2</text>
+<rect x="4.400" y="125.630" width="95.200" height="6.140" rx="0.00" fill="#86efac" fill-opacity="0.55" stroke="#15803d" stroke-width="0.200"/>
+<text x="2.600" y="129.500" font-size="2.00" fill="#14532d" text-anchor="end" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">功率 MOS  20N06 ×2</text>
+<rect x="4.400" y="133.955" width="95.200" height="7.090" rx="0.00" fill="#86efac" fill-opacity="0.55" stroke="#15803d" stroke-width="0.200"/>
+<text x="2.600" y="138.300" font-size="2.00" fill="#14532d" text-anchor="end" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">输出端子  Jn</text>
+<text x="92.000" y="90.600" font-size="2.60" fill="#14532d" text-anchor="middle" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">CH1</text>
+<text x="76.000" y="90.600" font-size="2.60" fill="#14532d" text-anchor="middle" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">CH2</text>
+<text x="60.000" y="90.600" font-size="2.60" fill="#14532d" text-anchor="middle" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">CH3</text>
+<text x="44.000" y="90.600" font-size="2.60" fill="#14532d" text-anchor="middle" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">CH4</text>
+<text x="28.000" y="90.600" font-size="2.60" fill="#14532d" text-anchor="middle" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">CH5</text>
+<text x="12.000" y="90.600" font-size="2.60" fill="#14532d" text-anchor="middle" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">CH6</text>
+<rect x="101.800" y="80.355" width="27.400" height="3.290" rx="0.00" fill="#fdba74" fill-opacity="0.60" stroke="#c2410c" stroke-width="0.200"/>
+<text x="131.200" y="82.700" font-size="1.90" fill="#7c2d12" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">RS1 + U1 + C6 →分配点</text>
+<rect x="101.800" y="86.305" width="27.400" height="8.390" rx="0.00" fill="#fdba74" fill-opacity="0.60" stroke="#c2410c" stroke-width="0.200"/>
+<text x="131.200" y="91.200" font-size="1.90" fill="#7c2d12" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">C4 C5 电解 + D1 TVS</text>
+<rect x="101.800" y="95.805" width="27.400" height="8.390" rx="0.00" fill="#fdba74" fill-opacity="0.60" stroke="#c2410c" stroke-width="0.200"/>
+<text x="131.200" y="100.700" font-size="1.90" fill="#7c2d12" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">C1 C2 C3 电解(体电容)</text>
+<rect x="101.800" y="108.405" width="27.400" height="6.190" rx="0.00" fill="#fdba74" fill-opacity="0.60" stroke="#c2410c" stroke-width="0.200"/>
+<text x="131.200" y="112.200" font-size="1.90" fill="#7c2d12" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">Q1‖Q2 P-MOS + DZ1 R1 Q3</text>
+<rect x="101.800" y="118.595" width="27.400" height="6.810" rx="0.00" fill="#fdba74" fill-opacity="0.60" stroke="#c2410c" stroke-width="0.200"/>
+<text x="131.200" y="122.700" font-size="1.90" fill="#7c2d12" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">F1 主保险丝座 15A</text>
+<rect x="101.800" y="130.955" width="27.400" height="12.090" rx="0.00" fill="#fdba74" fill-opacity="0.60" stroke="#c2410c" stroke-width="0.200"/>
+<text x="131.200" y="137.700" font-size="1.90" fill="#7c2d12" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">J1  24V 输入端子</text>
+<text x="8.000" y="32.000" font-size="2.40" fill="#0f172a" text-anchor="start" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">A1 主控区</text>
+<text x="8.000" y="34.700" font-size="1.85" fill="#475569" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">U4 ESP32 · 复位/BOOT 键</text>
+<text x="8.000" y="36.400" font-size="1.80" fill="#64748b" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">x 0–40  y 0–62</text>
+<text x="41.500" y="46.000" font-size="2.40" fill="#0f172a" text-anchor="start" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">A2 USB / 串口</text>
+<text x="41.500" y="48.700" font-size="1.85" fill="#475569" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">J2 Type-C · CH340C · 自动下载</text>
+<text x="41.500" y="50.400" font-size="1.80" fill="#64748b" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">x 40–66  y 0–62</text>
+<text x="67.500" y="12.000" font-size="2.40" fill="#0f172a" text-anchor="start" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">A3 传感器 / 干接点接口</text>
+<text x="67.500" y="14.700" font-size="1.85" fill="#475569" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">J11 · J10 · J9 全在上板边</text>
+<text x="67.500" y="16.400" font-size="1.80" fill="#64748b" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">x 66–101  y 0–26</text>
+<text x="67.500" y="36.000" font-size="2.40" fill="#0f172a" text-anchor="start" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">A4 低压电源 buck + LDO</text>
+<text x="67.500" y="38.700" font-size="1.85" fill="#475569" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">U2 / L1 / D2 环路 &lt;2cm² · U3 · OR 二极管</text>
+<text x="67.500" y="40.400" font-size="1.80" fill="#64748b" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">x 66–130  y 26–62</text>
+<text x="5.500" y="65.600" font-size="2.00" fill="#4c1d95" text-anchor="start" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">A5 栅极驱动区  x 4–101  y 62–71</text>
+<text x="5.500" y="69.400" font-size="1.80" fill="#4c1d95" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">U6 压 CH1–4 质心 x=68 · U7 压 CH5–6 质心 x=20 · 12 颗 100Ω 栅阻紧贴驱动输出</text>
+<text x="10.500" y="75.900" font-size="2.00" fill="#991b1b" text-anchor="start" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">B0  24V 分配脊椎  x 8.5–100  y 73–85</text>
+<text x="102.400" y="66.500" font-size="2.40" fill="#7c2d12" text-anchor="start" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">D0 入电保护区</text>
+<text x="102.400" y="69.600" font-size="1.80" fill="#7c2d12" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">x 101–130  y 62–145</text>
+<text x="102.400" y="72.600" font-size="1.80" fill="#7c2d12" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">电流自下而上一条直线</text>
+<text x="4.000" y="12.000" font-size="2.00" fill="#334155" text-anchor="middle" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif" transform="rotate(-90.0 4.000 12.000)">A0 天线净空</text>
+<circle cx="4.000" cy="30.000" r="1.600" fill="#ffffff" stroke="#0f172a" stroke-width="0.450"/>
+<circle cx="4.000" cy="30.000" r="3.500" fill="none" stroke="#0f172a" stroke-width="0.200"/>
+<text x="4.000" y="25.400" font-size="2.00" fill="#111" text-anchor="middle" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">H4</text>
+<circle cx="126.000" cy="30.000" r="1.600" fill="#ffffff" stroke="#0f172a" stroke-width="0.450"/>
+<circle cx="126.000" cy="30.000" r="3.500" fill="none" stroke="#0f172a" stroke-width="0.200"/>
+<text x="126.000" y="25.400" font-size="2.00" fill="#111" text-anchor="middle" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">H3</text>
+<circle cx="4.000" cy="79.000" r="1.600" fill="#ffffff" stroke="#0f172a" stroke-width="0.450"/>
+<circle cx="4.000" cy="79.000" r="3.500" fill="none" stroke="#0f172a" stroke-width="0.200"/>
+<text x="4.000" y="74.400" font-size="2.00" fill="#111" text-anchor="middle" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">H2</text>
+<circle cx="126.000" cy="79.000" r="1.600" fill="#ffffff" stroke="#0f172a" stroke-width="0.450"/>
+<circle cx="126.000" cy="79.000" r="3.500" fill="none" stroke="#0f172a" stroke-width="0.200"/>
+<text x="126.000" y="74.400" font-size="2.00" fill="#111" text-anchor="middle" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">H1</text>
+<circle cx="103.000" cy="137.000" r="1.600" fill="#ffffff" stroke="#0f172a" stroke-width="0.400"/>
+<circle cx="103.000" cy="137.000" r="3.500" fill="none" stroke="#0f172a" stroke-width="0.250"/>
+<line x1="103.000" y1="141.000" x2="103.000" y2="147.000" stroke="#0f172a" stroke-width="0.250" stroke-linecap="round"/>
+<text x="103.000" y="150.000" font-size="2.00" fill="#0f172a" text-anchor="middle" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">H5 建议新增(J3 与 J1 之间 9.6mm 空当)</text>
+<path d="M 116,130.5 L 116,85.0" fill="none" stroke="#dc2626" stroke-width="1.600" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#apwr)"/>
+<path d="M 111,80.0 L 102.0,80.0 L 102.0,79.4 L 13,79.4" fill="none" stroke="#dc2626" stroke-width="1.600" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#apwr)"/>
+<path d="M 92.0,79.4 L 92.0,86.4" fill="none" stroke="#dc2626" stroke-width="1.000" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#apwr)"/>
+<path d="M 76.0,79.4 L 76.0,86.4" fill="none" stroke="#dc2626" stroke-width="1.000" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#apwr)"/>
+<path d="M 60.0,79.4 L 60.0,86.4" fill="none" stroke="#dc2626" stroke-width="1.000" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#apwr)"/>
+<path d="M 44.0,79.4 L 44.0,86.4" fill="none" stroke="#dc2626" stroke-width="1.000" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#apwr)"/>
+<path d="M 28.0,79.4 L 28.0,86.4" fill="none" stroke="#dc2626" stroke-width="1.000" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#apwr)"/>
+<path d="M 12.0,79.4 L 12.0,86.4" fill="none" stroke="#dc2626" stroke-width="1.000" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#apwr)"/>
+<path d="M 98.4,92.5 L 98.4,133.2" fill="none" stroke="#dc2626" stroke-width="0.650" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#apwr)" stroke-dasharray="2 1.4"/>
+<path d="M 82.4,92.5 L 82.4,133.2" fill="none" stroke="#dc2626" stroke-width="0.650" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#apwr)" stroke-dasharray="2 1.4"/>
+<path d="M 66.4,92.5 L 66.4,133.2" fill="none" stroke="#dc2626" stroke-width="0.650" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#apwr)" stroke-dasharray="2 1.4"/>
+<path d="M 50.4,92.5 L 50.4,133.2" fill="none" stroke="#dc2626" stroke-width="0.650" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#apwr)" stroke-dasharray="2 1.4"/>
+<path d="M 34.4,92.5 L 34.4,133.2" fill="none" stroke="#dc2626" stroke-width="0.650" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#apwr)" stroke-dasharray="2 1.4"/>
+<path d="M 18.4,92.5 L 18.4,133.2" fill="none" stroke="#dc2626" stroke-width="0.650" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#apwr)" stroke-dasharray="2 1.4"/>
+<path d="M 8,143.4 L 110,143.4" fill="none" stroke="#334155" stroke-width="1.100" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#agnd)"/>
+<path d="M 30,20 L 38.0,20 L 38.0,58.8 L 20,58.8 L 20,63.5" fill="none" stroke="#2563eb" stroke-width="0.800" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#asig)"/>
+<path d="M 30,17 L 39.4,17 L 39.4,55.6 L 68,55.6 L 68,63.5" fill="none" stroke="#2563eb" stroke-width="0.800" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#asig)"/>
+<path d="M 85.6,70.5 L 85.6,121.8" fill="none" stroke="#2563eb" stroke-width="0.550" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#asig)" stroke-dasharray="1.6 1.3"/>
+<path d="M 69.6,70.5 L 69.6,121.8" fill="none" stroke="#2563eb" stroke-width="0.550" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#asig)" stroke-dasharray="1.6 1.3"/>
+<path d="M 53.6,70.5 L 53.6,121.8" fill="none" stroke="#2563eb" stroke-width="0.550" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#asig)" stroke-dasharray="1.6 1.3"/>
+<path d="M 37.6,70.5 L 37.6,121.8" fill="none" stroke="#2563eb" stroke-width="0.550" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#asig)" stroke-dasharray="1.6 1.3"/>
+<path d="M 21.6,70.5 L 21.6,121.8" fill="none" stroke="#2563eb" stroke-width="0.550" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#asig)" stroke-dasharray="1.6 1.3"/>
+<path d="M 5.6,70.5 L 5.6,121.8" fill="none" stroke="#2563eb" stroke-width="0.550" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#asig)" stroke-dasharray="1.6 1.3"/>
+<text x="121.500" y="108.000" font-size="2.20" fill="#dc2626" text-anchor="middle" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif" transform="rotate(-90.0 121.500 108.000)">24V 进线</text>
+<text x="56.000" y="77.800" font-size="2.10" fill="#dc2626" text-anchor="middle" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">24V 分配 · 单向左行 · 全程不折返</text>
+<text x="-46.000" y="151.000" font-size="2.60" fill="#111" text-anchor="start" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">图例</text>
+<line x1="-46.000" y1="154.800" x2="-36.000" y2="154.800" stroke="#dc2626" stroke-width="1.200" stroke-linecap="round"/>
+<text x="-34.000" y="155.600" font-size="2.20" fill="#0f172a" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">24V 功率主干(粗)/ 每路 3A 支路(细虚线)—— 全程只向左、向下</text>
+<line x1="-46.000" y1="159.200" x2="-36.000" y2="159.200" stroke="#334155" stroke-width="1.200" stroke-linecap="round"/>
+<text x="-34.000" y="160.000" font-size="2.20" fill="#0f172a" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">GND 功率回流:6 路 MOS 源极 → 底部带向右 → J1 负极,不进逻辑区</text>
+<line x1="-46.000" y1="163.600" x2="-36.000" y2="163.600" stroke="#2563eb" stroke-width="1.200" stroke-linecap="round"/>
+<text x="-34.000" y="164.400" font-size="2.20" fill="#0f172a" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">逻辑与栅极信号:ESP32 → U6/U7 → 12 根垂直下行,每列只走本列的网络</text>
+<text x="-46.000" y="173.500" font-size="2.00" fill="#64748b" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">尺寸全部为 courtyard 实测值(取自 cct-main.kicad_pcb);本图是楼层规划,不是最终摆位。生成脚本:hardware/gen_floorplan_svg.py</text>
+<text x="-46.000" y="177.200" font-size="2.00" fill="#64748b" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">通道列距 16mm(现版 14mm)· 行间距 ≥2.2mm 作丝印预算 · 保险丝下方 8.0mm 镊子净空 · 205 个元件全部归区 · 脊椎双面 12mm 铜 + 每 3mm 一颗缝合过孔,15A 压降 32mV / 0.48W(IPC-2221 估算)</text>
+</svg>
