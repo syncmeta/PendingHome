@@ -6,7 +6,7 @@
 
 | | |
 |---|---|
-| 在跑的 HA | `ha-home` 这套 —— `192.168.1.29`（`homeassistant.local`），HA **2026.8.1**，Docker + `network_mode: host` |
+| 在跑的 HA | `ha-home` 这套 —— `192.168.1.20`（`homeassistant.local`），HA **2026.8.1**，Docker + `network_mode: host` ⚠️ 机器 IP 会漂，见文末「HA 机器自己的 IP 也会漂」 |
 | 没在跑的 | Mac 试验台 `ha-lab`（Lima 虚拟机 Stopped）、另一个房子的 `ha-t630` |
 | 配置目录 | 宿主机 `/opt/ha/config`（容器里是 `/config`） |
 | 协调器 | **`ZBGW7688`** — `192.168.1.32:6636`，`radio_type=ezsp`，序列号 `120000abd1c8` |
@@ -166,7 +166,7 @@ python3 ws_cmd.py '{"type":"config_entries/get"}'   # 看 domain=zha 那条的 s
 ```bash
 curl -s -X POST -H "Authorization: Bearer $HA_TOKEN" -H "Content-Type: application/json" \
      -d '{"entry_id":"01KZTW8EN38M2P4EK4E3TREQ2T"}' \
-     http://192.168.1.29:8123/api/services/homeassistant/reload_config_entry
+     http://homeassistant.local:8123/api/services/homeassistant/reload_config_entry
 ```
 
 > 盒子那会儿还有个附带症状：它赖在 `.28` 时，`6636` 端口**既不拒绝也不应答**
@@ -198,9 +198,9 @@ curl -s -X POST -H "Authorization: Bearer $HA_TOKEN" -H "Content-Type: applicati
 ```bash
 curl -s -X POST -H "Authorization: Bearer $HA_TOKEN" -H "Content-Type: application/json" \
      -d '{"zigpy":"debug","zigpy.zcl":"debug","bellows":"debug","homeassistant.components.zha":"debug"}' \
-     http://192.168.1.29:8123/api/services/logger/set_level
+     http://homeassistant.local:8123/api/services/logger/set_level
 # 然后拉日志看原始帧
-curl -s -H "Authorization: Bearer $HA_TOKEN" http://192.168.1.29:8123/api/error_log \
+curl -s -H "Authorization: Bearer $HA_TOKEN" http://homeassistant.local:8123/api/error_log \
   | grep '0x0500.*Decoded ZCL frame: IasZone'
 ```
 
@@ -308,11 +308,11 @@ ssh hey@192.168.1.29 'docker exec -i homeassistant sh -c \
 
 # 3. 重启前先校验，别拿重启当验证手段
 curl -s -X POST -H "Authorization: Bearer $HA_TOKEN" \
-     http://192.168.1.29:8123/api/config/core/check_config      # → {"result":"valid"}
+     http://homeassistant.local:8123/api/config/core/check_config      # → {"result":"valid"}
 
 # 4. 重启
 curl -s -X POST -H "Authorization: Bearer $HA_TOKEN" \
-     http://192.168.1.29:8123/api/services/homeassistant/restart
+     http://homeassistant.local:8123/api/services/homeassistant/restart
 ```
 
 装的时候核对过主机上的实际版本，**别凭记忆写**：
@@ -328,7 +328,7 @@ curl -s -X POST -H "Authorization: Bearer $HA_TOKEN" \
 
 ```bash
 # 日志里有这一行才说明自定义 quirk 被加载了
-ssh hey@192.168.1.29 'docker exec homeassistant grep -i quirk /config/home-assistant.log'
+ssh hey@homeassistant.local 'docker exec homeassistant grep -i quirk /config/home-assistant.log'
 # → WARNING [zhaquirks] Loaded custom quirks. Please contribute them to ...
 
 # 设备上真的套上了才算数（光加载不等于匹配上）
@@ -375,30 +375,60 @@ python3 zha_devices.py    # 看 LH79221 那台的 quirk_applied / quirk_class
 自动化 `last_triggered` 有值 —— 但 `light.toggle` 正好打进了灯的掉线窗口，
 指令落空。**排查时先看灯那一刻在不在线**，别把这个算到 Zigbee 头上。
 
+## HA 机器自己的 IP 也会漂
+
+⚠️ **2026-08-14 记录。** 上次漂的是协调器，这次轮到 HA 机器本身：`homeassistant` 从
+`192.168.1.29` 漂到了 `192.168.1.20`（路由器 DHCP 发的，跟协调器那次一个道理）。
+
+| 判据 | 值 |
+|---|---|
+| 主机名 | `homeassistant` |
+| MAC | `d4:3d:7e:36:b6:75`（enp2s0，用这个在路由器上做 DHCP 静态分配）|
+| 现地址 | `192.168.1.20`（2026-08-14 实测，之前文档里的 `.29` 已作废）|
+
+mDNS 兜底照常工作 —— `homeassistant.local` 永远指得到它，`_home-assistant._tcp`
+广播里的 `internal_url` 也会跟着 IP 变，所以日常访问用 `.local` 就行。但脚本、
+SSH、API 里写死的 IP 会断。**根治办法跟协调器一样：路由器上给
+`d4:3d:7e:36:b6:75` 绑一个固定 IP**（建议就绑回 `192.168.1.29`，少改几处文档）。
+
+> 顺带：这台机器 2026-08-14 11:23 重启过（机器重启，不是 HA 容器重启）。
+> 重启后 ZHA 会把电池设备标成 `unavailable`，直到设备下一次心跳（约 10 分钟）
+> 或第一次按压才恢复 —— 这是正常现象，别当成坏了。
+
 ## 状态
 
-⏳ **链路已经全程打通过一次，但可用性不达标。**
+✅ **2026-08-14 全链路实测通过：人按下去、灯当场翻。**
+
+quirk 装上并重启后，实机按了 4 下，每一下都完整走通：
+
+```
+11:35:29.7  心跳 Test 帧        → binary_sensor unavailable → off（设备活，先复位）
+11:35:30.1  按压 #1 Alarm_1      → sensor on → 自动化触发 → 灯灭（11:35:30.5）
+11:35:31.1  quirk 自动复位       → sensor off
+11:35:31.9  按压 #2 Alarm_1      → sensor on → 自动化触发 → 灯亮（11:35:32.1）
+11:35:32.9  quirk 自动复位       → sensor off
+11:35:38.0  按压 #3 Alarm_1      → sensor on → 自动化触发 → 灯灭（11:35:38.2）
+11:35:39.0  quirk 自动复位       → sensor off
+11:35:39.7  按压 #4 Alarm_1      → sensor on → 自动化触发 → 灯亮（11:35:41.1）
+11:35:40.7  quirk 自动复位       → sensor off
+```
+
+- TSN `197→198→199→200` 严格递增、一次一帧，无重传
+- `reset_s=1` 每次按压后 1 秒干净复位，**连续按压不再被吞**
+- 第一下按之前设备刚经历机器重启处于 `unavailable`，心跳帧先把实体拨回 `off`，
+  于是第一下按压也能产生合法的 `off → on` 边沿
+- 自动化 `automation.zigbee_kai_guan_can_ting_deng` 已启用，
+  `last_triggered` 随每次按压刷新；餐厅灯四次翻转状态与按压一一对应
+
+**当前链路状态全绿：**
 
 - ✅ 协调器固定在 `192.168.1.32`（路由器静态绑定），ZHA `state=loaded`
-- ✅ `LH79221` 在网、信号好，按压走 IAS Zone `Alarm_1`，原始帧已抓到
-- ✅ 自动化已改成单边沿触发、已启用，**实测触发过**
-  （`last_triggered=2026-08-13T06:44:02Z`）
-- ⚠️ **但一个心跳周期(~10.4 分钟)内只有第一次按压有效** —— 见上面那节，
-  必须配 ZHA quirk 才能根治
-- ⚠️ 餐厅灯会自己掉线，掉线窗口内按了也没用 —— 见上面那节
-- ❌ **还没有一次"人按下去、灯当场翻"的完整成功记录**
-
-**下一步取决于那个未验证项**（正挂着原始帧监听等人连按 3 下）：
-
-- **重复按会发帧** → 帧到了但 HA 状态不动，改 HA 侧：别盯 `state`，
-  改盯 `last_reported`（或用模板/事件过滤的方式接原始上报）。
-- **重复按不发帧** → 是设备自身 latch，得给它配一个 **ZHA quirk**：
-  把 `Alarm_1` 映射成带自动复位（`reset_s`）的实体，这样每按一次都产生
-  干净的 `off → on` 边沿，现有那条 `state` 触发器就能一直用下去。
-  quirk 放 `/opt/ha/config/custom_zha_quirks/`，在 `configuration.yaml` 里
-  用 `zha: custom_quirks_path:` 指过去，需要重启 HA。推文件走 `../deploy.sh`。
-
-**启用自动化之前仍然必须先定身份。** 只要还没排除"它是门窗磁 / 人体感应"，
-就不能启用 —— 开门或走过去会让餐厅灯自己动，违反家规第一条。
-现有帧数据（单个 `Alarm_1`，无 `Zone Status` 周期上报）跟按钮相符，但**没到
-可以拿家里的灯去赌的程度**；等那 3 下连按的数据到了再定。
+- ✅ `LH79221` 在网、信号好，quirk `lh79221:LH79221Button` 已套上
+  （`quirk_applied=true`，2026-08-14 重启后复查确认）
+- ✅ 自动化已启用、单边沿触发、实测 4/4 触发
+- ✅ 「人按 → 灯翻」完整成功记录已取得，连续按也成立
+- ⚠️ 遗留待办（都不影响这条链路本身）：
+  1. **路由器上给 HA 机器绑静态 IP**（MAC `d4:3d:7e:36:b6:75`），
+     否则机器 IP 再漂一次，写死 `.20` 的地方又要改
+  2. 餐厅灯（米家）偶尔自己掉线，掉线窗口内按了没反应 —— 这是灯侧问题，
+     不是 Zigbee 链路的问题
