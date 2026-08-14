@@ -31,13 +31,13 @@
 <rect x="4.400" y="87.040" width="95.200" height="5.120" rx="0.00" fill="#86efac" fill-opacity="0.55" stroke="#15803d" stroke-width="0.200"/>
 <text x="2.600" y="90.400" font-size="2.00" fill="#14532d" text-anchor="end" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">支路保险丝  Fn</text>
 <rect x="4.400" y="100.165" width="95.200" height="8.390" rx="0.00" fill="#86efac" fill-opacity="0.55" stroke="#15803d" stroke-width="0.200"/>
-<text x="2.600" y="105.160" font-size="2.00" fill="#14532d" text-anchor="end" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">输出电解/去耦/指示灯</text>
+<text x="2.600" y="105.160" font-size="2.00" fill="#14532d" text-anchor="end" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">输出电解 + 指示灯 ×2</text>
 <rect x="4.400" y="110.755" width="95.200" height="3.690" rx="0.00" fill="#86efac" fill-opacity="0.55" stroke="#15803d" stroke-width="0.200"/>
-<text x="2.600" y="113.400" font-size="2.00" fill="#14532d" text-anchor="end" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">续流二极管  SS36B ×2</text>
+<text x="2.600" y="113.400" font-size="2.00" fill="#14532d" text-anchor="end" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">输出 TVS  SMBJ26A ×2</text>
 <rect x="4.400" y="116.655" width="95.200" height="3.690" rx="0.00" fill="#86efac" fill-opacity="0.55" stroke="#15803d" stroke-width="0.200"/>
-<text x="2.600" y="119.300" font-size="2.00" fill="#14532d" text-anchor="end" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">输出 TVS  SMBJ26A ×2</text>
+<text x="2.600" y="119.300" font-size="2.00" fill="#14532d" text-anchor="end" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">续流二极管  SS36B ×2</text>
 <rect x="4.400" y="122.545" width="95.200" height="0.890" rx="0.00" fill="#86efac" fill-opacity="0.55" stroke="#15803d" stroke-width="0.200"/>
-<text x="2.600" y="123.790" font-size="2.00" fill="#14532d" text-anchor="end" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">栅源下拉 10k ×2</text>
+<text x="2.600" y="123.790" font-size="2.00" fill="#14532d" text-anchor="end" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">栅阻/下拉 ×4 + 100nF</text>
 <rect x="4.400" y="125.630" width="95.200" height="6.140" rx="0.00" fill="#86efac" fill-opacity="0.55" stroke="#15803d" stroke-width="0.200"/>
 <text x="2.600" y="129.500" font-size="2.00" fill="#14532d" text-anchor="end" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">功率 MOS  20N06 ×2</text>
 <rect x="4.400" y="133.955" width="95.200" height="7.090" rx="0.00" fill="#86efac" fill-opacity="0.55" stroke="#15803d" stroke-width="0.200"/>
@@ -73,7 +73,7 @@
 <text x="67.500" y="38.700" font-size="1.85" fill="#475569" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">U2 / L1 / D2 环路 &lt;2cm² · U3 · OR 二极管</text>
 <text x="67.500" y="40.400" font-size="1.80" fill="#64748b" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">x 66–130  y 26–62</text>
 <text x="5.500" y="65.600" font-size="2.00" fill="#4c1d95" text-anchor="start" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">A5 栅极驱动区  x 4–101  y 62–71</text>
-<text x="5.500" y="69.400" font-size="1.80" fill="#4c1d95" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">U6 压 CH1–4 质心 x=68 · U7 压 CH5–6 质心 x=20 · 12 颗 100Ω 栅阻紧贴驱动输出</text>
+<text x="5.500" y="69.400" font-size="1.80" fill="#4c1d95" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">U6 压 CH1–4 质心 x=68 · U7 压 CH5–6 质心 x=20 · 栅阻与下拉全部下放到 MOS 栅极旁</text>
 <text x="10.500" y="75.900" font-size="2.00" fill="#991b1b" text-anchor="start" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">B0  24V 分配脊椎  x 8.5–100  y 73–85</text>
 <text x="102.400" y="66.500" font-size="2.40" fill="#7c2d12" text-anchor="start" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">D0 入电保护区</text>
 <text x="102.400" y="69.600" font-size="1.80" fill="#7c2d12" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">x 101–130  y 62–145</text>
@@ -128,5 +128,5 @@
 <line x1="-46.000" y1="163.600" x2="-36.000" y2="163.600" stroke="#2563eb" stroke-width="1.200" stroke-linecap="round"/>
 <text x="-34.000" y="164.400" font-size="2.20" fill="#0f172a" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">逻辑与栅极信号:ESP32 → U6/U7 → 12 根垂直下行,每列只走本列的网络</text>
 <text x="-46.000" y="173.500" font-size="2.00" fill="#64748b" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">尺寸全部为 courtyard 实测值(取自 cct-main.kicad_pcb);本图是楼层规划,不是最终摆位。生成脚本:hardware/gen_floorplan_svg.py</text>
-<text x="-46.000" y="177.200" font-size="2.00" fill="#64748b" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">通道列距 16mm(现版 14mm)· 行间距 ≥2.2mm 作丝印预算 · 保险丝下方 8.0mm 镊子净空 · 205 个元件全部归区 · 脊椎双面 12mm 铜 + 每 3mm 一颗缝合过孔,15A 压降 32mV / 0.48W(IPC-2221 估算)</text>
+<text x="-46.000" y="177.200" font-size="2.00" fill="#64748b" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">通道列距 16mm(现版 14mm)· 行间距 ≥2.2mm 作丝印预算 · 保险丝下方 8.0mm 镊子净空 · 205 个元件全部归区 · 脊椎双面 12mm 铜 + 每 3mm 一颗缝合过孔,15A 压降 39mV / 0.59W(按铜箔电阻率估算)</text>
 </svg>
