@@ -52,13 +52,14 @@ SPINE_Y0, SPINE_Y1 = 65.0, 77.0
 SPINE_X0, SPINE_X1 = 6.0, 108.0
 
 # 列内底层车道(相对列心)
-LANE_GATE_CW, LANE_VOUT, LANE_DCW, LANE_DWW, LANE_GATE_WW = -7.60, -5.40, -2.00, 2.00, 7.60
+LANE_GATE_CW, LANE_VOUT, LANE_DCW, LANE_DWW, LANE_GATE_WW = -7.20, -5.40, -2.00, 2.00, 7.20
 LANE_SPINE_CW, LANE_SPINE_WW = -1.50, 1.50   # 穿脊椎那 6mm 车道里的两条
-FANOUT_Y = 100.0                              # 出脊椎之后向列两侧张开的高度
+FANOUT_Y = 92.0                               # 出脊椎之后向列两侧张开的高度
+                                              #(放在换保险丝的净空那一段,底层是空的)
 
 # 线宽(§A5.3)
 W_BUS = 4.0
-W_VOUT = 3.0
+W_VOUT = 2.6      # 底层竖带。列内五条车道排完之后能给到的最大宽度
 W_VOUT_F = 2.5
 W_DRAIN = 1.2
 W_PROT = 3.0
@@ -298,18 +299,21 @@ for (n, Fz, Jz, Qc, Qw, Rgc, Rgw, Rpc, Rpw, Dfc, Dfw, Dtc, Dtw,
         path([P(L, LK), P(Rl, LK)], F, 0.4, LK)
 
         # 漏极:限流电阻 → TVS → 续流 → 底层 → MOS 散热片 → 端子
+        # ⚠️ 从限流电阻那一脚出发**不能横着走** —— 它旁边就是同一颗电阻的另一脚
+        #(指示灯阴极),横过去直接压上。先竖下来出了指示灯那一排再拐。
         r_d, t_d, f_d = P(Rl, D), P(Dtvs, D), P(Dfw_, D)
-        path([r_d, (dx, r_d[1]), (dx, t_d[1]), t_d], F, 0.8, D)
+        path([r_d, (r_d[0], LED_Y + 2.2), (dx, LED_Y + 3.2), (dx, t_d[1]), t_d],
+             F, 0.8, D)
         path([t_d, (dx, t_d[1]), (dx, f_d[1]), f_d], F, W_DRAIN, D)
         drop(dx, f_d[1] + 1.8, D, W_DRAIN, frm=(dx, f_d[1]))
         tab = P(Q, D)
         term_d = P(Jz, D)
         path([(dx, f_d[1] + 1.8), (dx, tab[1] + 4.0), (term_d[0], 137.5), term_d],
              B, W_DRAIN, D)
-        # 散热片本体也要接到底层这条干线上(3 颗过孔,兼做散热)
-        for k in (-1.8, 0.0, 1.8):
-            via(tab[0] + k, tab[1] + 1.6, D)
-        seg(tab[0], tab[1] + 1.6, dx, tab[1] + 4.0, B, W_DRAIN, D)
+        # 散热片本体接到底层这条干线上:3 颗过孔**沿着干线**打(不是横着排),
+        # 横着排会把过孔打到隔壁 CHn_VOUT 的底层竖带上去。
+        for k in (-1.8, 0.6, 2.6):
+            via(dx, tab[1] + k, D)
 
         # 栅极信号:驱动器 → 脊椎底层车道 → 栅阻(顶层脚就在车道正下方)
         gx = cx + (LANE_GATE_CW if sgn < 0 else LANE_GATE_WW)
@@ -323,7 +327,8 @@ for (n, Fz, Jz, Qc, Qw, Rgc, Rgw, Rpc, Rpw, Dfc, Dfw, Dtc, Dtw,
         # 栅阻下游 → 下拉 → MOS 栅极(顶层一条线,不折返)
         gr_r, gr_pd, gr_q = P(Rg, GR), P(Rpd, GR), P(Q, GR)
         path([gr_r, gr_pd], F, 0.4, GR)
-        path([gr_pd, (gr_q[0], gr_pd[1]), gr_q], F, 0.4, GR)
+        # 下拉电阻的另一脚是地,横着过去会压上它 —— 先竖下来出了这一排再拐
+        path([gr_pd, (gr_pd[0], R5_Y + 2.0), (gr_q[0], R5_Y + 2.0), gr_q], F, 0.4, GR)
 
 print("[通道列] 六列的 V+ / 漏极 / 栅极干线已铺")
 
@@ -332,9 +337,10 @@ print("[通道列] 六列的 V+ / 漏极 / 栅极干线已铺")
 # ============================================================================
 j1 = P("J1", "V24_IN")
 f1a = P("F1", "V24_IN")
-path([j1, (j1[0], 137.0), (f1a[0], 133.0), (f1a[0], 129.01), (f1a[0], 125.61)],
-     F, W_PROT, "V24_IN")
-seg(f1a[0], 125.61, f1a[0], 129.01, F, W_PROT, "V24_IN")
+# 走**底层**:J1 与 F1 都是插件件,两层都通,底层这一段正好从进线阻尼 RC 那一排下面
+# 穿过去,不用在顶层跟 C44 / R68 抢位置。
+path([j1, (j1[0], 138.0), (f1a[0], 133.5), (f1a[0], 129.01), (f1a[0], 125.61)],
+     B, W_PROT, "V24_IN")
 
 # V24_FUSED:F1 右夹子 → Q1/Q2 散热片 → 进线阻尼 C44
 zone("V24_FUSED", [F], rect(101.5, 112.0, 129.0, 124.3), 25, "V24_FUSED(Q1/Q2 散热片)")
@@ -342,7 +348,7 @@ c44 = P("C44", "V24_FUSED")
 f1b = P("F1", "V24_FUSED")
 # F1 的出线夹子(3/4 脚)→ 上行进 V24_FUSED 那片铜;再横过去喂进线阻尼 C44
 path([(f1b[0], 129.01), (f1b[0], 125.61), (f1b[0], 123.0)], F, W_PROT, "V24_FUSED")
-path([(f1b[0], 130.5), (f1b[0], 133.5), (c44[0], 133.5), c44], F, W_PWR1, "V24_FUSED")
+path([(f1b[0], 130.5), (f1b[0], 132.8), (c44[0], 132.8), c44], F, W_PWR1, "V24_FUSED")
 # 阻尼 RC 的中点与地
 snub = P("R68", "SNUB_MID")
 path([P("C44", "SNUB_MID"), snub], F, W_PWR1, "SNUB_MID")
@@ -355,7 +361,7 @@ for q in ("Q1", "Q2"):
 rs_hi = P("RS1", "V24_PROT")
 seg(rs_hi[0], 74.5, rs_hi[0], rs_hi[1], F, 2.5, "V24_PROT")
 ptc = P("PTC1", "V24_PROT")
-path([(ptc[0], 74.5), (ptc[0], ptc[1])], F, W_PWR1, "V24_PROT")
+path([(ptc[0], 74.5), (129.2, 72.0), (129.2, ptc[1]), ptc], F, W_PWR1, "V24_PROT")
 
 # PMOS_GATE:两个栅极 → DZ1 / R1 / TP8
 gq1, gq2 = P("Q1", "PMOS_GATE"), P("Q2", "PMOS_GATE")
@@ -365,8 +371,8 @@ path([gdz, P("R1", "PMOS_GATE")], F, 0.4, "PMOS_GATE")
 path([P("R1", "PMOS_GATE"), P("TP8", "PMOS_GATE")], F, 0.4, "PMOS_GATE")
 
 # V24_BUS:RS1 下游 → 脊椎(脊椎覆铜自己会长过来,这里补一条粗线保证一定连上)
-rs_lo = P("RS1", "V24_BUS")
-seg(rs_lo[0], rs_lo[1], SPINE_X1 - 1.0, rs_lo[1], F, W_BUS, "V24_BUS")
+# RS1 的下游脚就落在脊椎那片铜里(脊椎 x 到 108,RS1 下游脚在 106.93),
+# 不再补一段粗线 —— 4mm 宽的短线会蹭到旁边 C46 的地脚。
 
 # V24_LOGIC:PTC1 → 沿右板边细线上行 → buck 的输入电容
 vl = P("PTC1", "V24_LOGIC")
@@ -395,54 +401,69 @@ zone("GND", [F, B], rect(0.5, 0.5, 129.5, 63.5), 5, "GND 逻辑地(y ≤ 63.5)")
 zone("GND", [B], rect(0.5, 78.0, 129.5, 163.5), 5, "GND 功率地(底层,y ≥ 78)")
 zone("GND", [B], rect(100.5, 55.0, 129.5, 80.0), 5, "GND 汇合颈(RS1 旁,唯一的连接点)")
 zone("GND", [F], rect(0.5, 78.0, 100.5, 146.5), 4, "GND 功率地(顶层,通道列 + 底部带)")
-zone("GND", [F], rect(100.5, 74.0, 129.5, 146.5), 4, "GND 入电区顶层(优先级低于 V24_PROT)")
+zone("GND", [F], rect(100.5, 74.0, 129.5, 146.5), 3, "GND 入电区顶层(优先级低于 V24_PROT)")
 
-# 每个 MOS 源极就近打 3 颗过孔到底层地
-for (n, Fz, Jz, Qc, Qw, *_rest) in CH_PARTS:
-    for Q in (Qc, Qw):
-        s = P(Q, "GND")
-        for k in (-0.55, 0.0, 0.55):
-            via(s[0] + k, s[1] + 0.9, "GND", STITCH_D, STITCH_DRILL)
+# MOS 源极不单独打过孔:顶层在通道列里本来就是一片功率地,源极焊盘直接落在铜面上,
+# 一路向下汇到底部带、横着回 J1 的负极。(原来在源极旁边打过孔,反而会打到
+# 隔壁 CHn_VOUT 的底层竖带和漏极车道上去。)
 
 # 列内其它 GND 脚(电解负极 / 100nF / TVS 阳极 / 栅极下拉)不再逐脚打过孔 ——
 # 顶层在通道列里本来就铺了一片功率地,它们直接落在铜面上。这里只在每一列打一组
 # 缝合过孔,把顶层这片和底层那片订在一起。
 for (n, *_r) in CH_PARTS:
     cx = COL_X[n]
-    for yy in (100.0, 108.0, 114.0, 126.0, 136.0, 143.0):
-        via(cx - 8.0, yy, "GND", STITCH_D, STITCH_DRILL)   # 只打列的左边界:
-        # 两列各打一颗的话,相邻两颗只隔 0.2mm,会撞 hole_to_hole
-for yy in (100.0, 108.0, 114.0, 126.0, 136.0, 143.0):
-    via(COL_X[1] + 8.0, yy, "GND", STITCH_D, STITCH_DRILL)
+    # 打在「漏极 WW 车道」与「栅极 WW 车道」之间那条确实空着的带上(cx+5.0)。
+    # 打在列边界上不行:相邻列的栅极车道就在 0.4mm 外。
+    for yy in (94.0, 100.0, 113.2, 122.4, 127.0, 136.0, 143.0):
+        via(cx + 5.0, yy, "GND", STITCH_D, STITCH_DRILL)
 
 print("[地] 逻辑地 / 功率地两片,只在 RS1 旁边那一段颈上汇合")
 
 # ============================================================================
 # ⑤ 栅极驱动区 A5 与总断路
 # ============================================================================
-DRV_Y = 58.5
+DRV_Y = 54.5
+# 12 根栅极信号的扇出。两件事同时满足:
+#   ① 同层的走线**不交叉** —— 引脚顺序与目标顺序单调对应,拉直线即可;
+#   ② 换层过孔彼此离得开 —— 目标 x 天然隔 3mm 以上,但一根线不能压到别人的过孔上,
+#      所以按「跑得远的排在离引脚近的车道」分四条车道,同车道那两根的 x 区间不重叠。
+GATE_LANES = (59.0, 59.8, 60.6, 61.4)
 for (u, chans) in (("U6", [(1, "CW"), (1, "WW"), (2, "CW"), (2, "WW"),
                            (3, "CW"), (3, "WW"), (4, "CW"), (4, "WW")]),
                    ("U7", [(5, "CW"), (5, "WW"), (6, "CW"), (6, "WW")])):
+    items = []
     for (n, side) in chans:
         G = f"CH{n}_{side}_G"
         a = P(u, G)
-        gx = COL_X[n] + (LANE_GATE_CW if side == "CW" else LANE_GATE_WW)
-        # 驱动器 B 侧输出在下排(y = DRV_Y + 2.87),直接下到脊椎车道
-        drop(a[0], a[1] + 1.4, G, W_SIG, frm=a)
-        path([(a[0], a[1] + 1.4), (a[0], SPINE_Y0 - 2.0), (gx, SPINE_Y0 - 2.0)],
-             B, W_SIG, G)
+        sx = COL_X[n] + (LANE_SPINE_CW if side == "CW" else LANE_SPINE_WW)
+        items.append((abs(sx - a[0]), a, sx, G))
+    # 左右分组各自排队:**引脚越靠外,车道越靠上**。
+    # 这样每根线的竖直段都停在自己车道上方,底下那些横向车道从它旁边过去时不会撞上;
+    # 而横向线经过别人的过孔时,那个过孔一定在更上面的车道,竖直距离就是车道间距。
+    left = sorted((it for it in items if it[2] < it[1][0]), key=lambda it: it[1][0])
+    right = sorted((it for it in items if it[2] >= it[1][0]), key=lambda it: -it[1][0])
+    plan = [(it, GATE_LANES[k]) for k, it in enumerate(left)] + \
+           [(it, GATE_LANES[k]) for k, it in enumerate(right)]
+    if max(len(left), len(right)) > len(GATE_LANES):
+        raise SystemExit("扇出车道不够,要加车道或把驱动器再往上挪")
+    for ((_d, a, sx, G), ly) in plan:
+        path([a, (a[0], ly), (sx, ly)], F, W_SIG, G)
+        via(sx, ly, G, 0.5, 0.3)
+        seg(sx, ly, sx, SPINE_Y0 - 1.5, B, W_SIG, G)
 
-# /OE 失效安全链:R13 上拉、Q6 下拉、R14/R15、Q3 总断路
-path([P("R13", "OE_N"), P("Q6", "OE_N")], F, W_SIG, "OE_N")
-for u in ("U6", "U7"):
-    o = P(u, "OE_N")
-    path([P("Q6", "OE_N"), (P("Q6", "OE_N")[0], DRV_Y - 4.2), (o[0], DRV_Y - 4.2), o],
-         F, W_SIG, "OE_N")
-path([P("Q6", "OE_B"), P("R14", "OE_B")], F, W_SIG, "OE_B")
+# /OE 是一条横穿整个驱动带的干线。它的两端是 U6/U7 的 19 脚,而 19 脚旁边就是
+# 通道输入脚 —— 顶层横过去必压。改走**底层**,从两片 TSSOP 的身子底下穿过去。
+OE_Y = 56.0
+oe_taps = [P("R13", "OE_N"), P("Q6", "OE_N"), P("U6", "OE_N"), P("U7", "OE_N")]
+xs = sorted(x for x, _y in oe_taps)
+seg(xs[0], OE_Y, xs[-1], OE_Y, B, W_SIG, "OE_N")
+for (px, py) in oe_taps:
+    drop(px, OE_Y, "OE_N", W_SIG, frm=(px, py))
+path([P("Q6", "OE_B"), (P("Q6", "OE_B")[0], DRV_Y + 3.2),
+      (P("R14", "OE_B")[0], DRV_Y + 3.2), P("R14", "OE_B")], F, W_SIG, "OE_B")
 path([P("R14", "OE_B"), P("R15", "OE_B")], F, W_SIG, "OE_B")
-path([P("R15", "OE_B"), (P("R15", "OE_B")[0], DRV_Y + 4.0),
-      (P("Q3", "OE_B")[0], DRV_Y + 4.0), P("Q3", "OE_B")], F, W_SIG, "OE_B")
+path([P("R15", "OE_B"), (P("R15", "OE_B")[0], DRV_Y + 2.8),
+      (P("Q3", "OE_B")[0], DRV_Y + 2.8), P("Q3", "OE_B")], F, W_SIG, "OE_B")
 path([P("Q3", "MASTER_OFF_B"), P("R3", "MASTER_OFF_B")], F, W_SIG, "MASTER_OFF_B")
 path([P("R3", "MASTER_OFF_B"), (P("R3", "MASTER_OFF_B")[0], DRV_Y - 3.0),
       (P("R2", "MASTER_OFF_B")[0], DRV_Y - 3.0), P("R2", "MASTER_OFF_B")],
