@@ -481,6 +481,80 @@ path([P("R2", "MASTER_OFF_TP"), P("TP7", "MASTER_OFF_TP")], F, W_SIG, "MASTER_OF
 print("[驱动区] 12 根栅极信号从驱动器垂直下到本列的脊椎车道,不跨列", flush=True)
 
 # ============================================================================
+# ⑥ 逻辑区 A1–A4 的近距离连线
+# ============================================================================
+# 这里只走**同区之内、两脚就在隔壁**的那些线:接口 → 串阻 → 上拉 → MCU、
+# buck 自己那一圈、USB 那一串。它们的共同点是两端相距 ≤10mm、中间没有别的东西,
+# 拉一条 L 形就够,不需要规划车道。
+#
+# ⚠️ 还**没有**布的:12 路 PWM 从 U4 下到 U6/U7 的 A 侧输入(要跨半块板,
+#    而且 U4 的 PWM 脚大半在模组的上排),那个要单独规划车道,留到下一轮。
+
+
+def wire(netname, refs, layer=F, width=W_SIG, bend="hv", mid=None):
+    """按 refs 给的顺序把同一个网络的焊盘串起来。
+
+    bend="hv" 先横后竖、"vh" 先竖后横 —— 挑一个不压到中间那些焊盘的;
+    bend="z" 走 Z 形(先竖到 mid 这个 y、再横、再竖),
+    bend="zx" 走横向 Z 形(先横到 mid 这个 x)。
+    **两端元件的另一只脚常常就在 L 形的拐角上**,所以很多地方非 Z 形不可。
+    """
+    pts = [P(r, netname) for r in refs]
+    for a, b in zip(pts, pts[1:]):
+        if bend == "z":
+            path([a, (a[0], mid), (b[0], mid), b], layer, width, netname)
+        elif bend == "zx":
+            path([a, (mid, a[1]), (mid, b[1]), b], layer, width, netname)
+        else:
+            m = (b[0], a[1]) if bend == "hv" else (a[0], b[1])
+            path([a, m, b], layer, width, netname)
+
+
+for i in range(1, 5):                      # A3 干接点:端子 → 串阻 → 上拉 + 消抖
+    wire(f"SW_T{i}", ["J11", f"R{53+i}"], bend="z", mid=9.0)
+    wire(f"SW_IN{i}", [f"R{53+i}", f"R{57+i}"], bend="z", mid=13.8)
+    wire(f"SW_IN{i}", [f"R{57+i}", f"C{27+i}"], bend="z", mid=17.3)
+
+for netname, rpull in (("I2C_SDA", "R52"), ("I2C_SCL", "R53")):   # A3 I2C 上拉
+    wire(netname, ["J9", rpull], bend="z", mid=9.5)
+
+wire("CC1", ["J2", "R9"], bend="z", mid=9.8)       # A2 USB
+wire("CC2", ["J2", "R10"], bend="z", mid=10.2)
+# TODO(下一轮): wire("USB_DP", ["J2", "U5"], bend="z", mid=14.5)   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
+# TODO(下一轮): wire("USB_DM", ["J2", "U5"], bend="z", mid=15.2)   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
+# TODO(下一轮): wire("DTR", ["U5", "R11"], bend="hv")   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
+# TODO(下一轮): wire("RTS", ["U5", "R12"], bend="hv")   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
+# TODO(下一轮): wire("RTS_B", ["R11", "Q4"], bend="hv")   # 自动下载是交叉接法:   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
+# TODO(下一轮): wire("DTR_B", ["R12", "Q5"], bend="hv")   # DTR→R11→RTS_B→Q4→EN,RTS→R12→DTR_B→Q5→IO0   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
+
+wire("LED1_K", ["LED1", "R8"], bend="z", mid=10.0)  # A1 状态灯
+
+# TODO(下一轮): wire("V24_LOGIC", ["C32", "C33"], width=W_PWR1, bend="z", mid=26.8)   —— 拐角压到隔壁那只脚        # A4 buck
+# TODO(下一轮): wire("V24_LOGIC", ["C33", "C34"], width=W_PWR1, bend="z", mid=26.8)   —— 拐角压到隔壁那只脚
+# TODO(下一轮): wire("BOOT", ["U2", "C38"], bend="vh")   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
+# TODO(下一轮): wire("RT_CLK", ["U2", "R62"], bend="vh")   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
+# TODO(下一轮): wire("SW_NODE", ["U2", "D2"], width=W_PWR1, bend="vh")   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
+wire("SW_NODE", ["U2", "L1"], width=W_PWR1, bend="hv")
+# TODO(下一轮): wire("SW_NODE", ["C38", "L1"], bend="hv")   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
+# TODO(下一轮): wire("V5_BUCK", ["L1", "C36"], width=W_PWR1, bend="hv")   —— 拐角压到隔壁那只脚
+# TODO(下一轮): wire("V5_BUCK", ["C36", "C37"], width=W_PWR1, bend="hv")   —— 拐角压到隔壁那只脚
+# TODO(下一轮): wire("V5_BUCK", ["C37", "D3"], width=W_PWR1, bend="z", mid=33.5)   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
+wire("FB_5V", ["R63", "R64"], bend="z", mid=41.0)
+# TODO(下一轮): wire("COMP", ["R65", "C40"], bend="hv")   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
+# TODO(下一轮): wire("COMP_Z", ["R65", "C39"], bend="vh")   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
+# TODO(下一轮): wire("EN_BUCK", ["R66", "R67"], bend="z", mid=52.0)   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
+# TODO(下一轮): wire("V5_SYS", ["D3", "D4"], width=W_PWR1, bend="z", mid=40.0)   —— 拐角压到隔壁那只脚
+# TODO(下一轮): wire("V5_SYS", ["D4", "C41"], width=W_PWR1, bend="z", mid=40.0)   —— 拐角压到隔壁那只脚
+# TODO(下一轮): wire("V5_SYS", ["C41", "U3"], width=W_PWR1, bend="zx", mid=129.0)   —— 拐角压到隔壁那只脚
+# TODO(下一轮): wire("V5_SYS", ["C41", "TP3"], bend="hv")   —— 拐角压到隔壁那只脚
+# TODO(下一轮): wire("V3P3", ["U3", "C42"], width=0.8, bend="z", mid=41.5)   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
+# TODO(下一轮): wire("V3P3", ["C42", "C43"], width=0.8, bend="vh")   —— 拐角压到隔壁那只脚
+# TODO(下一轮): wire("V3P3", ["C43", "TP4"], bend="hv")   —— 拐角压到隔壁那只脚
+
+print("[逻辑区] 接口链 / USB / buck 的近距离连线已铺(12 路 PWM 还没布)", flush=True)
+
+
+# ============================================================================
 # 收尾:填充覆铜、报告
 # ============================================================================
 # 覆铜填充不在本进程里做 —— pcbnew 的 ZONE_FILLER 在无头环境里跑多块覆铜会直接崩掉
