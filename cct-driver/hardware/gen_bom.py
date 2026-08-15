@@ -70,9 +70,28 @@ for i in range(1, 5):
     SUPP[f"R{53+i}"] = "C21190"
     SUPP[f"R{57+i}"] = "C25804"
     SUPP[f"C{27+i}"] = "C14663"
-for r in ("TP1","TP2","TP3","TP4","TP5","TP6","H1","H2","H3","H4"):
+for r in ("TP1","TP2","TP3","TP4","TP5","TP6","TP7","TP8","TP9","H1","H2","H3","H4"):
     SUPP[r] = "无需采购"
 parts.update({k: v for k, v in SUPP.items() if k not in parts})
+
+# 3c. v2 新增件 —— 它们还不在 cct-main.kicad_pcb 里(这一轮只改原理图,布局是下一轮)。
+# 原先这里的位号全集是「PCB 里的 footprint」,新增件会被静默漏掉,BOM 与原理图对不上。
+# 改成:位号全集 = 原理图 P 表 ∪ SUPP ∪ PCB;封装名优先取 PCB,取不到就查下表。
+NEW_FP = {
+    "C44": "C1210",                    # 进线阻尼电容 4.7µF/100V
+    "C45": "C1210",                    # V24_PROT 母线陶瓷
+    "C46": "C1210",                    # V24_BUS 母线陶瓷
+    "R68": "R1206",                    # 进线阻尼电阻 1Ω
+    "TP7": "TestPoint_Pad_D1.5mm",     # MASTER_OFF 控制焊盘
+    "TP8": "TestPoint_Pad_D1.5mm",     # PMOS_GATE
+    "TP9": "TestPoint_Pad_D1.5mm",     # GND(buck 区)
+}
+for ref, fpn in NEW_FP.items():
+    if ref in parts:                      # 只对真的存在于原理图/SUPP 里的位号生效
+        fp_name.setdefault(ref, fpn)
+missing_fp = sorted(set(parts) - set(fp_name))
+if missing_fp:
+    print("⚠️ 有 C 号但没有封装名(既不在 PCB 也不在 NEW_FP):", missing_fp)
 
 # 4. 汇总
 missing_c = []
