@@ -26,7 +26,7 @@ CPL = os.path.join(HERE, "cpl-jlc.csv")
 OUT_SVG = os.path.join(HERE, "floorplan-v2.svg")
 
 # ---------------------------------------------------------------- 板框
-BW, BH = 130.0, 158.0          # v2 推荐板框
+BW, BH = 130.0, 164.0          # v2 推荐板框
 V1_BW, V1_BH = 110.0, 145.0    # 现版板框(画参考虚线用)
 
 # ------------------------------------------------ 封装 courtyard 实测值(mm)
@@ -77,7 +77,7 @@ CH_ROWS = [
     ("续流二极管  SS36B ×2",        120.46, FP["SMB"][1]),
     ("栅阻/下拉 ×4 + 100nF",        124.95, FP["R0603"][1]),
     ("功率 MOS  20N06 ×2",          130.66, FP["TO252"][1]),
-    ("输出端子  Jn",                141.78, FP["KF2EDGV3P"][1]),
+    ("输出端子 Jn(焊盘行 141.20)", 141.70, 6.95),   # 体非对称:焊盘行上 2.975 / 下 3.975
 ]
 
 # 入电保护区的行结构(电流自下而上)
@@ -87,12 +87,12 @@ IN_ROWS = [
     ("C1 C2 C3 电解(体电容)",       102.00, FP["ELEC8"][1]),
     ("Q1‖Q2 P-MOS + DZ1 R1 Q3",     114.50, FP["TO252P"][1]),
     ("F1 主保险丝座 15A",           126.00, FP["ATO2"][1]),
-    ("J1  24V 输入端子",            141.78, FP["KF7622P"][1]),
+    ("J1  24V 输入端子",            144.90, 12.05),   # 焊盘行 141.20,体下沿 150.93
 ]
 
 SPINE = dict(x0=8.5, x1=100.0, y0=73.0, y1=85.0)      # 24V 分配脊椎带
-IN_BLOCK = dict(x0=101.0, y0=62.0, x1=130.0, y1=148.0)
-SUPPORT = dict(x0=0.0, y0=148.0, x1=130.0, y1=158.0)  # 下板边支撑孔带
+IN_BLOCK = dict(x0=101.0, y0=62.0, x1=130.0, y1=147.0)
+SUPPORT = dict(x0=0.0, y0=147.0, x1=130.0, y1=164.0)  # 下板边支撑带(避让区 + 孔区)
 ANT_KEEPOUT = dict(x0=0.0, y0=0.0, x1=8.0, y1=25.0)
 
 # (位号, x, y, 是否新增, 它挡住的受力点)
@@ -102,10 +102,10 @@ HOLES = [
     ("H3",  58.0,   9.0, True,  "J2 Type-C 插拔力"),
     ("H4",   4.0,  79.0, False, "左板边中段"),
     ("H5", 126.0,  79.0, True,  "右板边中段 / RS1 区"),
-    ("H6",  15.0, 152.5, True,  "CH6·CH5 端子插拔力"),
-    ("H7",  50.0, 152.5, True,  "CH4·CH3 端子插拔力"),
-    ("H8",  85.0, 152.5, True,  "CH2·CH1 端子插拔力"),
-    ("H9", 117.0, 152.5, True,  "J1 拧紧力矩"),
+    ("H6",  15.0, 158.0, True,  "CH6·CH5 端子插拔力"),
+    ("H7",  50.0, 158.0, True,  "CH4·CH3 端子插拔力"),
+    ("H8",  85.0, 158.0, True,  "CH2·CH1 端子插拔力"),
+    ("H9", 117.0, 158.0, True,  "J1 拧紧力矩"),
 ]
 
 # ---------------------------------------------------------------- 分区定义
@@ -127,7 +127,7 @@ ZONES = [
      IN_BLOCK["x1"], IN_BLOCK["y1"], "#fed7aa",
      "J1→F1→Q1/Q2→体电容→RS1,一条直线不折返"),
     ("E0", "下板边支撑带", SUPPORT["x0"], SUPPORT["y0"], SUPPORT["x1"], SUPPORT["y1"],
-     "#e2e8f0", "4 个 M3 支撑孔;只装下层铜柱"),
+     "#e2e8f0", "上半插头外伸避让区 + 下半 4 个 M3 支撑孔;只装下层铜柱"),
     ("A0", "天线净空区", 0.0, 0.0, 8.0, 25.0, "#ffffff",
      "双面禁铜 / 无元件 / 无过孔 / 无螺丝"),
 ]
@@ -179,10 +179,10 @@ NEW_PARTS = [
     ("D0", "TP7", "测试焊盘", "PMOS_GATE,验证防反接 P-MOS 真的导通"),
     ("A4", "TP8", "测试焊盘", "buck 旁的就近 GND 参考"),
     ("MH", "H5", "M3 安装孔 (126, 79)", "右板边中段 / RS1 区"),
-    ("MH", "H6", "M3 安装孔 (15, 152.5)", "CH6·CH5 端子插拔力"),
-    ("MH", "H7", "M3 安装孔 (50, 152.5)", "CH4·CH3 端子插拔力"),
-    ("MH", "H8", "M3 安装孔 (85, 152.5)", "CH2·CH1 端子插拔力"),
-    ("MH", "H9", "M3 安装孔 (117, 152.5)", "J1 拧紧力矩"),
+    ("MH", "H6", "M3 安装孔 (15, 158)", "CH6·CH5 端子插拔力"),
+    ("MH", "H7", "M3 安装孔 (50, 158)", "CH4·CH3 端子插拔力"),
+    ("MH", "H8", "M3 安装孔 (85, 158)", "CH2·CH1 端子插拔力"),
+    ("MH", "H9", "M3 安装孔 (117, 158)", "J1 拧紧力矩"),
 ]
 
 ZONE_NAME = {z[0]: z[1] for z in ZONES}
@@ -329,7 +329,7 @@ def build_svg():
     # ---- 标题
     s.text(-M_L + 2, -M_T + 6.0, "CCT LED 驱动板 · v2 楼层规划", size=5.0, weight="bold")
     s.text(-M_L + 2, -M_T + 11.2,
-           "板框 130 × 158 mm(推荐)· 1:1 · 原点左上角 · 文件方向 = 上墙方向(端子在下)",
+           "板框 130 × 164 mm(推荐)· 1:1 · 原点左上角 · 文件方向 = 上墙方向(端子在下)",
            size=2.6, fill="#475569")
 
     # ---- 现版板框参考
@@ -338,7 +338,7 @@ def build_svg():
 
     # ---- 新板框
     s.rect(0, 0, BW, BH, fill="#f8fafc", stroke="#0f172a", sw=0.7, rx=2.0)
-    s.text(BW + 1.2, -1.6, "v2 板框 130×158", size=2.2, fill="#0f172a", anchor="end")
+    s.text(BW + 1.2, -1.6, "v2 板框 130×164", size=2.2, fill="#0f172a", anchor="end")
 
     # ---- 分区
     for zid, name, x0, y0, x1, y1, col, note in ZONES:
@@ -352,12 +352,12 @@ def build_svg():
     # ---- 功率通道列(6 列 + 行带)
     cx_min = CH_X[6] - CH_HALF
     cx_max = CH_X[1] + CH_HALF
-    s.rect(cx_min, 85.0, cx_max - cx_min, 148.0 - 85.0, fill="#dcfce7",
+    s.rect(cx_min, 85.0, cx_max - cx_min, 147.0 - 85.0, fill="#dcfce7",
            stroke="#475569", sw=0.3, op=0.85)
     for n in (1, 2, 3, 4, 5, 6):
         x = CH_X[n] - CH_HALF
-        s.line(x, 85.0, x, 147.5, stroke="#16a34a", sw=0.25, dash="1.2 1.2")
-    s.line(cx_max, 85.0, cx_max, 147.5, stroke="#16a34a", sw=0.25, dash="1.2 1.2")
+        s.line(x, 85.0, x, 146.5, stroke="#16a34a", sw=0.25, dash="1.2 1.2")
+    s.line(cx_max, 85.0, cx_max, 146.5, stroke="#16a34a", sw=0.25, dash="1.2 1.2")
     for label, cy, hgt in CH_ROWS:
         s.rect(cx_min + 0.4, cy - hgt / 2, (cx_max - cx_min) - 0.8, hgt,
                fill="#86efac", stroke="#15803d", sw=0.2, op=0.55)
@@ -402,9 +402,14 @@ def build_svg():
     s.text(ib["x0"] + 1.4, 72.6, "电流自下而上一条直线", size=1.8, fill="#7c2d12")
     s.text(4.0, 12.0, "A0 天线净空", size=2.0, weight="bold", fill="#334155",
            anchor="middle", rot=-90)
-    s.text(cx_min - 1.4, 152.2, "E0 下板边支撑带", size=2.0, weight="bold",
+    # E0 上半:插头外伸避让区
+    s.rect(SUPPORT["x0"] + 0.5, 147.0, BW - 1.0, 7.0, fill="#cbd5e1",
+           stroke="#64748b", sw=0.25, op=0.55)
+    s.text(BW / 2.0, 151.4, "插头外伸避让区(空板)· 最坏情况插头下沿 y=152.8",
+           size=2.0, fill="#334155", anchor="middle")
+    s.text(cx_min - 1.4, 157.0, "E0 下板边支撑带", size=2.0, weight="bold",
            fill="#334155", anchor="end")
-    s.text(cx_min - 1.4, 155.4, "y 148–158(暂定)", size=1.8, fill="#334155", anchor="end")
+    s.text(cx_min - 1.4, 160.2, "y 147–164", size=1.8, fill="#334155", anchor="end")
 
     # ---- 安装孔
     for name, hx, hy, is_new, why in HOLES:
@@ -425,10 +430,10 @@ def build_svg():
                stroke=ARROW_PWR, sw=1.0, marker="apwr")
     for n in (1, 2, 3, 4, 5, 6):
         x = CH_X[n] + 6.4
-        s.path("M %.1f,92.5 L %.1f,137.5" % (x, x), stroke=ARROW_PWR, sw=0.65,
+        s.path("M %.1f,92.5 L %.1f,137.0" % (x, x), stroke=ARROW_PWR, sw=0.65,
                marker="apwr", dash="2 1.4")
     # 地回流
-    s.path("M 8,146.6 L 110,146.6", stroke=ARROW_GND, sw=1.1, marker="agnd")
+    s.path("M 8,145.9 L 110,145.9", stroke=ARROW_GND, sw=1.1, marker="agnd")
 
     # ================= 逻辑 / 信号走向 =================
     s.path("M 30,20 L 38.0,20 L 38.0,58.8 L 20,58.8 L 20,63.5",
@@ -460,8 +465,8 @@ def build_svg():
         s.text(-M_L + 14, yy, txt, size=2.2, fill="#0f172a")
     s.text(-M_L + 2, ly + 22.0,
            "安装孔 9 个,带 * 的 5 个是本轮新增。E0 那 4 个只装下层铜柱,顶住插拔时压向底板的力 —— "
-           "插头与出线都在板子上方,不挡它们。左上角天线区不放螺丝。⚠️ E0 那排孔的 y=152.5 是暂定值,"
-           "等插头实测深度(见 §A4c);x 坐标与其余尺寸不受它影响。",
+           "插头与出线都在板子上方,不挡它们。左上角天线区不放螺丝。E0 那排孔的 y=158 按插头最坏包络算死"
+           "(KF2EDG 5.08 版官方机械图换算,见 §A4c),不再是暂定值。",
            size=2.0, fill="#64748b")
     s.text(-M_L + 2, ly + 25.7,
            "尺寸全部为 courtyard 实测值(取自 cct-main.kicad_pcb);本图是楼层规划,不是最终摆位。"
