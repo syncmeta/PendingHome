@@ -13,6 +13,7 @@
   - 封装外形尺寸(courtyard)取自 cct-main.kicad_pcb,见 FP 字典的注释
   - 位号全集读自 cpl-jlc.csv(195 个贴装件)+ 本文件里的 10 个非贴装件
     (H1–H4 安装孔、TP1–TP6 测试焊盘),合计 205
+  - 建议新增件(§C 与新增安装孔)单列一张表,不混进那 205
 本脚本只读不写 PCB 文件。
 """
 
@@ -25,7 +26,7 @@ CPL = os.path.join(HERE, "cpl-jlc.csv")
 OUT_SVG = os.path.join(HERE, "floorplan-v2.svg")
 
 # ---------------------------------------------------------------- 板框
-BW, BH = 130.0, 145.0          # v2 推荐板框
+BW, BH = 130.0, 158.0          # v2 推荐板框
 V1_BW, V1_BH = 110.0, 145.0    # 现版板框(画参考虚线用)
 
 # ------------------------------------------------ 封装 courtyard 实测值(mm)
@@ -44,7 +45,7 @@ FP = {
     "NANO2":      (9.82, 5.12),   # 支路保险丝座
     "ATO2":       (19.90, 6.81),  # F1 Keystone 3557-2 双联 ATO
     "KF7622P":    (16.53, 12.09), # J1 24V 输入端子
-    "KF2EDGV3P":  (12.31, 7.09),  # J3–J8 灯带输出端子
+    "KF2EDGV3P":  (12.31, 7.09),  # J3–J8 灯带输出端子(针座,不含插头)
     "R2512":      (6.39, 3.29),   # RS1
     "VSSOP10":    (3.09, 3.09),   # U1 INA237
     "WROOM":      (25.59, 18.09), # U4 ESP32-WROOM-32E
@@ -68,33 +69,44 @@ CH_X = {1: 92.0, 2: 76.0, 3: 60.0, 4: 44.0, 5: 28.0, 6: 12.0}   # 列心 x
 CH_HALF = CH_PITCH / 2.0
 
 # 功率通道列的行结构:(行名, 中心 y, 该行最高元件的 courtyard 高度)
+# 行序 = 电流方向,自上而下;行间净距即丝印预算(硬预算 1.8mm,设计值 2.2mm)
 CH_ROWS = [
-    ("支路保险丝  Fn",              89.60, FP["NANO2"][1]),
-    ("输出电解 + 指示灯 ×2",         104.36, FP["ELEC8"][1]),
-    ("输出 TVS  SMBJ26A ×2",       112.60, FP["SMB"][1]),
-    ("续流二极管  SS36B ×2",        118.50, FP["SMB"][1]),
-    ("栅阻/下拉 ×4 + 100nF",        122.99, FP["R0603"][1]),
-    ("功率 MOS  20N06 ×2",          128.70, FP["TO252"][1]),
-    ("输出端子  Jn",                137.50, FP["KF2EDGV3P"][1]),
+    ("支路保险丝  Fn",              89.56, FP["NANO2"][1]),
+    ("输出电解 + 指示灯 ×2",        106.32, FP["ELEC8"][1]),
+    ("输出 TVS  SMBJ26A ×2",       114.57, FP["SMB"][1]),
+    ("续流二极管  SS36B ×2",        120.46, FP["SMB"][1]),
+    ("栅阻/下拉 ×4 + 100nF",        124.95, FP["R0603"][1]),
+    ("功率 MOS  20N06 ×2",          130.66, FP["TO252"][1]),
+    ("输出端子  Jn",                141.78, FP["KF2EDGV3P"][1]),
 ]
 
 # 入电保护区的行结构(电流自下而上)
 IN_ROWS = [
     ("RS1 + U1 + C6 →分配点",       82.00, FP["R2512"][1]),
-    ("C4 C5 电解 + D1 TVS",         90.50, FP["ELEC8"][1]),
-    ("C1 C2 C3 电解(体电容)",       100.00, FP["ELEC8"][1]),
-    ("Q1‖Q2 P-MOS + DZ1 R1 Q3",     111.50, FP["TO252P"][1]),
-    ("F1 主保险丝座 15A",           122.00, FP["ATO2"][1]),
-    ("J1  24V 输入端子",            137.00, FP["KF7622P"][1]),
+    ("C4 C5 电解 + D1 TVS",          91.00, FP["ELEC8"][1]),
+    ("C1 C2 C3 电解(体电容)",       102.00, FP["ELEC8"][1]),
+    ("Q1‖Q2 P-MOS + DZ1 R1 Q3",     114.50, FP["TO252P"][1]),
+    ("F1 主保险丝座 15A",           126.00, FP["ATO2"][1]),
+    ("J1  24V 输入端子",            141.78, FP["KF7622P"][1]),
 ]
 
-SPINE = dict(x0=8.5, x1=100.0, y0=73.0, y1=85.0)     # 24V 分配脊椎带
-IN_BLOCK = dict(x0=101.0, y0=62.0, x1=130.0, y1=145.0)
+SPINE = dict(x0=8.5, x1=100.0, y0=73.0, y1=85.0)      # 24V 分配脊椎带
+IN_BLOCK = dict(x0=101.0, y0=62.0, x1=130.0, y1=148.0)
+SUPPORT = dict(x0=0.0, y0=148.0, x1=130.0, y1=158.0)  # 下板边支撑孔带
 ANT_KEEPOUT = dict(x0=0.0, y0=0.0, x1=8.0, y1=25.0)
 
-HOLES = [("H4", 4.0, 30.0), ("H3", 126.0, 30.0),
-         ("H2", 4.0, 79.0), ("H1", 126.0, 79.0)]
-HOLE5 = ("H5", 103.0, 137.0)   # 建议新增
+# (位号, x, y, 是否新增, 它挡住的受力点)
+HOLES = [
+    ("H1",   4.0,  36.0, False, "左板边上段"),
+    ("H2", 126.0,  12.0, False, "右上角"),
+    ("H3",  58.0,   9.0, True,  "J2 Type-C 插拔力"),
+    ("H4",   4.0,  79.0, False, "左板边中段"),
+    ("H5", 126.0,  79.0, True,  "右板边中段 / RS1 区"),
+    ("H6",  15.0, 152.5, True,  "CH6·CH5 端子插拔力"),
+    ("H7",  50.0, 152.5, True,  "CH4·CH3 端子插拔力"),
+    ("H8",  85.0, 152.5, True,  "CH2·CH1 端子插拔力"),
+    ("H9", 117.0, 152.5, True,  "J1 拧紧力矩"),
+]
 
 # ---------------------------------------------------------------- 分区定义
 # (id, 名称, x0, y0, x1, y1, 填充色, 说明)
@@ -103,7 +115,7 @@ ZONES = [
      "U4 ESP32 天线朝左板边;复位/BOOT 键、状态灯"),
     ("A2", "USB / 串口区", 40.0, 0.0, 66.0, 62.0, "#e0e7ff",
      "J2 Type-C 在上板边;CH340C + 自动下载"),
-    ("A3", "传感器 / 干接点接口区", 66.0, 0.0, 101.0, 26.0, "#e0f2fe",
+    ("A3", "传感器 / 干接点接口区", 66.0, 0.0, 130.0, 26.0, "#e0f2fe",
      "J11 / J10 / J9 全部在上板边,插拔方向朝外"),
     ("A4", "低压电源区 (buck + OR + LDO)", 66.0, 26.0, 130.0, 62.0, "#fef3c7",
      "U2/L1/D2 开关环路 <2cm²;SW 铜面积最小"),
@@ -114,18 +126,20 @@ ZONES = [
     ("D0", "入电保护区 (电流自下而上)", IN_BLOCK["x0"], IN_BLOCK["y0"],
      IN_BLOCK["x1"], IN_BLOCK["y1"], "#fed7aa",
      "J1→F1→Q1/Q2→体电容→RS1,一条直线不折返"),
+    ("E0", "下板边支撑带", SUPPORT["x0"], SUPPORT["y0"], SUPPORT["x1"], SUPPORT["y1"],
+     "#e2e8f0", "4 个 M3 支撑孔;只装下层铜柱"),
     ("A0", "天线净空区", 0.0, 0.0, 8.0, 25.0, "#ffffff",
      "双面禁铜 / 无元件 / 无过孔 / 无螺丝"),
 ]
 
+
 # ---------------------------------------------------------------- 元件归区
-# 位号 → 区。每条规则是 (区 id, [位号...])
 def ch_parts(n):
-    """第 n 路(1..6)的 16 个元件位号,按 netlist-spec.md Block E 的复制规则。"""
+    """第 n 路(1..6)的 18 个元件位号,按 netlist-spec.md Block E 的复制规则。"""
     i = n - 1
     return [
-        "F%d" % (2 + i),                       # 支路保险丝
-        "J%d" % (3 + i),                       # 输出端子
+        "F%d" % (2 + i),                                   # 支路保险丝
+        "J%d" % (3 + i),                                   # 输出端子
         "Q%d" % (7 + 2 * i), "Q%d" % (8 + 2 * i),          # 2× MOS
         "R%d" % (16 + 6 * i), "R%d" % (17 + 6 * i),        # 2× 100Ω 栅阻
         "R%d" % (18 + 6 * i), "R%d" % (19 + 6 * i),        # 2× 栅源下拉 10k
@@ -156,6 +170,21 @@ for _n in range(1, 7):
     ASSIGN.append(("C%d" % _n, ch_parts(_n)))
 ASSIGN.append(("C1", ["TP6"]))   # TP6 = CH1_CW_D 波形点,只 CH1 有
 
+# 建议新增件(§C 与 §A4c):不计入现版那 205
+NEW_PARTS = [
+    ("D0", "C44", "1210 1µF/100V X7R", "V24_IN RC 缓冲,离 J1 焊盘 ≤8mm"),
+    ("D0", "R68", "1206 2.2Ω/1W(起始值)", "与 C44 串联,值须上电实测后定"),
+    ("B0", "C45", "1210 1µF/100V X7R", "V24_BUS 分配点旁的高频陶瓷"),
+    ("C6", "C46", "1210 1µF/100V X7R", "脊椎最远端(CH6 保险丝上游)"),
+    ("D0", "TP7", "测试焊盘", "PMOS_GATE,验证防反接 P-MOS 真的导通"),
+    ("A4", "TP8", "测试焊盘", "buck 旁的就近 GND 参考"),
+    ("MH", "H5", "M3 安装孔 (126, 79)", "右板边中段 / RS1 区"),
+    ("MH", "H6", "M3 安装孔 (15, 152.5)", "CH6·CH5 端子插拔力"),
+    ("MH", "H7", "M3 安装孔 (50, 152.5)", "CH4·CH3 端子插拔力"),
+    ("MH", "H8", "M3 安装孔 (85, 152.5)", "CH2·CH1 端子插拔力"),
+    ("MH", "H9", "M3 安装孔 (117, 152.5)", "J1 拧紧力矩"),
+]
+
 ZONE_NAME = {z[0]: z[1] for z in ZONES}
 ZONE_NAME["MH"] = "安装孔"
 for _n in range(1, 7):
@@ -164,13 +193,20 @@ for _n in range(1, 7):
 
 # ---------------------------------------------------------------- 清点
 def all_refs():
-    """位号全集:cpl-jlc.csv 的 195 个贴装件 + 10 个非贴装件。"""
+    """现版位号全集:cpl-jlc.csv 的 195 个贴装件 + 10 个非贴装件。"""
     refs = []
     with open(CPL, newline="", encoding="utf-8") as f:
         for row in csv.DictReader(f):
             refs.append(row["Designator"].strip())
     refs += ["H1", "H2", "H3", "H4", "TP1", "TP2", "TP3", "TP4", "TP5", "TP6"]
     return refs
+
+
+def sortkey(r):
+    i = 0
+    while i < len(r) and not r[i].isdigit():
+        i += 1
+    return (r[:i], int(r[i:] or 0))
 
 
 def census():
@@ -183,37 +219,42 @@ def census():
             if r in assigned:
                 dup.append(r)
             assigned[r] = zid
-    missing = sorted(ref_set - set(assigned))          # 有元件没归区
-    ghost = sorted(set(assigned) - ref_set)            # 归了区但板上没有
-    counts = {}
-    for r, z in assigned.items():
-        counts[z] = counts.get(z, 0) + 1
-    return refs, assigned, counts, missing, ghost, dup
+    missing = sorted(ref_set - set(assigned), key=sortkey)
+    ghost = sorted(set(assigned) - ref_set, key=sortkey)
+    return refs, assigned, missing, ghost, dup
+
+
+ZONE_ORDER = ["A1", "A2", "A3", "A4", "A5", "B0",
+              "C1", "C2", "C3", "C4", "C5", "C6", "D0", "E0", "MH"]
 
 
 def print_census():
-    refs, assigned, counts, missing, ghost, dup = census()
-    order = ["A1", "A2", "A3", "A4", "A5", "B0",
-             "C1", "C2", "C3", "C4", "C5", "C6", "D0", "MH"]
+    refs, assigned, missing, ghost, dup = census()
     print("| 区 | 名称 | 元件数 | 位号 |")
     print("|---|---|---:|---|")
     total = 0
-    for z in order:
+    for z in ZONE_ORDER:
         lst = sorted([r for r, zz in assigned.items() if zz == z], key=sortkey)
         total += len(lst)
+        if z == "E0" and not lst:
+            print("| E0 | %s | 0 | (无元件;H6–H9 四个支撑孔见下表) |" % ZONE_NAME[z])
+            continue
         print("| %s | %s | %d | %s |" % (z, ZONE_NAME[z], len(lst), " ".join(lst)))
     print("| **合计** | | **%d** | |" % total)
     print()
-    print("板上位号总数 = %d;已归区 = %d;未归区 = %s;多余 = %s;重复 = %s"
+    print("现版板上位号总数 = %d;已归区 = %d;未归区 = %s;多余 = %s;重复 = %s"
           % (len(refs), total, missing or "无", ghost or "无", dup or "无"))
+    print()
+    print("### 建议新增件(不计入上表那 %d 个)" % len(refs))
+    print()
+    print("| 区 | 位号 | 器件 / 位置 | 用途 |")
+    print("|---|---|---|---|")
+    for zid, ref, part, why in NEW_PARTS:
+        print("| %s | %s | %s | %s |" % (zid, ref, part, why))
+    print()
+    print("新增 %d 个 → 若全部采纳,全板元件总数 %d。"
+          % (len(NEW_PARTS), len(refs) + len(NEW_PARTS)))
     return total, len(refs), missing, ghost, dup
-
-
-def sortkey(r):
-    i = 0
-    while i < len(r) and not r[i].isdigit():
-        i += 1
-    return (r[:i], int(r[i:] or 0))
 
 
 # ---------------------------------------------------------------- SVG
@@ -267,7 +308,7 @@ ARROW_SIG = "#2563eb"      # 逻辑/信号
 
 
 def build_svg():
-    M_L, M_T, M_R, M_B = 48.0, 16.0, 46.0, 36.0
+    M_L, M_T, M_R, M_B = 48.0, 16.0, 46.0, 40.0
     vb = (-M_L, -M_T, BW + M_L + M_R, BH + M_T + M_B)
     s = Svg()
     s.add('<svg xmlns="http://www.w3.org/2000/svg" '
@@ -288,7 +329,7 @@ def build_svg():
     # ---- 标题
     s.text(-M_L + 2, -M_T + 6.0, "CCT LED 驱动板 · v2 楼层规划", size=5.0, weight="bold")
     s.text(-M_L + 2, -M_T + 11.2,
-           "板框 130 × 145 mm(推荐)· 1:1 · 原点左上角 · 文件方向 = 上墙方向(端子在下)",
+           "板框 130 × 158 mm(推荐)· 1:1 · 原点左上角 · 文件方向 = 上墙方向(端子在下)",
            size=2.6, fill="#475569")
 
     # ---- 现版板框参考
@@ -297,7 +338,7 @@ def build_svg():
 
     # ---- 新板框
     s.rect(0, 0, BW, BH, fill="#f8fafc", stroke="#0f172a", sw=0.7, rx=2.0)
-    s.text(BW + 1.2, -1.6, "v2 板框 130×145", size=2.2, fill="#0f172a", anchor="end")
+    s.text(BW + 1.2, -1.6, "v2 板框 130×158", size=2.2, fill="#0f172a", anchor="end")
 
     # ---- 分区
     for zid, name, x0, y0, x1, y1, col, note in ZONES:
@@ -311,12 +352,12 @@ def build_svg():
     # ---- 功率通道列(6 列 + 行带)
     cx_min = CH_X[6] - CH_HALF
     cx_max = CH_X[1] + CH_HALF
-    s.rect(cx_min, 85.0, cx_max - cx_min, BH - 85.0, fill="#dcfce7",
+    s.rect(cx_min, 85.0, cx_max - cx_min, 148.0 - 85.0, fill="#dcfce7",
            stroke="#475569", sw=0.3, op=0.85)
     for n in (1, 2, 3, 4, 5, 6):
         x = CH_X[n] - CH_HALF
-        s.line(x, 85.0, x, BH - 1.0, stroke="#16a34a", sw=0.25, dash="1.2 1.2")
-    s.line(cx_max, 85.0, cx_max, BH - 1.0, stroke="#16a34a", sw=0.25, dash="1.2 1.2")
+        s.line(x, 85.0, x, 147.5, stroke="#16a34a", sw=0.25, dash="1.2 1.2")
+    s.line(cx_max, 85.0, cx_max, 147.5, stroke="#16a34a", sw=0.25, dash="1.2 1.2")
     for label, cy, hgt in CH_ROWS:
         s.rect(cx_min + 0.4, cy - hgt / 2, (cx_max - cx_min) - 0.8, hgt,
                fill="#86efac", stroke="#15803d", sw=0.2, op=0.55)
@@ -324,6 +365,9 @@ def build_svg():
     for n in (1, 2, 3, 4, 5, 6):
         s.text(CH_X[n], 90.6, "CH%d" % n, size=2.6, fill="#14532d",
                anchor="middle", weight="bold")
+    # 镊子净空标注
+    s.line(cx_min + 2.2, 92.12, cx_min + 2.2, 102.12, stroke="#15803d", sw=0.35)
+    s.text(cx_min + 3.4, 98.6, "10.0mm 镊子净空", size=1.9, fill="#14532d")
 
     # ---- 入电保护区行带
     ib = IN_BLOCK
@@ -333,20 +377,20 @@ def build_svg():
         s.text(ib["x1"] + 1.2, cy + 0.7, label, size=1.9, fill="#7c2d12")
 
     # ---- 区标题文字
-    def ztitle(zid, tx, ty, name, note=None, size=2.4, anchor="start", col="#0f172a"):
+    def ztitle(tx, ty, name, note=None, size=2.4, anchor="start", col="#0f172a"):
         s.text(tx, ty, name, size=size, weight="bold", fill=col, anchor=anchor)
         if note:
             s.text(tx, ty + 2.7, note, size=1.85, fill="#475569", anchor=anchor)
 
-    ztitle("A1", 8.0, 32.0, "A1 主控区", "U4 ESP32 · 复位/BOOT 键")
-    s.text(8.0, 36.4, "x 0–40  y 0–62", size=1.8, fill="#64748b")
-    ztitle("A2", 41.5, 46.0, "A2 USB / 串口", "J2 Type-C · CH340C · 自动下载")
-    s.text(41.5, 50.4, "x 40–66  y 0–62", size=1.8, fill="#64748b")
-    ztitle("A3", 67.5, 12.0, "A3 传感器 / 干接点接口", "J11 · J10 · J9 全在上板边")
-    s.text(67.5, 16.4, "x 66–101  y 0–26", size=1.8, fill="#64748b")
-    ztitle("A4", 67.5, 36.0, "A4 低压电源 buck + LDO",
+    ztitle(9.0, 44.0, "A1 主控区", "U4 ESP32 · 复位/BOOT 键")
+    s.text(9.0, 48.4, "x 0–40  y 0–62", size=1.8, fill="#64748b")
+    ztitle(41.5, 44.0, "A2 USB / 串口", "J2 Type-C · CH340C")
+    s.text(41.5, 48.4, "x 40–66  y 0–62", size=1.8, fill="#64748b")
+    ztitle(67.5, 16.0, "A3 传感器 / 干接点接口", "J11 · J10 · J9 全在上板边")
+    s.text(67.5, 20.4, "x 66–130  y 0–26", size=1.8, fill="#64748b")
+    ztitle(67.5, 38.0, "A4 低压电源 buck + LDO",
            "U2 / L1 / D2 环路 <2cm² · U3 · OR 二极管")
-    s.text(67.5, 40.4, "x 66–130  y 26–62", size=1.8, fill="#64748b")
+    s.text(67.5, 42.4, "x 66–130  y 26–62", size=1.8, fill="#64748b")
     s.text(5.5, 65.6, "A5 栅极驱动区  x 4–101  y 62–71", size=2.0,
            weight="bold", fill="#4c1d95")
     s.text(5.5, 69.4, "U6 压 CH1–4 质心 x=68 · U7 压 CH5–6 质心 x=20 · "
@@ -354,40 +398,37 @@ def build_svg():
     s.text(10.5, 75.9, "B0  24V 分配脊椎  x 8.5–100  y 73–85", size=2.0,
            weight="bold", fill="#991b1b")
     s.text(ib["x0"] + 1.4, 66.5, "D0 入电保护区", size=2.4, weight="bold", fill="#7c2d12")
-    s.text(ib["x0"] + 1.4, 69.6, "x 101–130  y 62–145", size=1.8, fill="#7c2d12")
+    s.text(ib["x0"] + 1.4, 69.6, "x 101–130  y 62–148", size=1.8, fill="#7c2d12")
     s.text(ib["x0"] + 1.4, 72.6, "电流自下而上一条直线", size=1.8, fill="#7c2d12")
     s.text(4.0, 12.0, "A0 天线净空", size=2.0, weight="bold", fill="#334155",
            anchor="middle", rot=-90)
+    s.text(cx_min - 1.4, 152.2, "E0 下板边支撑带", size=2.0, weight="bold",
+           fill="#334155", anchor="end")
+    s.text(cx_min - 1.4, 155.4, "y 148–158", size=1.8, fill="#334155", anchor="end")
 
     # ---- 安装孔
-    for name, hx, hy in HOLES:
+    for name, hx, hy, is_new, why in HOLES:
         s.circle(hx, hy, 1.6, fill="#ffffff", stroke="#0f172a", sw=0.45)
-        s.circle(hx, hy, 3.5, fill="none", stroke="#0f172a", sw=0.2)
-        s.text(hx, hy - 4.6, name, size=2.0, anchor="middle", weight="bold")
-    hn, hx, hy = HOLE5
-    s.circle(hx, hy, 1.6, fill="#ffffff", stroke="#0f172a", sw=0.4)
-    s.circle(hx, hy, 3.5, fill="none", stroke="#0f172a", sw=0.25)
-    s.line(hx, hy + 4.0, hx, hy + 10.0, stroke="#0f172a", sw=0.25)
-    s.text(hx, hy + 13.0, hn + " 建议新增(J3 与 J1 之间 9.6mm 空当)", size=2.0,
-           anchor="middle", fill="#0f172a")
+        s.circle(hx, hy, 3.5, fill="none", stroke="#0f172a", sw=0.25)
+        lab = name + ("*" if is_new else "")
+        if hy > 145:      # 下板边支撑孔:标号放右侧,免得压到别的字
+            s.text(hx + 4.6, hy + 0.9, lab, size=2.2, anchor="start", weight="bold")
+        else:
+            s.text(hx, hy - 4.8, lab, size=2.2, anchor="middle", weight="bold")
 
     # ================= 电流主干走向 =================
-    # 1) 入电:J1 → 上行穿过保护链 → RS1
-    s.path("M 116,130.5 L 116,85.0", stroke=ARROW_PWR, sw=1.6, marker="apwr")
-    # 2) RS1 → 分配点 → 脊椎左行
+    s.path("M 116,135.0 L 116,85.0", stroke=ARROW_PWR, sw=1.6, marker="apwr")
     s.path("M 111,80.0 L 102.0,80.0 L 102.0,79.4 L 13,79.4",
            stroke=ARROW_PWR, sw=1.6, marker="apwr")
-    # 3) 脊椎 → 每列下行(到保险丝)
     for n in (1, 2, 3, 4, 5, 6):
         s.path("M %.1f,79.4 L %.1f,86.4" % (CH_X[n], CH_X[n]),
                stroke=ARROW_PWR, sw=1.0, marker="apwr")
-    # 4) 每列内部:保险丝 → … → 端子(向下)
     for n in (1, 2, 3, 4, 5, 6):
         x = CH_X[n] + 6.4
-        s.path("M %.1f,92.5 L %.1f,133.2" % (x, x), stroke=ARROW_PWR, sw=0.65,
+        s.path("M %.1f,92.5 L %.1f,137.5" % (x, x), stroke=ARROW_PWR, sw=0.65,
                marker="apwr", dash="2 1.4")
-    # 5) 地回流:MOS 源极 → 沿底部带右行 → J1 负极
-    s.path("M 8,143.4 L 110,143.4", stroke=ARROW_GND, sw=1.1, marker="agnd")
+    # 地回流
+    s.path("M 8,146.6 L 110,146.6", stroke=ARROW_GND, sw=1.1, marker="agnd")
 
     # ================= 逻辑 / 信号走向 =================
     s.path("M 30,20 L 38.0,20 L 38.0,58.8 L 20,58.8 L 20,63.5",
@@ -396,17 +437,17 @@ def build_svg():
            stroke=ARROW_SIG, sw=0.8, marker="asig")
     for n in (1, 2, 3, 4, 5, 6):
         x = CH_X[n] - 6.4
-        s.path("M %.1f,70.5 L %.1f,121.8" % (x, x), stroke=ARROW_SIG, sw=0.55,
+        s.path("M %.1f,70.5 L %.1f,123.8" % (x, x), stroke=ARROW_SIG, sw=0.55,
                marker="asig", dash="1.6 1.3")
 
     # ---- 电流标注
-    s.text(121.5, 108, "24V 进线", size=2.2, fill=ARROW_PWR, weight="bold",
+    s.text(121.5, 110, "24V 进线", size=2.2, fill=ARROW_PWR, weight="bold",
            rot=-90, anchor="middle")
     s.text(56, 77.8, "24V 分配 · 单向左行 · 全程不折返", size=2.1,
            fill=ARROW_PWR, weight="bold", anchor="middle")
 
     # ================= 图例 =================
-    ly = BH + 6.0
+    ly = BH + 8.0
     s.text(-M_L + 2, ly, "图例", size=2.6, weight="bold")
     items = [
         (ARROW_PWR, "24V 功率主干(粗)/ 每路 3A 支路(细虚线)—— 全程只向左、向下"),
@@ -417,14 +458,16 @@ def build_svg():
         yy = ly + 4.6 + i * 4.4
         s.line(-M_L + 2, yy - 0.8, -M_L + 12, yy - 0.8, stroke=col, sw=1.2)
         s.text(-M_L + 14, yy, txt, size=2.2, fill="#0f172a")
-    s.text(-M_L + 2, ly + 22.5,
-           "尺寸全部为 courtyard 实测值(取自 cct-main.kicad_pcb);"
-           "本图是楼层规划,不是最终摆位。生成脚本:hardware/gen_floorplan_svg.py",
+    s.text(-M_L + 2, ly + 22.0,
+           "安装孔 9 个,带 * 的 5 个是本轮新增。E0 那 4 个只装下层铜柱,顶住插拔时压向底板的力 —— "
+           "插头与出线都在板子上方,不挡它们。左上角天线区不放螺丝。每个孔挡住哪个受力点见 §A4c。",
            size=2.0, fill="#64748b")
-    s.text(-M_L + 2, ly + 26.2,
-           "通道列距 16mm(现版 14mm)· 行间距 ≥2.2mm 作丝印预算 · "
-           "保险丝下方 8.0mm 镊子净空 · 205 个元件全部归区 · "
-           "脊椎双面 12mm 铜 + 每 3mm 一颗缝合过孔,15A 压降 39mV / 0.59W(按铜箔电阻率估算)",
+    s.text(-M_L + 2, ly + 25.7,
+           "尺寸全部为 courtyard 实测值(取自 cct-main.kicad_pcb);本图是楼层规划,不是最终摆位。"
+           "生成脚本:hardware/gen_floorplan_svg.py", size=2.0, fill="#64748b")
+    s.text(-M_L + 2, ly + 29.4,
+           "通道列距 16mm(现版 14mm)· 行间距 ≥2.2mm 作丝印预算 · 保险丝下方 10.0mm 镊子净空 · "
+           "脊椎双面 12mm 铜,15A 压降 39mV / 0.59W(按铜箔电阻率估算)",
            size=2.0, fill="#64748b")
 
     s.add('</svg>')
