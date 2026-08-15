@@ -10,3 +10,5 @@ hardware/logs/
 .easyeda_cache/
 
 .DS_Store
+hardware/.drc-v2.rpt
+hardware/.netlist-verify.net

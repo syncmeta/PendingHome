@@ -85,7 +85,7 @@ for ref, cid, pins in g.P:
 # ---- 测试焊盘(不在 P 表里,是纯板级件)----
 TPS = [
     ("TP1", "V24_BUS",       96.0,  71.0),    # B0 脊椎
-    ("TP2", "GND",          126.5,  71.21),    # D0
+    ("TP2", "GND",          126.5,  76.5),    # D0
     ("TP3", "V5_SYS",       127.0,  36.0),    # A4
     ("TP4", "V3P3",         127.0,  45.0),    # A4
     ("TP5", "CH1_WW_GR",    101.5, 120.84),   # C1 右肩:紧挨 Rg_ww / Q8 栅极
@@ -98,7 +98,7 @@ TPS = [
 # ---- 安装孔(§A4c,按受力点重排 4 → 9 个)----
 HOLES = [
     ("H1",   4.0,  36.0), ("H2", 126.0,  12.0), ("H3",  58.0,   9.0),
-    ("H4",   4.0,  71.0), ("H5", 126.0,  61.5),
+    ("H4",   4.0,  71.0), ("H5", 126.0,  66.0),
     ("H6",  15.0, 158.0), ("H7",  50.0, 158.0), ("H8",  85.0, 158.0),
     ("H9", 117.0, 158.0),
 ]
@@ -202,13 +202,15 @@ ROW = dict(
     #      **板框不变,仍是 130 × 164**。
     fuse_y=81.67,           # 行1 支路保险丝座,包络 79.00–84.33
     cel_y=97.13,            # 行2 100µF 电解(包络 12.04 × 8.60,几乎占满列宽)
-    led_y=104.78,           # 行3 指示灯 + 限流电阻(一排四个:灯 电阻 灯 电阻)
-    led_cw=-5.52, rl_cw=-1.48, led_ww=2.56, rl_ww=6.60,
-    tvs_y=110.10,           # 行4 输出 TVS
-    fw_y=116.24,            # 行5 续流(排在更靠近 MOS 的那一行)
+    led_y=104.78,           # 行3 指示灯 + 限流电阻(左右镜像:灯 电阻 | 电阻 灯)
+    led_cw=-5.52, rl_cw=-1.48, rl_ww=1.48, led_ww=5.52,
+    tvs_y=110.10,           # 行4 输出 TVS(阴极朝列心)
+    fw_y=116.24,            # 行5 续流(阴极朝列外侧,排在更靠近 MOS 的那一行)
     d_cw=-4.00, d_ww=4.00,
     r5_y=120.84,            # 行6 栅阻 / 下拉 / 100nF 去耦
-    rpd_cw=-6.60, rg_cw=-3.30, cm=0.00, rpd_ww=3.30, rg_ww=6.60,
+    # 顺序按信号流向排,保证「栅极信号 → 栅阻 → 下拉 → MOS 栅极」一条线不折返:
+    #   栅阻在外(迎脊椎下来的信号车道)、下拉在内(挨着 MOS 栅极)
+    rg_cw=-6.60, rpd_cw=-3.30, cm=0.00, rpd_ww=3.30, rg_ww=6.60,
     mos_y=128.26, q_cw=-4.00, q_ww=4.00,   # 行7 MOS(rot180:漏极片朝下正对端子)
     term_y=141.20,          # 行8 输出端子
 )
@@ -218,31 +220,33 @@ for (n, F, J, Qc, Qw, Rgc, Rgw, Rpc, Rpw, Dfc, Dfw_, Dtc, Dtw, Ce, Cm, Lc, Lw, R
     cx = COL_X[n]
     at(F,  cx,                     ROW["fuse_y"], 180)  # 1 脚(V24_BUS)朝右迎脊椎
     at(Ce, cx,                     ROW["cel_y"], 0)
-    at(Lc, cx + ROW["led_cw"],     ROW["led_y"], 0)
+    # 一列之内左右镜像:CW 半边和 WW 半边的器件方向互为镜像,
+    # 于是「阴极朝哪边」变成一条肉眼一扫就能查的规则(见 layout-guide.md)。
+    at(Lc, cx + ROW["led_cw"],     ROW["led_y"], 180)  # 阳极朝列外
     at(Rlc, cx + ROW["rl_cw"],     ROW["led_y"], 0)
+    at(Rlw, cx + ROW["rl_ww"],     ROW["led_y"], 180)
     at(Lw, cx + ROW["led_ww"],     ROW["led_y"], 0)
-    at(Rlw, cx + ROW["rl_ww"],     ROW["led_y"], 0)
-    at(Dtc, cx + ROW["d_cw"],      ROW["tvs_y"], 0)
+    at(Dtc, cx + ROW["d_cw"],      ROW["tvs_y"], 180)  # TVS 阴极朝列心
     at(Dtw, cx + ROW["d_ww"],      ROW["tvs_y"], 0)
-    at(Dfc, cx + ROW["d_cw"],      ROW["fw_y"], 0)
-    at(Dfw_, cx + ROW["d_ww"],     ROW["fw_y"], 0)
-    at(Rpc, cx + ROW["rpd_cw"],    ROW["r5_y"], 0)
+    at(Dfc, cx + ROW["d_cw"],      ROW["fw_y"], 0)     # 续流阴极朝列外
+    at(Dfw_, cx + ROW["d_ww"],     ROW["fw_y"], 180)
     at(Rgc, cx + ROW["rg_cw"],     ROW["r5_y"], 0)
+    at(Rpc, cx + ROW["rpd_cw"],    ROW["r5_y"], 0)
     at(Cm,  cx + ROW["cm"],        ROW["r5_y"], 0)
-    at(Rpw, cx + ROW["rpd_ww"],    ROW["r5_y"], 0)
-    at(Rgw, cx + ROW["rg_ww"],     ROW["r5_y"], 0)
+    at(Rpw, cx + ROW["rpd_ww"],    ROW["r5_y"], 180)
+    at(Rgw, cx + ROW["rg_ww"],     ROW["r5_y"], 180)
     at(Qc, cx + ROW["q_cw"],       ROW["mos_y"], 180)
     at(Qw, cx + ROW["q_ww"],       ROW["mos_y"], 180)
     at(J,  cx,                     ROW["term_y"], 0)
 
 # ---------------- D0 入电保护区 x 101–130 y 54–147(电流自下而上)----------------
-at("PTC1", 104.0,  56.73, 0)    # V24_PROT → V24_LOGIC,细线上行去 buck
+at("PTC1", 126.0,  56.73, 180)  # V24_PROT(右)→ V24_LOGIC(左),沿右板边上行去 buck
 at("U1",  109.25,  63.98, 180)  # INA237:IN+/IN− 朝下正对 RS1,x 取到两脚等距
 at("C6",   117.0,  63.98, 0)
 at("C46",  102.6,  71.21, 0)    # V24_BUS 高频陶瓷(1210,4.68 宽)
 at("RS1",  110.0,  71.21, 180)  # 2mΩ:右脚 V24_PROT 进、左脚 V24_BUS 出 → 直接向左进脊椎
 at("C45",  120.0,  71.21, 0)    # V24_PROT 高频陶瓷
-at("TP2",  126.5,  71.21)       # (见 TPS)
+at("TP2",  126.5,  76.5)        # (见 TPS)
 at("C5",   107.3,  79.74, 0)   # 体电容三排:C1/C2 排在最靠近 J1 的一排
 at("D1",   120.7,  79.74, 0)   # SMBJ26A
 at("C3",   107.3,  90.84, 0)
