@@ -4,8 +4,16 @@
 必须用 KiCad 自带 python 运行:
   /Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework/Versions/Current/bin/python3 gen_route_v2.py
 
-**幂等**:每次先把板上所有走线 / 过孔 / 覆铜删干净,再从头按规划重铺。
-输出只取决于 `gen_pcb_v2.py` 的摆位 + 本文件的规划,和跑了几次无关。
+**跑法(顺序不能乱)**:
+    KP=/Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework/Versions/Current/bin/python3
+    $KP gen_pcb_v2.py            # 摆位(从空板重建)
+    $KP gen_silk_refdes_fix.py   # 位号避障(只动丝印)
+    $KP gen_route_v2.py          # 本脚本:布线 + 覆铜
+
+**幂等**:每次先把板上所有走线 / 过孔 / 覆铜(以及本脚本自己下的规则区)删干净,
+再从头按规划重铺。整条流水线跑两遍,板文件的**内容完全一致** —— 实测:
+把 uuid 与覆铜填充多边形(那是 kicad-cli 现算的)归一化之后,两次的行集合逐条相同,
+差别只在文件里的**排列顺序**(pcbnew 内部 Add/Remove 之后的存储次序),不影响板子。
 
 ⛔ 不用自动布线器,也不再有 `gen_route_repair*.py` 那种「一轮轮打补丁」。
    布不通就报出来,不靠补丁堆。
