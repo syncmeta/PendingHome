@@ -54,7 +54,9 @@ GAPS = (0.20, 0.35, 0.55, 0.80, 1.20)
 ALIGNS = (0.0, -0.5, 0.5, -1.0, 1.0)   # 沿边对齐点,按 body 半宽/半高的倍数
 NEAR = 25.0                  # 只跟这个半径内的东西比,纯提速
 
-BOARD_W, BOARD_H = 110.0, 145.0
+# 板框尺寸从 Edge.Cuts 现取 —— v2 改成 130×164 之后写死的 110×145 会让
+# 「离板边 ≥0.30mm」这一条按错误的边界判,右下角一大片位号会被误判成出界。
+BOARD_W, BOARD_H = None, None   # 见下方 LoadBoard 之后的赋值
 
 
 # ---------------------------------------------------------------- 几何小工具
@@ -86,6 +88,8 @@ def need(d_self):
 
 # ---------------------------------------------------------------- 采集(改动前)
 board = pcbnew.LoadBoard(str(BOARD))
+_bb = board.GetBoardEdgesBoundingBox()
+BOARD_W, BOARD_H = _bb.GetRight() / IU, _bb.GetBottom() / IU
 fps = list(board.GetFootprints())
 
 bodies = {}          # ref → 元件外框(不含文字)
