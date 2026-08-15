@@ -404,7 +404,7 @@ def build_svg():
            anchor="middle", rot=-90)
     s.text(cx_min - 1.4, 152.2, "E0 下板边支撑带", size=2.0, weight="bold",
            fill="#334155", anchor="end")
-    s.text(cx_min - 1.4, 155.4, "y 148–158", size=1.8, fill="#334155", anchor="end")
+    s.text(cx_min - 1.4, 155.4, "y 148–158(暂定)", size=1.8, fill="#334155", anchor="end")
 
     # ---- 安装孔
     for name, hx, hy, is_new, why in HOLES:
@@ -460,7 +460,8 @@ def build_svg():
         s.text(-M_L + 14, yy, txt, size=2.2, fill="#0f172a")
     s.text(-M_L + 2, ly + 22.0,
            "安装孔 9 个,带 * 的 5 个是本轮新增。E0 那 4 个只装下层铜柱,顶住插拔时压向底板的力 —— "
-           "插头与出线都在板子上方,不挡它们。左上角天线区不放螺丝。每个孔挡住哪个受力点见 §A4c。",
+           "插头与出线都在板子上方,不挡它们。左上角天线区不放螺丝。⚠️ E0 那排孔的 y=152.5 是暂定值,"
+           "等插头实测深度(见 §A4c);x 坐标与其余尺寸不受它影响。",
            size=2.0, fill="#64748b")
     s.text(-M_L + 2, ly + 25.7,
            "尺寸全部为 courtyard 实测值(取自 cct-main.kicad_pcb);本图是楼层规划,不是最终摆位。"

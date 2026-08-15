@@ -83,7 +83,7 @@
 <text x="102.400" y="72.600" font-size="1.80" fill="#7c2d12" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">电流自下而上一条直线</text>
 <text x="4.000" y="12.000" font-size="2.00" fill="#334155" text-anchor="middle" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif" transform="rotate(-90.0 4.000 12.000)">A0 天线净空</text>
 <text x="2.600" y="152.200" font-size="2.00" fill="#334155" text-anchor="end" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">E0 下板边支撑带</text>
-<text x="2.600" y="155.400" font-size="1.80" fill="#334155" text-anchor="end" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">y 148–158</text>
+<text x="2.600" y="155.400" font-size="1.80" fill="#334155" text-anchor="end" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">y 148–158(暂定)</text>
 <circle cx="4.000" cy="36.000" r="1.600" fill="#ffffff" stroke="#0f172a" stroke-width="0.450"/>
 <circle cx="4.000" cy="36.000" r="3.500" fill="none" stroke="#0f172a" stroke-width="0.250"/>
 <text x="4.000" y="31.200" font-size="2.20" fill="#111" text-anchor="middle" font-weight="bold" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">H1</text>
@@ -143,7 +143,7 @@
 <text x="-34.000" y="175.000" font-size="2.20" fill="#0f172a" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">GND 功率回流:6 路 MOS 源极 → 底部带向右 → J1 负极,不进逻辑区</text>
 <line x1="-46.000" y1="178.600" x2="-36.000" y2="178.600" stroke="#2563eb" stroke-width="1.200" stroke-linecap="round"/>
 <text x="-34.000" y="179.400" font-size="2.20" fill="#0f172a" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">逻辑与栅极信号:ESP32 → U6/U7 → 12 根垂直下行,每列只走本列的网络</text>
-<text x="-46.000" y="188.000" font-size="2.00" fill="#64748b" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">安装孔 9 个,带 * 的 5 个是本轮新增。E0 那 4 个只装下层铜柱,顶住插拔时压向底板的力 —— 插头与出线都在板子上方,不挡它们。左上角天线区不放螺丝。每个孔挡住哪个受力点见 §A4c。</text>
+<text x="-46.000" y="188.000" font-size="2.00" fill="#64748b" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">安装孔 9 个,带 * 的 5 个是本轮新增。E0 那 4 个只装下层铜柱,顶住插拔时压向底板的力 —— 插头与出线都在板子上方,不挡它们。左上角天线区不放螺丝。⚠️ E0 那排孔的 y=152.5 是暂定值,等插头实测深度(见 §A4c);x 坐标与其余尺寸不受它影响。</text>
 <text x="-46.000" y="191.700" font-size="2.00" fill="#64748b" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">尺寸全部为 courtyard 实测值(取自 cct-main.kicad_pcb);本图是楼层规划,不是最终摆位。生成脚本:hardware/gen_floorplan_svg.py</text>
 <text x="-46.000" y="195.400" font-size="2.00" fill="#64748b" text-anchor="start" font-weight="normal" font-family="PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Helvetica, sans-serif">通道列距 16mm(现版 14mm)· 行间距 ≥2.2mm 作丝印预算 · 保险丝下方 10.0mm 镊子净空 · 脊椎双面 12mm 铜,15A 压降 39mV / 0.59W(按铜箔电阻率估算)</text>
 </svg>
