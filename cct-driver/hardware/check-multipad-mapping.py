@@ -79,7 +79,8 @@ for fp in board.GetFootprints():
     pads = []
     for pad in fp.Pads():
         number, net = pad.GetNumber(), pad.GetNetname()
-        pads.append((number, net))
+        pos = pad.GetPosition()
+        pads.append((number, net, pcbnew.ToMM(pos.x), pcbnew.ToMM(pos.y)))
         by_net[net].append(number)
     board_padnets[ref] = pads
     if any(len(numbers) > 1 for numbers in by_net.values()) or "" in by_net:
@@ -130,17 +131,31 @@ if {key: pin_nets.get(key) for key in expected_nets} != expected_nets:
 if f1_nums != Counter({"1": 2, "2": 2}):
     problems.append(f"F1 库封装焊盘编号错误: {dict(f1_nums)}")
 
+# 当前板的复核**按几何判**,不按焊盘编号判 —— 编号会随封装修版变化
+#(老封装是 1/2/3/4、新封装是 1/1/2/2),但「进线与出线必须落在**两个不同的夹子**上」
+# 这条不变。夹子由 x 坐标分成左右两簇,两簇之间隔着 13.48mm。
 current_f1 = defaultdict(list)
-for pad, net in board_padnets["F1"]:
+f1_xs = defaultdict(list)
+for pad, net, px, _py in board_padnets["F1"]:
     current_f1[net].append(pad)
-if set(current_f1["V24_IN"]) != {"1", "2"} or set(current_f1["V24_FUSED"]) != {"3", "4"}:
-    problems.append(f"当前板 F1 手工映射不符合已确认状态: {dict(current_f1)}")
+    f1_xs[net].append(px)
+_in_x, _out_x = f1_xs.get("V24_IN", []), f1_xs.get("V24_FUSED", [])
+if len(_in_x) != 2 or len(_out_x) != 2:
+    problems.append(f"当前板 F1 每个端子应各占 2 个焊盘,实为 {dict(current_f1)}")
+elif max(_in_x) - min(_in_x) > 0.5 or max(_out_x) - min(_out_x) > 0.5:
+    problems.append(f"当前板 F1 同一端子的两个焊盘不在同一个夹子上:{dict(f1_xs)}")
+elif abs(sum(_in_x) / 2 - sum(_out_x) / 2) < 10.0:
+    problems.append("当前板 F1 的进线与出线落在**同一个夹子**上 —— 保险丝被旁路,"
+                    f"两簇 x 中心只差 {abs(sum(_in_x)/2 - sum(_out_x)/2):.2f}mm")
 
 print()
 print("F1 导出网表/库封装映射:")
 print(f"  符号 1 = {pin_nets.get(('F1', '1'))} → 左夹 pad 1 × {f1_nums['1']}")
 print(f"  符号 2 = {pin_nets.get(('F1', '2'))} → 右夹 pad 2 × {f1_nums['2']}")
-print("  当前板只读复核:pad 1+2=V24_IN,pad 3+4=V24_FUSED")
+print(f"  当前板只读复核(按几何,不按编号):"
+      f"V24_IN 落在 x≈{sum(_in_x)/2:.2f} 那个夹子(焊盘 {sorted(current_f1['V24_IN'])}),"
+      f"V24_FUSED 落在 x≈{sum(_out_x)/2:.2f}(焊盘 {sorted(current_f1['V24_FUSED'])}),"
+      f"两簇相距 {abs(sum(_in_x)/2 - sum(_out_x)/2):.2f}mm")
 print(f"  自动候选 {len(candidates)} 个位号;实际映射缺陷 1 处(F1),已修正;其他未分类错误 {len(unknown)} 处")
 
 if problems:

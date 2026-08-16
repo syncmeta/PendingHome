@@ -30,7 +30,7 @@ NETLIST = HERE / ".netlist-verify.net"
 
 # 与 gen_pcb_v2.py 的 PAD_GROUPS 同源(从那边读,避免两份表走散)
 _src = (HERE / "gen_pcb_v2.py").read_text(encoding="utf-8")
-PAD_GROUPS = eval(re.search(r"^PAD_GROUPS = (\{.*?^\})", _src, re.S | re.M).group(1))
+PAD_GROUPS = eval(re.search(r"^PAD_GROUPS = (\{\}|\{.*?^\})", _src, re.S | re.M).group(1))
 
 # 板上有、原理图没有的元件(纯板级件)。它们不参与 diff,但要逐个列出来。
 BOARD_ONLY = {f"TP{i}" for i in range(1, 10)} | {f"H{i}" for i in range(1, 10)}
