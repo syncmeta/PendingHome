@@ -70,7 +70,9 @@ for i in range(1, 5):
     SUPP[f"R{53+i}"] = "C21190"
     SUPP[f"R{57+i}"] = "C25804"
     SUPP[f"C{27+i}"] = "C14663"
-for r in ("TP1","TP2","TP3","TP4","TP5","TP6","TP7","TP8","TP9","H1","H2","H3","H4"):
+# 安装孔 v2 从 4 个变成 9 个(按受力点重排,见 floorplan-v2.md §A4c)
+for r in ("TP1","TP2","TP3","TP4","TP5","TP6","TP7","TP8","TP9",
+          "H1","H2","H3","H4","H5","H6","H7","H8","H9"):
     SUPP[r] = "无需采购"
 parts.update({k: v for k, v in SUPP.items() if k not in parts})
 

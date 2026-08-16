@@ -39,7 +39,8 @@ if len(sch_refs) != len(P):
     problems.append(f"gen_sch.py 的 P 表里位号有重复({len(P)} 条 / {len(sch_refs)} 个位号)")
 
 # 不采购件(测试点、安装孔)—— 与 gen_bom.py 的 SUPP 保持一致
-NON_PURCHASED = {f"TP{i}" for i in range(1, 10)} | {f"H{i}" for i in range(1, 5)}
+# 安装孔 v2 是 9 个(H1–H9),不是 4 个 —— 按受力点重排,见 floorplan-v2.md §A4c
+NON_PURCHASED = {f"TP{i}" for i in range(1, 10)} | {f"H{i}" for i in range(1, 10)}
 
 # ---- 2. cct-main.kicad_sch 里的符号 ----
 sch_txt = (HERE / "cct-main.kicad_sch").read_text()
