@@ -1137,12 +1137,12 @@ for a, b in zip(["L1", "C36", "C37", "R63", "D3"], ["C36", "C37", "R63", "D3", "
         later("V5_BUCK", a, b, width=W_PWR1, layers=FB)
 for a, b in zip(["D3", "D4", "C41", "TP3", "U3"], ["D4", "C41", "TP3", "U3", "U3"]):
     if a != b:
-        later("V5_SYS", a, b, width=0.8, layers=FB)
+        later("V5_SYS", a, b, width=0.4, layers=FB)
 
 for a, b in zip(["U3", "C42", "C43", "TP4", "R53", "R52", "J9"],
                 ["C42", "C43", "TP4", "R53", "R52", "J9", "J9"]):
     if a != b:
-        later("V3P3", a, b, width=0.8, layers=FB)
+        later("V3P3", a, b, width=0.4, layers=FB)   # 0.8mm 在 U5 那排 0.5mm 间距的脚边上塞不下
 # U1(INA237)的 V3P3 就近从 A4 的 C43 取,不要绕右上角那一大圈
 # U1 的 V3P3 就近从 A4 的 C43 沿右板边内侧下来(x=123.3 那条竖道)
 corridor("V3P3", P("U1", "V3P3"), P("C6", "V3P3"), width=0.5,
@@ -1150,7 +1150,7 @@ corridor("V3P3", P("U1", "V3P3"), P("C6", "V3P3"), width=0.5,
 for a, b in zip(["U4", "C10", "C11", "R4", "R5", "U5", "C13"],
                 ["C10", "C11", "R4", "R5", "U5", "C13", "C13"]):
     if a != b:
-        later("V3P3", a, b, width=0.8, layers=FB)
+        later("V3P3", a, b, width=0.4, layers=FB)   # 0.8mm 在 U5 那排 0.5mm 间距的脚边上塞不下
 
 # ---- buck 自己那一圈 ----
 later("BOOT", "U2", "C38", layers=FB)
