@@ -343,7 +343,7 @@ def _escapes(ref, netname, toward):
     return out[:14]
 
 
-def _cands(a, b, step=0.25, span=6.0):
+def _cands(a, b, step=0.25, span=12.0):
     """候选拐法:先横后竖、先竖后横,再加两族 Z 形(拐点按固定步长枚举)。"""
     out = [[a, (b[0], a[1]), b], [a, (a[0], b[1]), b]]
     lo, hi = min(a[1], b[1]) - span, max(a[1], b[1]) + span
@@ -357,9 +357,9 @@ def _cands(a, b, step=0.25, span=6.0):
     # 再加一族「竖 → 横 → 竖 → 横」的五点路径:两个自由参数,步长放粗一点,
     # 用来绕开中间那些排得很密的小件(逻辑区那些长距离连线全靠它)。
     cy = sorted((min(a[1], b[1]) - span + k for k in range(int(2 * span + abs(a[1] - b[1])) + 1)),
-                key=lambda y: abs(y - (a[1] + b[1]) / 2))[:14]
+                key=lambda y: abs(y - (a[1] + b[1]) / 2))[:22]
     cx = sorted((min(a[0], b[0]) - span + k for k in range(int(2 * span + abs(a[0] - b[0])) + 1)),
-                key=lambda x: abs(x - (a[0] + b[0]) / 2))[:14]
+                key=lambda x: abs(x - (a[0] + b[0]) / 2))[:22]
     out += [[a, (a[0], y), (x, y), (x, b[1]), b] for y in cy for x in cx]
     return out
 
@@ -368,6 +368,46 @@ for _o in PADBOX:            # 焊盘一次性进网格索引(它们不会变)
     _index(_o)
 
 UNROUTED = []
+DIRTY = []
+
+
+def hpath(pts, layer, width, netname, tag):
+    """手写的走线也要**先查干净再落笔**;不干净就记账,不硬塞。"""
+    if _clean(pts, layer, width, netname, 0.21):
+        _emit(pts, layer, width, netname)
+        return True
+    DIRTY.append((netname, tag))
+    return False
+
+
+def corridor(netname, a, b, ys=None, xs=None, width=W_SIG, ea=2.2, eb=2.2, clr=0.21):
+    """a ─竖出来─▶ **底层**走廊 ─竖回去─▶ b。走廊位置从 ys(或 xs)里依次试。
+
+    手写的干线也要**先查干净再落笔** —— 一条都不干净就记进 DIRTY,末尾统一报,
+    绝不硬塞。这是本文件里所有「跨区干线」的统一写法。
+    """
+    # 逃逸点也依次试:上下、左右、远近 —— 两头都被密集焊盘夹着的时候就差这一下
+    def _outs(pt, d):
+        return [(pt[0], pt[1] + d * f) for f in (1.0, -1.0, 1.7, -1.7, 2.6, -2.6)] + \
+               [(pt[0] + d * f, pt[1]) for f in (1.0, -1.0, 1.7, -1.7, 2.6, -2.6)]
+    for pa in _outs(a, ea):
+      for pb in _outs(b, eb):
+       for c in [v + d for v in (ys or xs) for d in (0.0, 0.6, -0.6, 1.2, -1.2)]:
+        mid = ([pa, (pa[0], c), (pb[0], c), pb] if ys
+               else [pa, (c, pa[1]), (c, pb[1]), pb])
+        if (_clean([a, pa], F, width, netname, clr)
+                and _clean([b, pb], F, width, netname, clr)
+                and _clean([pa], None, VIA_D, netname, clr)
+                and _clean([pb], None, VIA_D, netname, clr)
+                and _clean(mid, B, width, netname, clr)):
+            _emit([a, pa], F, width, netname)
+            _emit([b, pb], F, width, netname)
+            via(pa[0], pa[1], netname)
+            via(pb[0], pb[1], netname)
+            _emit(mid, B, width, netname)
+            return True
+    DIRTY.append((netname, f"{a}→{b}"))
+    return False
 
 
 def auto(netname, ra, rb, width=W_SIG, clr=0.21, layers=(F,), esc=1.4):
@@ -582,7 +622,8 @@ path([P("R1", "PMOS_GATE"), P("TP8", "PMOS_GATE")], F, 0.4, "PMOS_GATE")
 # 所以先在 y≈57(I2C 拐弯处以下)横过来,再上到体电容 C35。
 vl = P("PTC1", "V24_LOGIC")
 c35 = P("C35", "V24_LOGIC")
-path([vl, (vl[0], 57.5), (90.0, 57.5), (90.0, 40.0), (c35[0], 40.0), (c35[0], c35[1])],
+# 横过来的那一段走 y=52 —— y=40 那条走廊要留给 buck 的 FB / COMP / EN 分压回 U2
+path([vl, (vl[0], 57.5), (90.0, 57.5), (90.0, 52.0), (c35[0], 52.0), (c35[0], c35[1])],
      B, W_PWR1, "V24_LOGIC")
 u2vin = P("U2", "V24_LOGIC")
 drop(u2vin[0], u2vin[1] - 2.0, "V24_LOGIC", W_PWR1, frm=u2vin)
@@ -758,9 +799,10 @@ for drv, lanes in (("U6", PWM_LANES_U6), ("U7", PWM_LANES_U7)):
             ex, ey = _lane_x(src[0] - 2.2, G), src[1]
         elif src[1] < 12.0:                    # 上排:往模组里(下)走
             ex, ey = _lane_x(src[0], G), src[1] + 2.6
-        else:                                  # 下排:只能往下走一点点 ——
-            # 再往下就是 y23.2 起的那条接口总线带,顶层横穿它就撞上了
-            ex, ey = _lane_x(src[0], G), 22.55
+        else:                                  # 下排:往**模组里面**(上)走再换层。
+            # 往下不行:紧挨着的两只脚只隔 1.27mm,过孔一定压上;
+            # 再往下 y23.2 起是接口总线带,顶层横穿它也撞。模组两排焊盘之间是空的。
+            ex, ey = _lane_x(src[0], G), 19.0
         esc = (ex, ey)
         vx = ex
         path([src, esc], F, W_SIG, G)
@@ -778,6 +820,24 @@ print("[PWM] 12 路 PWM 按「底层竖 → 顶层车道 → 顶层竖」布完"
 # 读起来就是一张接线表。布不通的不硬塞,末尾统一列出来。
 FB = (F, B)          # 先试顶层,顶层挤不下再换底层(两端各打一个换层过孔)
 
+# ---- 跨区干线先走 ----
+# 这些干线两头都被密集焊盘夹住、中间还要横穿半块板,**能走的走廊只有那么一两条**。
+# 所以必须排在前面挑路;放到后面,那几条走廊早被就近的小连线占掉了(实测就是这么栽的)。
+corridor("FB_5V", P("R64", "FB_5V"), P("U2", "FB_5V"),
+         ys=[40.6, 41.2, 40.0, 39.4, 41.8], ea=-1.8, eb=1.8)
+corridor("COMP", P("U2", "COMP"), P("R65", "COMP"),
+         ys=[47.5, 48.1, 46.9, 51.0, 51.6], ea=1.8, eb=1.8)
+corridor("EN_BUCK", P("R67", "EN_BUCK"), P("U2", "EN_BUCK"),
+         xs=[91.5, 92.5, 93.5, 94.5, 96.5, 98.5, 80.5, 79.5, 78.5, 82.5], ea=1.8, eb=-1.8)
+corridor("USB_VBUS", P("J2", "USB_VBUS"), P("D4", "USB_VBUS"), width=0.6,
+         ys=[33.0, 34.0, 35.0, 32.0, 31.0, 36.5, 38.0, 39.5, 41.0, 43.0, 44.5], ea=2.6, eb=-2.6)
+corridor("USB_DM", P("J2", "USB_DM"), P("U5", "USB_DM"),
+         xs=[49.9, 51.2, 52.4, 45.0], ea=3.5, eb=1.6)
+corridor("V3P3", P("C43", "V3P3"), P("U1", "V3P3"), width=0.5,
+         xs=[123.3, 122.3, 121.3, 124.3, 119.5, 118.5, 125.3, 117.5], ea=2.5, eb=-1.8)
+corridor("V5_SYS", P("C41", "V5_SYS"), P("J10", "V5_SYS"), width=0.5,
+         ys=[9.5, 10.5, 8.6, 11.5, 12.5, 13.5, 14.5, 7.5, 15.5], ea=-2.6, eb=4.5)
+
 # ---- 低压电源干线(链式串起来,不是星形)----
 for w, chain in ((W_PWR1, ["PTC1", "C35", "C32", "C33", "C34", "U2", "R66"]),):
     for a, b in zip(chain, chain[1:]):
@@ -785,14 +845,36 @@ for w, chain in ((W_PWR1, ["PTC1", "C35", "C32", "C33", "C34", "U2", "R66"]),):
 for a, b in zip(["L1", "C36", "C37", "R63", "D3"], ["C36", "C37", "R63", "D3", "D3"]):
     if a != b:
         auto("V5_BUCK", a, b, width=W_PWR1, layers=FB)
-for a, b in zip(["D3", "D4", "C41", "TP3", "U3", "R13", "U6", "U7", "J10"],
-                ["D4", "C41", "TP3", "U3", "R13", "U6", "U7", "J10", "J10"]):
+for a, b in zip(["D3", "D4", "C41", "TP3", "U3"], ["D4", "C41", "TP3", "U3", "U3"]):
     if a != b:
         auto("V5_SYS", a, b, width=0.8, layers=FB)
-for a, b in zip(["U3", "C42", "C43", "TP4", "R53", "R52", "J9", "U1", "C6"],
-                ["C42", "C43", "TP4", "R53", "R52", "J9", "U1", "C6", "C6"]):
+
+# V5_SYS 要喂两片驱动器和 R13,它们分散在 x 20–71。拉**一条顶层横轨走 y=50**:
+# 上面是 PWM 的横向车道(37–46)与自动下载那一行(46.5),下面是两片驱动器的身子(50.76 起),
+# 中间这条正好空着,而且驱动器的 VCC 脚(1 脚)就在上排 y=51.63,直接往下扎进去。
+V5_RAIL_Y = 50.0
+_u3 = P("U3", "V5_SYS")
+# U3 的三只脚是竖着排的,不能顺着 x 往下走 —— 先往右让开,再下来
+# 横轨本身走**底层** —— 顶层这一条被 12 根 PWM 最后那一竖横着穿过去(x 65.7–70.3),
+# 放顶层必撞。底层那一带是空的,只在三个抽头处上一个过孔。
+path([_u3, (117.8, _u3[1])], F, 0.8, "V5_SYS")
+via(117.8, _u3[1], "V5_SYS")
+path([(117.8, _u3[1]), (117.8, V5_RAIL_Y), (22.93, V5_RAIL_Y)], B, 0.8, "V5_SYS")
+for _ref in ("U6", "U7", "R13"):
+    _p = P(_ref, "V5_SYS")
+    via(_p[0], V5_RAIL_Y, "V5_SYS")
+    path([(_p[0], V5_RAIL_Y), (_p[0], _p[1])], F, 0.5, "V5_SYS")
+for _x in (70.93, 22.93):        # 驱动器的两只 VCC 脚在 IC 两排之间对接
+    path([(_x, 51.63), (_x, 57.37)], F, 0.5, "V5_SYS")
+# 走底层:顶层 y≈9.5 那一带要留给 J9 的 I2C 竖下来
+for a, b in zip(["U3", "C42", "C43", "TP4", "R53", "R52", "J9"],
+                ["C42", "C43", "TP4", "R53", "R52", "J9", "J9"]):
     if a != b:
         auto("V3P3", a, b, width=0.8, layers=FB)
+# U1(INA237)的 V3P3 就近从 A4 的 C43 取,不要绕右上角那一大圈
+# U1 的 V3P3 就近从 A4 的 C43 沿右板边内侧下来(x=123.3 那条竖道)
+corridor("V3P3", P("U1", "V3P3"), P("C6", "V3P3"), width=0.5,
+         ys=[68.0, 69.5, 71.0, 59.5, 58.5], ea=1.8, eb=1.8)
 for a, b in zip(["U4", "C10", "C11", "R4", "R5", "U5", "C13"],
                 ["C10", "C11", "R4", "R5", "U5", "C13", "C13"]):
     if a != b:
@@ -805,12 +887,11 @@ auto("SW_NODE", "U2", "D2", width=W_PWR1, layers=FB)
 auto("SW_NODE", "U2", "L1", width=W_PWR1, layers=FB)
 auto("SW_NODE", "C38", "L1", layers=FB)
 auto("FB_5V", "R63", "R64", layers=FB)
-auto("FB_5V", "R64", "U2", layers=FB)
-auto("COMP", "U2", "R65", layers=FB)
+# FB / COMP / EN 分压回 U2:U2 两排脚只隔 1.27mm,顶层横过去必压隔壁脚,
+# 所以都从脚正下方/正上方竖出来一小截换到底层,横过去再竖回去。
 auto("COMP", "R65", "C40", layers=FB)
 auto("COMP_Z", "R65", "C39", layers=FB)
 auto("EN_BUCK", "R66", "R67", layers=FB)
-auto("EN_BUCK", "R67", "U2", layers=FB)
 
 # ---- A3 干接点:端子 → 串阻(端子侧)→ 上拉 + 消抖(MCU 侧)→ U4 ----
 for i in range(1, 5):
@@ -828,11 +909,10 @@ for netname, rpull in (("I2C_SDA", "R52"), ("I2C_SCL", "R53")):
 # (已由 ⑥a 的横向车道接管)
 
 # ---- A2 USB 与自动下载(交叉接法:DTR→R11→RTS_B→Q4→EN,RTS→R12→DTR_B→Q5→IO0)----
-auto("USB_VBUS", "J2", "D4", width=W_PWR1, layers=FB)
 auto("CC1", "J2", "R9", layers=FB)
-auto("CC2", "J2", "R10", layers=FB)
+_cc, _r10 = P("J2", "CC2"), P("R10", "CC2")
+path([_cc, (_cc[0], 10.5), (_r10[0], 10.5), _r10], F, W_SIG, "CC2")
 auto("USB_DP", "J2", "U5", layers=FB)
-auto("USB_DM", "J2", "U5", layers=FB)
 auto("U0TXD", "U5", "U4", layers=FB)
 auto("U0RXD", "U5", "U4", layers=FB)
 auto("DTR", "U5", "R11", layers=FB)
@@ -853,6 +933,10 @@ auto("LED1_K", "LED1", "R8", layers=FB)
 auto("OE_CTRL", "U4", "R14", layers=FB)
 
 print(f"[逻辑区] 近距离连线布完;没布通的 {len(UNROUTED)} 条", flush=True)
+if DIRTY:
+    print(f"[干线] 手写干线里有 {len(DIRTY)} 条找不到干净走廊:", flush=True)
+    for _n, _w in DIRTY:
+        print(f"    ✗ {_n:<12} {_w}", flush=True)
 for _n, _a, _b in UNROUTED:
     print(f"    ✗ {_n:<12} {_a} → {_b}", flush=True)
 
