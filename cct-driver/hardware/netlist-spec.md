@@ -38,7 +38,7 @@
 | C45 | 4.7µF/100V X7R 1210(母线陶瓷) | C381466 | 1 → `V24_PROT`;2 → `GND` |
 | RS1 | 2mΩ ±1% 3W 2512 合金采样电阻 | **C459679** | 1 → `V24_PROT`;2 → `V24_BUS` |
 | C46 | 4.7µF/100V X7R 1210(母线陶瓷) | C381466 | 1 → `V24_BUS`;2 → `GND` |
-| U1 | INA237AIDGSR VSSOP-10 | C2864837 | IN+ → `V24_PROT`(开尔文);IN− → `V24_BUS`(开尔文);VS → `V3P3`;GND → `GND`;SDA → `I2C_SDA`;SCL → `I2C_SCL`;**A0 → `GND`;A1 → `GND`**;ALERT → NC |
+| U1 | INA237AIDGSR VSSOP-10 | C2864837 | IN+ → `V24_PROT`(开尔文);IN− → `V24_BUS`(开尔文);**VBUS → `V24_BUS`**;VS → `V3P3`;GND → `GND`;SDA → `I2C_SDA`;SCL → `I2C_SCL`;**A0 → `GND`;A1 → `GND`**;ALERT → NC |
 | C6 | 100nF 0603 | C14663 | 1 → `V3P3`;2 → `GND`(U1 去耦,紧贴 VS 脚) |
 | TP1 | 测试焊盘 | — | `V24_BUS` |
 | TP2 | 测试焊盘 | — | `GND` |
@@ -56,6 +56,18 @@
   DZ1 跨在**栅-源**之间把 Vgs 钳在 12V 以内(器件 Vgs 上限 ±20V)。
 - **RS1 必须开尔文接法**:U1 的 IN+/IN− 用细线从采样电阻两端焊盘**单独引出**,不得从大电流覆铜上任取一点。两条线并行走、长度接近。
 - **U1 地址脚 A0=A1=GND → I2C 地址 0x40**,与固件 `address: 0x40` 一致。INA237 每次总线通信都重新采样 A0/A1,故这两脚电平必须在总线活动前就稳定(接死到 GND 即满足)。
+- **U1 的 VBUS(8 脚)接 `V24_BUS`(RS1 下游、负载侧)**,因此 BUS_VOLTAGE 读数是实际送往六路灯带的母线电压,POWER/ENERGY 也使用这一路电压参与内部计算。依据
+  [TI INA237 datasheet, SBOSA20A, Figure 5-1 / Table 5-1 / Figure 10-1](https://www.ti.com/lit/ds/symlink/ina237.pdf):
+  DGS/VSSOP-10 的 8 脚为 VBUS、3 脚为 ALERT,且布局示例要求 VBUS 接负载供电节点。
+- **VBUS 不需要外部分压或串阻。** 手册给出的 VBUS 可测量范围是 0–85V、绝对最大范围是
+  −0.3–85V。正常母线 24V 距 85V 上限还有 61V;SMBJ26A 的最坏钳位天花板 42.1V 距上限
+  还有 42.9V(50.5% 的上限余量)。两者都在正常工作范围内。TI 只要求 VS–GND 就近放
+  0.1µF 去耦(已由 C6 满足),没有要求 VBUS 外接分压或滤波;额外串阻反而会与 VBUS 约
+  1MΩ 输入阻抗形成增益误差,本设计直接连接。
+- **U1 十脚逐脚复核(2026-08-16,对照上述 TI Table 5-1):** 1=A1→GND、2=A0→GND、
+  3=ALERT→NC(有意)、4=SDA→`I2C_SDA`、5=SCL→`I2C_SCL`、6=VS→`V3P3`、
+  7=GND→GND、8=VBUS→`V24_BUS`、9=IN−→`V24_BUS`(采样电阻负载侧)、
+  10=IN+→`V24_PROT`(采样电阻电源侧)。除有意悬空的 ALERT 外,无其他错接或漏接。
 - C1–C5 尽量靠近 J1,抑制上电浪涌与长线感抗。
 
 ---

@@ -56,7 +56,8 @@ part("C45", "C381466", {"1": "V24_PROT", "2": "GND"})
 part("C46", "C381466", {"1": "V24_BUS", "2": "GND"})
 part("U1", "C2864837", {"IN+": "V24_PROT", "IN-": "V24_BUS", "VS": "V3P3",
                         "GND": "GND", "SDA": "I2C_SDA", "SCL": "I2C_SCL",
-                        "A0": "GND", "A1": "GND", "ALERT": "NC_U1_ALERT"})
+                        "A0": "GND", "A1": "GND", "VBUS": "V24_BUS",
+                        "ALERT": "NC_U1_ALERT"})
 part("C6", "C14663", {"1": "V3P3", "2": "GND"})
 
 # ---- Block B ----
