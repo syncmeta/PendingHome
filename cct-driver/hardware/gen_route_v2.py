@@ -578,14 +578,12 @@ path([P("R1", "PMOS_GATE"), P("TP8", "PMOS_GATE")], F, 0.4, "PMOS_GATE")
 # 不再补一段粗线 —— 4mm 宽的短线会蹭到旁边 C46 的地脚。
 
 # V24_LOGIC:PTC1 → 沿右板边细线上行 → buck 的输入电容
+# V24_LOGIC 从 PTC1 沿右板边上行去 buck。**不能横穿右板边那两条 I2C 竖道**,
+# 所以先在 y≈57(I2C 拐弯处以下)横过来,再上到体电容 C35。
 vl = P("PTC1", "V24_LOGIC")
 c35 = P("C35", "V24_LOGIC")
-path([vl, (128.6, vl[1]), (128.6, 24.0), (c35[0], 24.0), (c35[0], c35[1])],
+path([vl, (vl[0], 57.5), (90.0, 57.5), (90.0, 40.0), (c35[0], 40.0), (c35[0], c35[1])],
      B, W_PWR1, "V24_LOGIC")
-for r in ("C32", "C33", "C34", "R66"):
-    p2 = P(r, "V24_LOGIC")
-    path([(p2[0], 24.0), (p2[0], p2[1] - 2.0), p2], B, W_PWR1 if r != "R66" else W_SIG,
-         "V24_LOGIC")
 u2vin = P("U2", "V24_LOGIC")
 drop(u2vin[0], u2vin[1] - 2.0, "V24_LOGIC", W_PWR1, frm=u2vin)
 
@@ -676,6 +674,48 @@ path([P("R2", "MASTER_OFF_TP"), P("TP7", "MASTER_OFF_TP")], F, W_SIG, "MASTER_OF
 print("[驱动区] 12 根栅极信号从驱动器垂直下到本列的脊椎车道,不跨列", flush=True)
 
 # ============================================================================
+# ⑥a A3 三个接口 → U4:8 根信号横穿整块板
+# ============================================================================
+# 这是「MCU 在左上、对外接口在右上」这个楼层规划的必然代价:干接点四路、I2C 两路、
+# UART2 两路,都要从 x≈70–112 回到 U4 下排 x≈11–22。8 根线成束走,规矩和 PWM 那束一样:
+#
+#   源头焊盘 ─(顶层短脚)─▶ 过孔 ─(**底层**竖下来)─▶ 过孔
+#           ─(**顶层**横向车道,每根一条自己的 y)─▶ 竖上去插进 U4 的脚
+#
+# 车道 y **按目标 x 从右到左依次下移**:每根线最后那一竖只会经过比自己更靠右的
+# 车道所在的 x,而那些车道早就拐走了。源头那一竖放底层,与顶层车道天然不打架。
+# 为了腾出 y 22.4–28 这条带,A1 那排小件整体下移了 3.5mm、C35 下移 1.5mm(见 gen_pcb_v2.py)。
+A3_BUS = [                      # (网络, 源位号) —— 顺序即车道自上而下
+    ("UART2_RX", "J10"), ("UART2_TX", "J10"),
+    ("I2C_SCL", "R53"), ("I2C_SDA", "R52"),
+    ("SW_IN2", "C29"), ("SW_IN1", "C28"), ("SW_IN4", "C31"), ("SW_IN3", "C30"),
+]
+A3_BUS.sort(key=lambda it: -P("U4", it[0])[0])
+for k_, (netname, src_ref) in enumerate(A3_BUS):
+    lane = 23.2 + 0.65 * k_    # 起点要在 U4 下排焊盘的下沿(22.65)之外
+    s, d = P(src_ref, netname), P("U4", netname)
+    esc = (s[0], s[1] + 2.2)
+    path([s, esc], F, W_SIG, netname)
+    via(esc[0], esc[1], netname)
+    path([esc, (esc[0], lane)], B, W_SIG, netname)
+    via(esc[0], lane, netname)
+    path([(esc[0], lane), (d[0], lane), (d[0], d[1])], F, W_SIG, netname)
+
+# I2C 还要沿右板边下行到 D0 的 U1(全板唯一一条从逻辑区伸进功率区的信号)
+# 沿右板边下行的两条 I2C:**外面那条要拐得更靠下**,否则它的竖直段会横穿里面那条的横道。
+for netname, rpull, ex, ey, turn in (("I2C_SCL", "R53", 126.4, 19.4, 60.5),
+                                     ("I2C_SDA", "R52", 127.2, 20.4, 62.0)):
+    a, b = P(rpull, netname), P("U1", netname)
+    esc = (a[0], a[1] - 2.2)
+    path([a, esc], F, W_SIG, netname)
+    via(esc[0], esc[1], netname)
+    path([esc, (esc[0], ey), (ex, ey), (ex, turn), (b[0], turn)], B, W_SIG, netname)
+    via(b[0], turn, netname)
+    seg(b[0], turn, b[0], b[1], F, W_SIG, netname)
+
+print("[接口总线] 干接点 / I2C / UART2 共 8 根横向车道布完", flush=True)
+
+# ============================================================================
 # ⑥ 12 路 PWM:U4 → 驱动器的 A 侧输入(全板最长的一批信号)
 # ============================================================================
 # 难在两头都挤:U4 的 PWM 脚大半在模组**上排** y=3.6,而驱动器的输入脚只隔 0.65mm。
@@ -695,15 +735,16 @@ PWM_LANES_U7 = (43.4, 44.2, 45.0, 45.8)
 
 # U4 上下两排会出现**同一个 x** 的两只脚(上排 y=3.6、下排 y=21.6),
 # 底层那一竖如果都放在焊盘正下方就会叠在一起。所以先给每根线分一条**互不重叠的竖道**。
-_used_x = []
+_used_x = []          # [(x, 归谁)] —— 同一根线自己的逃逸孔不算冲突
 
 
-def _lane_x(px):
-    for cand in (px, px + 0.63, px - 0.63, px + 1.26, px - 1.26, px + 1.9, px - 1.9):
-        if all(abs(cand - u) > 0.6 for u in _used_x):
-            _used_x.append(cand)
+def _lane_x(px, owner, step=0.63, tries=10):
+    cands = [px] + [px + s * step * k for k in range(1, tries) for s in (1, -1)]
+    for cand in cands:
+        if all(abs(cand - u) > 0.6 or o == owner for u, o in _used_x):
+            _used_x.append((cand, owner))
             return cand
-    raise SystemExit("PWM 底层竖道排不下,要重新分配")
+    raise SystemExit(f"{owner}:底层竖道排不下,要重新分配")
 
 
 for drv, lanes in (("U6", PWM_LANES_U6), ("U7", PWM_LANES_U7)):
@@ -714,15 +755,17 @@ for drv, lanes in (("U6", PWM_LANES_U6), ("U7", PWM_LANES_U7)):
         G = f"CH{n}_{s}"
         src, tgt = P("U4", G), P(drv, G)
         if src[0] > 25.0:                      # 模组右侧那一脚:先往左出模组
-            esc = (src[0] - 2.2, src[1])
+            ex, ey = _lane_x(src[0] - 2.2, G), src[1]
         elif src[1] < 12.0:                    # 上排:往模组里(下)走
-            esc = (src[0], src[1] + 2.6)
-        else:                                  # 下排:往模组外(下)走
-            esc = (src[0], src[1] + 2.4)
-        vx = _lane_x(esc[0])
+            ex, ey = _lane_x(src[0], G), src[1] + 2.6
+        else:                                  # 下排:只能往下走一点点 ——
+            # 再往下就是 y23.2 起的那条接口总线带,顶层横穿它就撞上了
+            ex, ey = _lane_x(src[0], G), 22.55
+        esc = (ex, ey)
+        vx = ex
         path([src, esc], F, W_SIG, G)
         via(esc[0], esc[1], G)
-        path([esc, (vx, esc[1] + 1.6), (vx, lane)], B, W_SIG, G)
+        path([esc, (vx, lane)], B, W_SIG, G)
         via(vx, lane, G)
         path([(vx, lane), (tgt[0], lane), (tgt[0], tgt[1])], F, W_SIG, G)
 
@@ -774,15 +817,15 @@ for i in range(1, 5):
     auto(f"SW_T{i}", "J11", f"R{53+i}", layers=FB)
     auto(f"SW_IN{i}", f"R{53+i}", f"R{57+i}", layers=FB)
     auto(f"SW_IN{i}", f"R{57+i}", f"C{27+i}", layers=FB)
-    auto(f"SW_IN{i}", f"C{27+i}", "U4", layers=FB)
+    # (已由 ⑥a 的横向车道接管)
 
 # ---- A3 I2C:接口 → 上拉 → MCU;并沿右板边下行到 D0 的 U1 ----
 for netname, rpull in (("I2C_SDA", "R52"), ("I2C_SCL", "R53")):
     auto(netname, "J9", rpull, layers=FB)
-    auto(netname, rpull, "U4", layers=FB)
-    auto(netname, rpull, "U1", layers=FB)
-auto("UART2_TX", "J10", "U4", layers=FB)
-auto("UART2_RX", "J10", "U4", layers=FB)
+    # (已由 ⑥a 的横向车道接管)
+    # (已由 ⑥a 的横向车道接管)
+# (已由 ⑥a 的横向车道接管)
+# (已由 ⑥a 的横向车道接管)
 
 # ---- A2 USB 与自动下载(交叉接法:DTR→R11→RTS_B→Q4→EN,RTS→R12→DTR_B→Q5→IO0)----
 auto("USB_VBUS", "J2", "D4", width=W_PWR1, layers=FB)
