@@ -81,6 +81,10 @@ STITCH_D, STITCH_DRILL = 0.5, 0.3
 # ============================================================================
 # 基础工具
 # ============================================================================
+PLACED = []          # 本脚本已经放下的铜:(x0, y0, x1, y1, layer, netname)
+                     # seg()/via() 自己往里记,避障小路由据此判间距
+
+
 def net(name):
     if name not in NET:
         raise SystemExit(f"网络不存在:{name}")
@@ -91,11 +95,21 @@ def net(name):
 # 原因还是那个 SWIG 坑:`board.Remove()` 调用过之后,先前拿到的 PAD 代理对象会失效
 #(连 `GetPosition().x` 都取不到),而 clear_copper() 是本脚本第一件事。
 PADXY = {}
+PADHALF = {}         # (ref, net) → 焊盘半宽半高,给「先垂直逃出焊盘排」用
+PADBOX = []          # 焊盘外框,给避障小路由用
 for fp in board.GetFootprints():
     _ref = fp.GetReference()
     for p in fp.Pads():
         q = p.GetPosition()
         PADXY.setdefault((_ref, p.GetNetname()), (ToMM(q.x), ToMM(q.y)))
+        bb = p.GetBoundingBox()
+        PADHALF.setdefault((_ref, p.GetNetname()),
+                           (ToMM(bb.GetRight() - bb.GetLeft()) / 2,
+                            ToMM(bb.GetBottom() - bb.GetTop()) / 2))
+        PADBOX.append((ToMM(bb.GetLeft()), ToMM(bb.GetTop()),
+                       ToMM(bb.GetRight()), ToMM(bb.GetBottom()),
+                       p.GetNetname(), p.GetAttribute() != pcbnew.PAD_ATTRIB_SMD,
+                       p.IsOnLayer(F), p.IsOnLayer(B)))
 
 
 def P(ref, netname):
@@ -111,6 +125,7 @@ def clear_copper():
     ⚠️ 必须**先把要删的都收集完**再动手:`board.Remove()` 一旦调用过,同一进程里
     其它 SWIG 代理对象就会集体失效(`'SwigPyObject' object has no attribute ...`)。
     """
+    PLACED.clear()
     items = list(board.GetTracks())
     # 覆铜全删;规则区只删本脚本自己下的那些(名字带「车道」),
     # gen_pcb_v2.py 下的天线禁区留着 —— 否则跑几次就叠出一堆重复的规则区。
@@ -132,6 +147,10 @@ def seg(x1, y1, x2, y2, layer, width, netname):
     t.SetWidth(FromMM(width))
     t.SetNet(net(netname))
     board.Add(t)
+    _o = (min(x1, x2) - width / 2, min(y1, y2) - width / 2,
+          max(x1, x2) + width / 2, max(y1, y2) + width / 2, layer, netname)
+    PLACED.append(_o)
+    _index(_o)
 
 
 def path(pts, layer, width, netname):
@@ -148,6 +167,9 @@ def via(x, y, netname, d=VIA_D, drill=VIA_DRILL):
     v.SetLayerPair(F, B)
     v.SetNet(net(netname))
     board.Add(v)
+    _o = (x - d / 2, y - d / 2, x + d / 2, y + d / 2, None, netname)
+    PLACED.append(_o)
+    _index(_o)
 
 
 def drop(x, y, netname, w=W_SIG, frm=None):
@@ -216,6 +238,179 @@ def keepout_fill(layers, pts, name):
 
 
 print(f"[清场] 删掉 {clear_copper()} 个旧走线/过孔/覆铜(幂等的前提)")
+
+# ============================================================================
+# 一个**会避障的小路由**(只走直角,只给短距离信号线用)
+# ============================================================================
+# 为什么要有它:逻辑区那些两端元件,**另一只脚常常正好落在 L 形的拐角上**,
+# 靠人一条条挑拐点又慢又容易漏。这里把「候选拐法 → 逐段查间距 → 第一个干净的就用」
+# 写成代码:候选是有限且**按固定顺序**枚举的,所以结果可复现,不是随机试出来的。
+#
+# 它**只解决短距离两点连线**,不是自动布线器:不会自己找绕远的路、布不通就明说
+# 布不通(记进 UNROUTED,末尾统一列出来),绝不硬塞。
+
+def _box(x1, y1, x2, y2, w):
+    return (min(x1, x2) - w / 2, min(y1, y2) - w / 2,
+            max(x1, x2) + w / 2, max(y1, y2) + w / 2)
+
+
+def _hit(b1, b2, clr):
+    return not (b1[2] + clr <= b2[0] or b2[2] + clr <= b1[0]
+                or b1[3] + clr <= b2[1] or b2[3] + clr <= b1[1])
+
+
+GRID = 6.0
+_gidx = {}           # (gx, gy) → [障碍物]
+
+
+def _gkeys(b):
+    for gx in range(int(b[0] // GRID), int(b[2] // GRID) + 1):
+        for gy in range(int(b[1] // GRID), int(b[3] // GRID) + 1):
+            yield (gx, gy)
+
+
+def _index(obst):
+    for k in _gkeys(obst):
+        _gidx.setdefault(k, []).append(obst)
+
+
+def _near(b):
+    seen = set()
+    for k in _gkeys((b[0] - 1, b[1] - 1, b[2] + 1, b[3] + 1)):
+        for o in _gidx.get(k, ()):
+            if id(o) not in seen:
+                seen.add(id(o))
+                yield o
+
+
+# 对所有网络一视同仁的禁区:天线净空 A0,以及板边留白。
+# 避障小路由本来看不见它们 —— 不加进来,它会大大方方从天线底下和板边外面绕过去。
+FORBIDDEN = [(0.0, 0.0, 8.0, 25.0)]      # A0 天线净空(双面)
+EDGE_KEEP = 0.6                          # 走线中心到板边至少留这么多
+
+
+def _clean(pts, layer, width, netname, clr):
+    """这条折线在这一层上,离所有**别的网络**的焊盘与已铺铜是否都够远;
+    并且不进天线净空、不贴板边。"""
+    for a, b in zip(pts, pts[1:]) if len(pts) > 1 else [(pts[0], pts[0])]:
+        bb = _box(a[0], a[1], b[0], b[1], width)
+        if (bb[0] < EDGE_KEEP or bb[1] < EDGE_KEEP
+                or bb[2] > 130.0 - EDGE_KEEP or bb[3] > 164.0 - EDGE_KEEP):
+            return False
+        if any(_hit(bb, fb, 0.3) for fb in FORBIDDEN):
+            return False
+        for o in _near(bb):
+            if len(o) == 8:                       # 焊盘
+                px0, py0, px1, py1, pnet, thru, onf, onb = o
+                if pnet == netname:
+                    continue
+                if not (thru or (onf and layer in (F, None))
+                        or (onb and layer in (B, None))):
+                    continue
+                if _hit(bb, (px0, py0, px1, py1), clr):
+                    return False
+            else:                                 # 已铺的铜
+                qx0, qy0, qx1, qy1, qlayer, qnet = o
+                if qnet == netname:
+                    continue
+                if qlayer is not None and layer is not None and qlayer != layer:
+                    continue
+                if _hit(bb, (qx0, qy0, qx1, qy1), clr):
+                    return False
+    return True
+
+
+def _emit(pts, layer, width, netname):
+    for a, b in zip(pts, pts[1:]):
+        if a == b:
+            continue
+        seg(a[0], a[1], b[0], b[1], layer, width, netname)   # seg 自己会记进 PLACED
+
+
+def _escapes(ref, netname, toward):
+    """从焊盘先**垂直逃出它那一排**再拐 —— 密集排里这是唯一能出去的方向。
+
+    返回若干候选逃逸点(含「原地不动」),按「朝着目标那一侧」优先排序。
+    """
+    x, y = PADXY[(ref, netname)]
+    hw, hh = PADHALF.get((ref, netname), (0.4, 0.4))
+    out = [(x, y)]
+    for d in (hh + 0.65, hh + 1.3, hh + 2.4, hh + 4.0, hh + 6.0):
+        out += [(x, y - d), (x, y + d)]
+    for d in (hw + 0.65, hw + 1.3, hw + 2.4, hw + 4.0, hw + 6.0):
+        out += [(x - d, y), (x + d, y)]
+    out.sort(key=lambda p2: (p2[0] - toward[0]) ** 2 + (p2[1] - toward[1]) ** 2)
+    return out[:14]
+
+
+def _cands(a, b, step=0.25, span=6.0):
+    """候选拐法:先横后竖、先竖后横,再加两族 Z 形(拐点按固定步长枚举)。"""
+    out = [[a, (b[0], a[1]), b], [a, (a[0], b[1]), b]]
+    lo, hi = min(a[1], b[1]) - span, max(a[1], b[1]) + span
+    ys = sorted((lo + k * step for k in range(int((hi - lo) / step) + 1)),
+                key=lambda y: abs(y - (a[1] + b[1]) / 2))
+    out += [[a, (a[0], y), (b[0], y), b] for y in ys]
+    lo, hi = min(a[0], b[0]) - span, max(a[0], b[0]) + span
+    xs = sorted((lo + k * step for k in range(int((hi - lo) / step) + 1)),
+                key=lambda x: abs(x - (a[0] + b[0]) / 2))
+    out += [[a, (x, a[1]), (x, b[1]), b] for x in xs]
+    # 再加一族「竖 → 横 → 竖 → 横」的五点路径:两个自由参数,步长放粗一点,
+    # 用来绕开中间那些排得很密的小件(逻辑区那些长距离连线全靠它)。
+    cy = sorted((min(a[1], b[1]) - span + k for k in range(int(2 * span + abs(a[1] - b[1])) + 1)),
+                key=lambda y: abs(y - (a[1] + b[1]) / 2))[:14]
+    cx = sorted((min(a[0], b[0]) - span + k for k in range(int(2 * span + abs(a[0] - b[0])) + 1)),
+                key=lambda x: abs(x - (a[0] + b[0]) / 2))[:14]
+    out += [[a, (a[0], y), (x, y), (x, b[1]), b] for y in cy for x in cx]
+    return out
+
+
+for _o in PADBOX:            # 焊盘一次性进网格索引(它们不会变)
+    _index(_o)
+
+UNROUTED = []
+
+
+def auto(netname, ra, rb, width=W_SIG, clr=0.21, layers=(F,), esc=1.4):
+    """把 ra、rb 两个位号上的同名网络连起来。布不通就记账,返回 False。
+
+    layers 里给 B 时会在两端各打一个换层过孔(离焊盘 esc 毫米,不打在焊盘上)。
+    """
+    a, b = P(ra, netname), P(rb, netname)
+    ea, eb = _escapes(ra, netname, b), _escapes(rb, netname, a)
+    for layer in layers:
+        if layer == F:
+            for pa in ea:
+                if not _clean([a, pa], F, width, netname, clr):
+                    continue
+                for pb in eb:
+                    if not _clean([b, pb], F, width, netname, clr):
+                        continue
+                    for pts in _cands(pa, pb):
+                        if _clean(pts, F, width, netname, clr):
+                            _emit([a, pa], F, width, netname)
+                            _emit([b, pb], F, width, netname)
+                            _emit(pts, F, width, netname)
+                            return True
+        else:
+            for va in ea[1:]:
+                if not (_clean([a, va], F, width, netname, clr)
+                        and _clean([va], None, VIA_D, netname, clr)):
+                    continue
+                for vb in eb[1:]:
+                    if not (_clean([b, vb], F, width, netname, clr)
+                            and _clean([vb], None, VIA_D, netname, clr)):
+                        continue
+                    for pts in _cands(va, vb):
+                        if _clean(pts, B, width, netname, clr):
+                            _emit([a, va], F, width, netname)
+                            _emit([b, vb], F, width, netname)
+                            via(va[0], va[1], netname)
+                            via(vb[0], vb[1], netname)
+                            _emit(pts, B, width, netname)
+                            return True
+    UNROUTED.append((netname, ra, rb))
+    return False
+
 
 # ============================================================================
 # ① B0 24V 分配脊椎 —— 双面 12mm + 每 3mm 一颗 0.5mm 缝合过孔
@@ -481,77 +676,142 @@ path([P("R2", "MASTER_OFF_TP"), P("TP7", "MASTER_OFF_TP")], F, W_SIG, "MASTER_OF
 print("[驱动区] 12 根栅极信号从驱动器垂直下到本列的脊椎车道,不跨列", flush=True)
 
 # ============================================================================
-# ⑥ 逻辑区 A1–A4 的近距离连线
+# ⑥ 12 路 PWM:U4 → 驱动器的 A 侧输入(全板最长的一批信号)
 # ============================================================================
-# 这里只走**同区之内、两脚就在隔壁**的那些线:接口 → 串阻 → 上拉 → MCU、
-# buck 自己那一圈、USB 那一串。它们的共同点是两端相距 ≤10mm、中间没有别的东西,
-# 拉一条 L 形就够,不需要规划车道。
+# 难在两头都挤:U4 的 PWM 脚大半在模组**上排** y=3.6,而驱动器的输入脚只隔 0.65mm。
+# 结构是「**底层竖下来 → 顶层横过去 → 顶层竖下去**」:
 #
-# ⚠️ 还**没有**布的:12 路 PWM 从 U4 下到 U6/U7 的 A 侧输入(要跨半块板,
-#    而且 U4 的 PWM 脚大半在模组的上排),那个要单独规划车道,留到下一轮。
+#   U4 焊盘 ─(顶层短脚)─▶ 过孔 ─(底层竖直,x = 焊盘自己的 x)─▶ 过孔
+#           ─(顶层横向车道,每根一条自己的 y)─▶ 竖下去插进驱动器的输入脚
+#
+# 车道的 y **按目标 x 从右到左依次下移**。这样每根线最后那一竖,
+# 只会经过比自己**更靠右**的车道所在的 x —— 而那些车道早就在它上方拐走了,
+# 所以一根都不交叉。源头那一竖放在底层,与顶层车道天然不打架。
+#
+# 它比通用小路由靠谱,是因为这十二根是**一束**,要一起规划;
+# 一根根去找缝一定会互相堵死(试过,只布通 3 根)。
+PWM_LANES_U6 = (37.0, 37.8, 38.6, 39.4, 40.2, 41.0, 41.8, 42.6)
+PWM_LANES_U7 = (43.4, 44.2, 45.0, 45.8)
+
+# U4 上下两排会出现**同一个 x** 的两只脚(上排 y=3.6、下排 y=21.6),
+# 底层那一竖如果都放在焊盘正下方就会叠在一起。所以先给每根线分一条**互不重叠的竖道**。
+_used_x = []
 
 
-def wire(netname, refs, layer=F, width=W_SIG, bend="hv", mid=None):
-    """按 refs 给的顺序把同一个网络的焊盘串起来。
-
-    bend="hv" 先横后竖、"vh" 先竖后横 —— 挑一个不压到中间那些焊盘的;
-    bend="z" 走 Z 形(先竖到 mid 这个 y、再横、再竖),
-    bend="zx" 走横向 Z 形(先横到 mid 这个 x)。
-    **两端元件的另一只脚常常就在 L 形的拐角上**,所以很多地方非 Z 形不可。
-    """
-    pts = [P(r, netname) for r in refs]
-    for a, b in zip(pts, pts[1:]):
-        if bend == "z":
-            path([a, (a[0], mid), (b[0], mid), b], layer, width, netname)
-        elif bend == "zx":
-            path([a, (mid, a[1]), (mid, b[1]), b], layer, width, netname)
-        else:
-            m = (b[0], a[1]) if bend == "hv" else (a[0], b[1])
-            path([a, m, b], layer, width, netname)
+def _lane_x(px):
+    for cand in (px, px + 0.63, px - 0.63, px + 1.26, px - 1.26, px + 1.9, px - 1.9):
+        if all(abs(cand - u) > 0.6 for u in _used_x):
+            _used_x.append(cand)
+            return cand
+    raise SystemExit("PWM 底层竖道排不下,要重新分配")
 
 
-for i in range(1, 5):                      # A3 干接点:端子 → 串阻 → 上拉 + 消抖
-    wire(f"SW_T{i}", ["J11", f"R{53+i}"], bend="z", mid=9.0)
-    wire(f"SW_IN{i}", [f"R{53+i}", f"R{57+i}"], bend="z", mid=13.8)
-    wire(f"SW_IN{i}", [f"R{57+i}", f"C{27+i}"], bend="z", mid=17.3)
+for drv, lanes in (("U6", PWM_LANES_U6), ("U7", PWM_LANES_U7)):
+    chans = [(n, s) for n in (range(1, 5) if drv == "U6" else range(5, 7))
+             for s in ("CW", "WW")]
+    order = sorted(chans, key=lambda ns: -P(drv, f"CH{ns[0]}_{ns[1]}")[0])
+    for lane, (n, s) in zip(lanes, order):
+        G = f"CH{n}_{s}"
+        src, tgt = P("U4", G), P(drv, G)
+        if src[0] > 25.0:                      # 模组右侧那一脚:先往左出模组
+            esc = (src[0] - 2.2, src[1])
+        elif src[1] < 12.0:                    # 上排:往模组里(下)走
+            esc = (src[0], src[1] + 2.6)
+        else:                                  # 下排:往模组外(下)走
+            esc = (src[0], src[1] + 2.4)
+        vx = _lane_x(esc[0])
+        path([src, esc], F, W_SIG, G)
+        via(esc[0], esc[1], G)
+        path([esc, (vx, esc[1] + 1.6), (vx, lane)], B, W_SIG, G)
+        via(vx, lane, G)
+        path([(vx, lane), (tgt[0], lane), (tgt[0], tgt[1])], F, W_SIG, G)
 
-for netname, rpull in (("I2C_SDA", "R52"), ("I2C_SCL", "R53")):   # A3 I2C 上拉
-    wire(netname, ["J9", rpull], bend="z", mid=9.5)
+print("[PWM] 12 路 PWM 按「底层竖 → 顶层车道 → 顶层竖」布完", flush=True)
 
-wire("CC1", ["J2", "R9"], bend="z", mid=9.8)       # A2 USB
-wire("CC2", ["J2", "R10"], bend="z", mid=10.2)
-# TODO(下一轮): wire("USB_DP", ["J2", "U5"], bend="z", mid=14.5)   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
-# TODO(下一轮): wire("USB_DM", ["J2", "U5"], bend="z", mid=15.2)   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
-# TODO(下一轮): wire("DTR", ["U5", "R11"], bend="hv")   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
-# TODO(下一轮): wire("RTS", ["U5", "R12"], bend="hv")   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
-# TODO(下一轮): wire("RTS_B", ["R11", "Q4"], bend="hv")   # 自动下载是交叉接法:   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
-# TODO(下一轮): wire("DTR_B", ["R12", "Q5"], bend="hv")   # DTR→R11→RTS_B→Q4→EN,RTS→R12→DTR_B→Q5→IO0   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
+# ============================================================================
+# ⑥ 逻辑区 A1–A4
+# ============================================================================
+# 全部交给上面那个会避障的小路由。每一条都写成「从哪到哪」,顺序 = 信号流向,
+# 读起来就是一张接线表。布不通的不硬塞,末尾统一列出来。
+FB = (F, B)          # 先试顶层,顶层挤不下再换底层(两端各打一个换层过孔)
 
-wire("LED1_K", ["LED1", "R8"], bend="z", mid=10.0)  # A1 状态灯
+# ---- 低压电源干线(链式串起来,不是星形)----
+for w, chain in ((W_PWR1, ["PTC1", "C35", "C32", "C33", "C34", "U2", "R66"]),):
+    for a, b in zip(chain, chain[1:]):
+        auto("V24_LOGIC", a, b, width=w, layers=FB)
+for a, b in zip(["L1", "C36", "C37", "R63", "D3"], ["C36", "C37", "R63", "D3", "D3"]):
+    if a != b:
+        auto("V5_BUCK", a, b, width=W_PWR1, layers=FB)
+for a, b in zip(["D3", "D4", "C41", "TP3", "U3", "R13", "U6", "U7", "J10"],
+                ["D4", "C41", "TP3", "U3", "R13", "U6", "U7", "J10", "J10"]):
+    if a != b:
+        auto("V5_SYS", a, b, width=0.8, layers=FB)
+for a, b in zip(["U3", "C42", "C43", "TP4", "R53", "R52", "J9", "U1", "C6"],
+                ["C42", "C43", "TP4", "R53", "R52", "J9", "U1", "C6", "C6"]):
+    if a != b:
+        auto("V3P3", a, b, width=0.8, layers=FB)
+for a, b in zip(["U4", "C10", "C11", "R4", "R5", "U5", "C13"],
+                ["C10", "C11", "R4", "R5", "U5", "C13", "C13"]):
+    if a != b:
+        auto("V3P3", a, b, width=0.8, layers=FB)
 
-# TODO(下一轮): wire("V24_LOGIC", ["C32", "C33"], width=W_PWR1, bend="z", mid=26.8)   —— 拐角压到隔壁那只脚        # A4 buck
-# TODO(下一轮): wire("V24_LOGIC", ["C33", "C34"], width=W_PWR1, bend="z", mid=26.8)   —— 拐角压到隔壁那只脚
-# TODO(下一轮): wire("BOOT", ["U2", "C38"], bend="vh")   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
-# TODO(下一轮): wire("RT_CLK", ["U2", "R62"], bend="vh")   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
-# TODO(下一轮): wire("SW_NODE", ["U2", "D2"], width=W_PWR1, bend="vh")   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
-wire("SW_NODE", ["U2", "L1"], width=W_PWR1, bend="hv")
-# TODO(下一轮): wire("SW_NODE", ["C38", "L1"], bend="hv")   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
-# TODO(下一轮): wire("V5_BUCK", ["L1", "C36"], width=W_PWR1, bend="hv")   —— 拐角压到隔壁那只脚
-# TODO(下一轮): wire("V5_BUCK", ["C36", "C37"], width=W_PWR1, bend="hv")   —— 拐角压到隔壁那只脚
-# TODO(下一轮): wire("V5_BUCK", ["C37", "D3"], width=W_PWR1, bend="z", mid=33.5)   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
-wire("FB_5V", ["R63", "R64"], bend="z", mid=41.0)
-# TODO(下一轮): wire("COMP", ["R65", "C40"], bend="hv")   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
-# TODO(下一轮): wire("COMP_Z", ["R65", "C39"], bend="vh")   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
-# TODO(下一轮): wire("EN_BUCK", ["R66", "R67"], bend="z", mid=52.0)   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
-# TODO(下一轮): wire("V5_SYS", ["D3", "D4"], width=W_PWR1, bend="z", mid=40.0)   —— 拐角压到隔壁那只脚
-# TODO(下一轮): wire("V5_SYS", ["D4", "C41"], width=W_PWR1, bend="z", mid=40.0)   —— 拐角压到隔壁那只脚
-# TODO(下一轮): wire("V5_SYS", ["C41", "U3"], width=W_PWR1, bend="zx", mid=129.0)   —— 拐角压到隔壁那只脚
-# TODO(下一轮): wire("V5_SYS", ["C41", "TP3"], bend="hv")   —— 拐角压到隔壁那只脚
-# TODO(下一轮): wire("V3P3", ["U3", "C42"], width=0.8, bend="z", mid=41.5)   —— L/Z 形拐角会压到隔壁那只脚,要单独规划
-# TODO(下一轮): wire("V3P3", ["C42", "C43"], width=0.8, bend="vh")   —— 拐角压到隔壁那只脚
-# TODO(下一轮): wire("V3P3", ["C43", "TP4"], bend="hv")   —— 拐角压到隔壁那只脚
+# ---- buck 自己那一圈 ----
+auto("BOOT", "U2", "C38", layers=FB)
+auto("RT_CLK", "U2", "R62", layers=FB)
+auto("SW_NODE", "U2", "D2", width=W_PWR1, layers=FB)
+auto("SW_NODE", "U2", "L1", width=W_PWR1, layers=FB)
+auto("SW_NODE", "C38", "L1", layers=FB)
+auto("FB_5V", "R63", "R64", layers=FB)
+auto("FB_5V", "R64", "U2", layers=FB)
+auto("COMP", "U2", "R65", layers=FB)
+auto("COMP", "R65", "C40", layers=FB)
+auto("COMP_Z", "R65", "C39", layers=FB)
+auto("EN_BUCK", "R66", "R67", layers=FB)
+auto("EN_BUCK", "R67", "U2", layers=FB)
 
-print("[逻辑区] 接口链 / USB / buck 的近距离连线已铺(12 路 PWM 还没布)", flush=True)
+# ---- A3 干接点:端子 → 串阻(端子侧)→ 上拉 + 消抖(MCU 侧)→ U4 ----
+for i in range(1, 5):
+    auto(f"SW_T{i}", "J11", f"R{53+i}", layers=FB)
+    auto(f"SW_IN{i}", f"R{53+i}", f"R{57+i}", layers=FB)
+    auto(f"SW_IN{i}", f"R{57+i}", f"C{27+i}", layers=FB)
+    auto(f"SW_IN{i}", f"C{27+i}", "U4", layers=FB)
+
+# ---- A3 I2C:接口 → 上拉 → MCU;并沿右板边下行到 D0 的 U1 ----
+for netname, rpull in (("I2C_SDA", "R52"), ("I2C_SCL", "R53")):
+    auto(netname, "J9", rpull, layers=FB)
+    auto(netname, rpull, "U4", layers=FB)
+    auto(netname, rpull, "U1", layers=FB)
+auto("UART2_TX", "J10", "U4", layers=FB)
+auto("UART2_RX", "J10", "U4", layers=FB)
+
+# ---- A2 USB 与自动下载(交叉接法:DTR→R11→RTS_B→Q4→EN,RTS→R12→DTR_B→Q5→IO0)----
+auto("USB_VBUS", "J2", "D4", width=W_PWR1, layers=FB)
+auto("CC1", "J2", "R9", layers=FB)
+auto("CC2", "J2", "R10", layers=FB)
+auto("USB_DP", "J2", "U5", layers=FB)
+auto("USB_DM", "J2", "U5", layers=FB)
+auto("U0TXD", "U5", "U4", layers=FB)
+auto("U0RXD", "U5", "U4", layers=FB)
+auto("DTR", "U5", "R11", layers=FB)
+auto("RTS", "U5", "R12", layers=FB)
+auto("RTS_B", "R11", "Q4", layers=FB)
+auto("DTR_B", "R12", "Q5", layers=FB)
+auto("EN", "Q4", "R4", layers=FB)
+auto("EN", "R4", "C12", layers=FB)
+auto("EN", "C12", "SW2", layers=FB)
+auto("EN", "SW2", "U4", layers=FB)
+auto("IO0", "Q5", "R5", layers=FB)
+auto("IO0", "R5", "SW1", layers=FB)
+auto("IO0", "SW1", "U4", layers=FB)
+
+# ---- A1 状态灯 / 总断路控制 ----
+auto("LED_STATUS", "U4", "LED1", layers=FB)
+auto("LED1_K", "LED1", "R8", layers=FB)
+auto("OE_CTRL", "U4", "R14", layers=FB)
+
+print(f"[逻辑区] 近距离连线布完;没布通的 {len(UNROUTED)} 条", flush=True)
+for _n, _a, _b in UNROUTED:
+    print(f"    ✗ {_n:<12} {_a} → {_b}", flush=True)
 
 
 # ============================================================================
