@@ -372,6 +372,20 @@ for _o in PADBOX:            # 焊盘一次性进网格索引(它们不会变)
 
 UNROUTED = []
 DIRTY = []
+TODO = []            # 待布的短连线;收齐之后按难度排序再跑
+
+
+def later(netname, ra, rb, **kw):
+    """登记一条短连线,不立刻布。**跑得远的先挑路** —— 顺手就布的话,
+    近的会先把窄缝占掉,远的反而绕不出去(实测:同一批线,换个顺序通与不通差 4 条)。"""
+    TODO.append((netname, ra, rb, kw))
+
+
+def run_todo():
+    TODO.sort(key=lambda it: -((P(it[1], it[0])[0] - P(it[2], it[0])[0]) ** 2
+                               + (P(it[1], it[0])[1] - P(it[2], it[0])[1]) ** 2))
+    for netname, ra, rb, kw in TODO:
+        auto(netname, ra, rb, **kw)
 
 
 def _who(n=3):
@@ -392,31 +406,51 @@ def hpath(pts, layer, width, netname, tag):
 
 
 def corridor(netname, a, b, ys=None, xs=None, width=W_SIG, ea=2.2, eb=2.2, clr=0.21):
-    """a ─竖出来─▶ **底层**走廊 ─竖回去─▶ b。走廊位置从 ys(或 xs)里依次试。
+    """a ─出来─▶ **底层**走廊 ─回去─▶ b。走廊位置**自己扫**,ys/xs 只是「先试这几个」。
 
-    手写的干线也要**先查干净再落笔** —— 一条都不干净就记进 DIRTY,末尾统一报,
-    绝不硬塞。这是本文件里所有「跨区干线」的统一写法。
+    手写的干线也要**先查干净再落笔** —— 一条都不干净就记进 DIRTY,末尾统一报,绝不硬塞。
+
+    ⚠️ **走廊位置一定要自己扫,不能只吃调用方给的那几个值。** 早先的版本要求调用方
+    给一串候选 y/x,而那些数是跟着某一版摆位手调出来的 —— 摆位一动(哪怕只挪 0.5mm),
+    十几条干线一起失效,而且看不出是为什么。现在给的值只当优先顺序,后面接一遍
+    从 a 到 b 之间(外扩 8mm)、步长 0.5mm 的密扫,横竖两个方向都扫。
     """
-    # 逃逸点也依次试:上下、左右、远近 —— 两头都被密集焊盘夹着的时候就差这一下
-    def _outs(pt, d):
-        return [(pt[0], pt[1] + d * f) for f in (1.0, -1.0, 1.7, -1.7, 2.6, -2.6)] + \
-               [(pt[0] + d * f, pt[1]) for f in (1.0, -1.0, 1.7, -1.7, 2.6, -2.6)]
-    for pa in _outs(a, ea):
-      for pb in _outs(b, eb):
-       for c in [v + d for v in (ys or xs) for d in (0.0, 0.6, -0.6, 1.2, -1.2)]:
-        mid = ([pa, (pa[0], c), (pb[0], c), pb] if ys
-               else [pa, (c, pa[1]), (c, pb[1]), pb])
-        if (_clean([a, pa], F, width, netname, clr)
-                and _clean([b, pb], F, width, netname, clr)
-                and _clean([pa], None, VIA_D, netname, clr)
-                and _clean([pb], None, VIA_D, netname, clr)
-                and _clean(mid, B, width, netname, clr)):
-            _emit([a, pa], F, width, netname)
-            _emit([b, pb], F, width, netname)
-            via(pa[0], pa[1], netname)
-            via(pb[0], pb[1], netname)
-            _emit(mid, B, width, netname)
-            return True
+    # 逃逸那一小截用**细线**:U1 的脚只隔 0.5mm、J2 的也是,拿干线宽度(0.5–1.0mm)
+    # 去出脚,连 0.21mm 的间距都留不出来 —— 这里栽过。
+    ew = min(width, 0.25)
+
+    def scan(v0, v1):
+        lo, hi = min(v0, v1) - 8.0, max(v0, v1) + 8.0
+        return [lo + 0.5 * k for k in range(int((hi - lo) / 0.5) + 1)]
+
+    y_seq = list(ys or ()) + scan(a[1], b[1])
+    x_seq = list(xs or ()) + scan(a[0], b[0])
+
+    def outs(pt, d):
+        return ([(pt[0], pt[1] + d * f) for f in (1.0, -1.0, 1.7, -1.7, 2.6, -2.6)]
+                + [(pt[0] + d * f, pt[1]) for f in (1.0, -1.0, 1.7, -1.7, 2.6, -2.6)])
+
+    for pa in outs(a, ea):
+        if not (_clean([a, pa], F, ew, netname, clr)
+                and _clean([pa], None, VIA_D, netname, clr)):
+            continue
+        for pb in outs(b, eb):
+            if not (_clean([b, pb], F, ew, netname, clr)
+                    and _clean([pb], None, VIA_D, netname, clr)):
+                continue
+            for horiz, seq in ((True, y_seq), (False, x_seq)):
+                for c in seq:
+                    mid = ([pa, (pa[0], c), (pb[0], c), pb] if horiz
+                           else [pa, (c, pa[1]), (c, pb[1]), pb])
+                    if not _clean(mid, B, width, netname, clr):
+                        continue
+                    _emit([a, pa], F, ew, netname)
+                    _emit([b, pb], F, ew, netname)
+                    via(pa[0], pa[1], netname)
+                    via(pb[0], pb[1], netname)
+                    _emit(mid, B, width, netname)
+                    return True
+
     DIRTY.append((netname, f"{a}→{b}", _who()))
     return False
 
@@ -430,31 +464,33 @@ def auto(netname, ra, rb, width=W_SIG, clr=0.21, layers=(F,), esc=1.4):
     ea, eb = _escapes(ra, netname, b), _escapes(rb, netname, a)
     for layer in layers:
         if layer == F:
+            ew = min(width, 0.25)
             for pa in ea:
-                if not _clean([a, pa], F, width, netname, clr):
+                if not _clean([a, pa], F, ew, netname, clr):
                     continue
                 for pb in eb:
-                    if not _clean([b, pb], F, width, netname, clr):
+                    if not _clean([b, pb], F, ew, netname, clr):
                         continue
                     for pts in _cands(pa, pb):
                         if _clean(pts, F, width, netname, clr):
-                            _emit([a, pa], F, width, netname)
-                            _emit([b, pb], F, width, netname)
+                            _emit([a, pa], F, ew, netname)
+                            _emit([b, pb], F, ew, netname)
                             _emit(pts, F, width, netname)
                             return True
         else:
+            ew = min(width, 0.25)
             for va in ea[1:]:
-                if not (_clean([a, va], F, width, netname, clr)
+                if not (_clean([a, va], F, ew, netname, clr)
                         and _clean([va], None, VIA_D, netname, clr)):
                     continue
                 for vb in eb[1:]:
-                    if not (_clean([b, vb], F, width, netname, clr)
+                    if not (_clean([b, vb], F, ew, netname, clr)
                             and _clean([vb], None, VIA_D, netname, clr)):
                         continue
                     for pts in _cands(va, vb):
                         if _clean(pts, B, width, netname, clr):
-                            _emit([a, va], F, width, netname)
-                            _emit([b, vb], F, width, netname)
+                            _emit([a, va], F, ew, netname)
+                            _emit([b, vb], F, ew, netname)
                             via(va[0], va[1], netname)
                             via(vb[0], vb[1], netname)
                             _emit(pts, B, width, netname)
@@ -887,18 +923,18 @@ corridor("V5_SYS", P("C41", "V5_SYS"), P("J10", "V5_SYS"), width=0.5,
 # ---- 低压电源干线(链式串起来,不是星形)----
 for w, chain in ((W_PWR1, ["PTC1", "C35", "C32", "C33", "C34", "U2", "R66"]),):
     for a, b in zip(chain, chain[1:]):
-        auto("V24_LOGIC", a, b, width=w, layers=FB)
+        later("V24_LOGIC", a, b, width=w, layers=FB)
 for a, b in zip(["L1", "C36", "C37", "R63", "D3"], ["C36", "C37", "R63", "D3", "D3"]):
     if a != b:
-        auto("V5_BUCK", a, b, width=W_PWR1, layers=FB)
+        later("V5_BUCK", a, b, width=W_PWR1, layers=FB)
 for a, b in zip(["D3", "D4", "C41", "TP3", "U3"], ["D4", "C41", "TP3", "U3", "U3"]):
     if a != b:
-        auto("V5_SYS", a, b, width=0.8, layers=FB)
+        later("V5_SYS", a, b, width=0.8, layers=FB)
 
 for a, b in zip(["U3", "C42", "C43", "TP4", "R53", "R52", "J9"],
                 ["C42", "C43", "TP4", "R53", "R52", "J9", "J9"]):
     if a != b:
-        auto("V3P3", a, b, width=0.8, layers=FB)
+        later("V3P3", a, b, width=0.8, layers=FB)
 # U1(INA237)的 V3P3 就近从 A4 的 C43 取,不要绕右上角那一大圈
 # U1 的 V3P3 就近从 A4 的 C43 沿右板边内侧下来(x=123.3 那条竖道)
 corridor("V3P3", P("U1", "V3P3"), P("C6", "V3P3"), width=0.5,
@@ -906,26 +942,26 @@ corridor("V3P3", P("U1", "V3P3"), P("C6", "V3P3"), width=0.5,
 for a, b in zip(["U4", "C10", "C11", "R4", "R5", "U5", "C13"],
                 ["C10", "C11", "R4", "R5", "U5", "C13", "C13"]):
     if a != b:
-        auto("V3P3", a, b, width=0.8, layers=FB)
+        later("V3P3", a, b, width=0.8, layers=FB)
 
 # ---- buck 自己那一圈 ----
-auto("BOOT", "U2", "C38", layers=FB)
-auto("RT_CLK", "U2", "R62", layers=FB)
-auto("SW_NODE", "U2", "D2", width=W_PWR1, layers=FB)
-auto("SW_NODE", "U2", "L1", width=W_PWR1, layers=FB)
-auto("SW_NODE", "C38", "L1", layers=FB)
-auto("FB_5V", "R63", "R64", layers=FB)
+later("BOOT", "U2", "C38", layers=FB)
+later("RT_CLK", "U2", "R62", layers=FB)
+later("SW_NODE", "U2", "D2", width=W_PWR1, layers=FB)
+later("SW_NODE", "U2", "L1", width=W_PWR1, layers=FB)
+later("SW_NODE", "C38", "L1", layers=FB)
+later("FB_5V", "R63", "R64", layers=FB)
 # FB / COMP / EN 分压回 U2:U2 两排脚只隔 1.27mm,顶层横过去必压隔壁脚,
 # 所以都从脚正下方/正上方竖出来一小截换到底层,横过去再竖回去。
-auto("COMP", "R65", "C40", layers=FB)
-auto("COMP_Z", "R65", "C39", layers=FB)
-auto("EN_BUCK", "R66", "R67", layers=FB)
+later("COMP", "R65", "C40", layers=FB)
+later("COMP_Z", "R65", "C39", layers=FB)
+later("EN_BUCK", "R66", "R67", layers=FB)
 
 # ---- A3 干接点:端子 → 串阻(端子侧)→ 上拉 + 消抖(MCU 侧)→ U4 ----
 for i in range(1, 5):
-    auto(f"SW_T{i}", "J11", f"R{53+i}", layers=FB)
-    auto(f"SW_IN{i}", f"R{53+i}", f"R{57+i}", layers=FB)
-    auto(f"SW_IN{i}", f"R{57+i}", f"C{27+i}", layers=FB)
+    later(f"SW_T{i}", "J11", f"R{53+i}", layers=FB)
+    later(f"SW_IN{i}", f"R{53+i}", f"R{57+i}", layers=FB)
+    later(f"SW_IN{i}", f"R{57+i}", f"C{27+i}", layers=FB)
     # (已由 ⑥a 的横向车道接管)
 
 # ---- A3 I2C:接口 → 上拉 → MCU;并沿右板边下行到 D0 的 U1 ----
@@ -937,28 +973,29 @@ for netname, rpull in (("I2C_SDA", "R52"), ("I2C_SCL", "R53")):
 # (已由 ⑥a 的横向车道接管)
 
 # ---- A2 USB 与自动下载(交叉接法:DTR→R11→RTS_B→Q4→EN,RTS→R12→DTR_B→Q5→IO0)----
-auto("CC1", "J2", "R9", layers=FB)
-auto("CC2", "J2", "R10", layers=FB)
+later("CC1", "J2", "R9", layers=FB)
+later("CC2", "J2", "R10", layers=FB)
 # (已由前面的 corridor 接管)
-auto("U0TXD", "U5", "U4", layers=FB)
-auto("U0RXD", "U5", "U4", layers=FB)
-auto("DTR", "U5", "R11", layers=FB)
-auto("RTS", "U5", "R12", layers=FB)
-auto("RTS_B", "R11", "Q4", layers=FB)
-auto("DTR_B", "R12", "Q5", layers=FB)
-auto("EN", "Q4", "R4", layers=FB)
-auto("EN", "R4", "C12", layers=FB)
-auto("EN", "C12", "SW2", layers=FB)
-auto("EN", "SW2", "U4", layers=FB)
-auto("IO0", "Q5", "R5", layers=FB)
-auto("IO0", "R5", "SW1", layers=FB)
+later("U0TXD", "U5", "U4", layers=FB)
+later("U0RXD", "U5", "U4", layers=FB)
+later("DTR", "U5", "R11", layers=FB)
+later("RTS", "U5", "R12", layers=FB)
+later("RTS_B", "R11", "Q4", layers=FB)
+later("DTR_B", "R12", "Q5", layers=FB)
+later("EN", "Q4", "R4", layers=FB)
+later("EN", "R4", "C12", layers=FB)
+later("EN", "C12", "SW2", layers=FB)
+later("EN", "SW2", "U4", layers=FB)
+later("IO0", "Q5", "R5", layers=FB)
+later("IO0", "R5", "SW1", layers=FB)
 # (已由 ⑥ 的上排竖道接管)
 
 # ---- A1 状态灯 / 总断路控制 ----
-auto("LED_STATUS", "U4", "LED1", layers=FB)
-auto("LED1_K", "LED1", "R8", layers=FB)
+later("LED_STATUS", "U4", "LED1", layers=FB)
+later("LED1_K", "LED1", "R8", layers=FB)
 # (已由前面的 corridor 接管)
 
+run_todo()
 print(f"[逻辑区] 近距离连线布完;没布通的 {len(UNROUTED)} 条", flush=True)
 if DIRTY:
     print(f"[干线] 手写干线里有 {len(DIRTY)} 条找不到干净走廊:", flush=True)
