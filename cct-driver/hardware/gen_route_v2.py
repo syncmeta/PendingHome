@@ -126,6 +126,7 @@ def clear_copper():
     其它 SWIG 代理对象就会集体失效(`'SwigPyObject' object has no attribute ...`)。
     """
     PLACED.clear()
+    VIAS.clear()
     items = list(board.GetTracks())
     # 覆铜全删;规则区只删本脚本自己下的那些(名字带「车道」),
     # gen_pcb_v2.py 下的天线禁区留着 —— 否则跑几次就叠出一堆重复的规则区。
@@ -158,7 +159,15 @@ def path(pts, layer, width, netname):
         seg(a[0], a[1], b[0], b[1], layer, width, netname)
 
 
+VIAS = []            # 已经打下的过孔 (x, y, net) —— 防止重打与钻孔挨太近
+
+
 def via(x, y, netname, d=VIA_D, drill=VIA_DRILL):
+    # 同一个网络上 0.7mm 之内已经有孔了就不再打:那儿本来就已经连通,
+    # 多打一个只会换来 holes_co_located / hole_to_hole 两条 DRC。
+    for (vx, vy, vn) in VIAS:
+        if vn == netname and (vx - x) ** 2 + (vy - y) ** 2 < 0.49:
+            return
     v = pcbnew.PCB_VIA(board)
     v.SetPosition(VECTOR2I(FromMM(x), FromMM(y)))
     v.SetWidth(FromMM(d))
@@ -167,6 +176,7 @@ def via(x, y, netname, d=VIA_D, drill=VIA_DRILL):
     v.SetLayerPair(F, B)
     v.SetNet(net(netname))
     board.Add(v)
+    VIAS.append((x, y, netname))
     _o = (x - d / 2, y - d / 2, x + d / 2, y + d / 2, None, netname)
     PLACED.append(_o)
     _index(_o)
@@ -286,7 +296,7 @@ def _near(b):
 
 # 对所有网络一视同仁的禁区:天线净空 A0,以及板边留白。
 # 避障小路由本来看不见它们 —— 不加进来,它会大大方方从天线底下和板边外面绕过去。
-FORBIDDEN = [(0.0, 0.0, 8.0, 25.0)]      # A0 天线净空(双面)
+FORBIDDEN = [(0.0, 0.0, 7.0, 25.0)]      # A0 天线净空(双面),与 gen_pcb_v2.py 的禁区一致
 EDGE_KEEP = 0.6                          # 走线中心到板边至少留这么多
 
 
@@ -370,6 +380,152 @@ def _cands(a, b, step=0.25, span=12.0):
 for _o in PADBOX:            # 焊盘一次性进网格索引(它们不会变)
     _index(_o)
 
+# ============================================================================
+# 迷宫布线(A*,两层,0.25mm 栅格)—— 上面那些「候选拐法」都试不出来时用它
+# ============================================================================
+# 为什么最后还是得写它:候选拐法(L / Z / 五点)本质是在猜路径的形状,
+# 板子一挤就猜不中,而且**每次摆位一动,猜中的那几条又全变**。
+# A* 不猜:把已有的铜栅格化成障碍图,从起点搜到终点,搜不到就是真的没路。
+# 它仍然**不是自动布线器** —— 一次只走一条线、不拆别人的线、不迭代重布;
+# 走不通照样记账报出来。
+GRID_MM = 0.25
+BOARD_W, BOARD_H = 130.0, 164.0
+GW, GH = int(BOARD_W / GRID_MM), int(BOARD_H / GRID_MM)
+
+
+def _rasterize(netname, inflate):
+    """把别的网络的铜栅格化成两层障碍图。返回 (blockedF, blockedB) 两个 set。"""
+    bf, bb = set(), set()
+
+    def mark(x0, y0, x1, y1, dst):
+        i0 = max(0, int((x0 - inflate) / GRID_MM))
+        i1 = min(GW - 1, int((x1 + inflate) / GRID_MM) + 1)
+        j0 = max(0, int((y0 - inflate) / GRID_MM))
+        j1 = min(GH - 1, int((y1 + inflate) / GRID_MM) + 1)
+        for i in range(i0, i1 + 1):
+            for j in range(j0, j1 + 1):
+                dst.add((i, j))
+
+    for (px0, py0, px1, py1, pnet, thru, onf, onb) in PADBOX:
+        if pnet == netname:
+            continue
+        if thru or onf:
+            mark(px0, py0, px1, py1, bf)
+        if thru or onb:
+            mark(px0, py0, px1, py1, bb)
+    for (qx0, qy0, qx1, qy1, qlayer, qnet) in PLACED:
+        if qnet == netname:
+            continue
+        if qlayer in (F, None):
+            mark(qx0, qy0, qx1, qy1, bf)
+        if qlayer in (B, None):
+            mark(qx0, qy0, qx1, qy1, bb)
+    for (fx0, fy0, fx1, fy1) in FORBIDDEN:          # 天线净空,两层都禁
+        mark(fx0, fy0, fx1, fy1, bf)
+        mark(fx0, fy0, fx1, fy1, bb)
+    return bf, bb
+
+
+def maze(netname, a, b, width=W_SIG, clr=0.21, via_cost=14, turn_cost=2):
+    """A* 从 a 走到 b。走得通就落笔,走不通返回 False(照样记账)。"""
+    import heapq
+    inflate = width / 2 + clr
+    bl = _rasterize(netname, inflate)
+    # 过孔比走线粗(⌀0.6),换层的那个格子要按**过孔**的尺寸另查一遍 ——
+    # 用走线的余量去判过孔,过孔就会贴到隔壁焊盘上(实测栽过)。
+    blv = _rasterize(netname, VIA_D / 2 + clr)
+    # 已有孔周围 0.8mm 内不许再换层(钻孔之间要留得开)。先算成格子集合,
+    # 否则每搜一个节点都要跟几百个孔比一遍 —— 实测慢到 2 分半。
+    near_via_cells = set()
+    r = int(0.8 / GRID_MM) + 1
+    for (vx, vy, _vn) in VIAS:
+        ci, cj = int(vx / GRID_MM), int(vy / GRID_MM)
+        for di in range(-r, r + 1):
+            for dj in range(-r, r + 1):
+                if di * di + dj * dj <= r * r:
+                    near_via_cells.add((ci + di, cj + dj))
+    margin = int(1.0 / GRID_MM)                     # 离板边留 1mm
+    start = (int(a[0] / GRID_MM), int(a[1] / GRID_MM), 0)
+    goal = (int(b[0] / GRID_MM), int(b[1] / GRID_MM))
+
+    def ok(i, j, l):
+        return (margin <= i < GW - margin and margin <= j < GH - margin
+                and (i, j) not in bl[l])
+
+    def h(i, j):
+        return abs(i - goal[0]) + abs(j - goal[1])
+
+    seen = {}
+    pq = [(h(*start[:2]), 0, start, None)]
+    end = None
+    while pq:
+        _f, g, cur, prev = heapq.heappop(pq)
+        if cur in seen:
+            continue
+        seen[cur] = prev
+        # 起点终点都**必须落在顶层** —— 焊盘几乎都是顶层贴片,
+        # 路径若在底层收尾,最后那一小截接不到焊盘上(DRC 报 track_dangling)。
+        if cur[:2] == goal and cur[2] == 0:
+            end = cur
+            break
+        i, j, l = cur
+        for di, dj in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            ni, nj = i + di, j + dj
+            if not ok(ni, nj, l):
+                continue
+            c = 1
+            if prev is not None and (i - prev[0], j - prev[1]) != (di, dj):
+                c += turn_cost
+            nxt = (ni, nj, l)
+            if nxt not in seen:
+                heapq.heappush(pq, (g + c + h(ni, nj), g + c, nxt, cur))
+        nl = 1 - l
+        just_changed = prev is not None and prev[:2] == (i, j)
+        if (not just_changed and (i, j) not in near_via_cells and ok(i, j, nl)
+                and (i, j) not in blv[l] and (i, j) not in blv[nl]):
+            nxt = (i, j, nl)
+            if nxt not in seen:
+                heapq.heappush(pq, (g + via_cost + h(i, j), g + via_cost, nxt, cur))
+    if end is None:
+        return False
+
+    # 回溯 → 折线,同层连续段合成一条走线,换层处打过孔
+    pts = []
+    cur = end
+    while cur is not None:
+        pts.append(cur)
+        cur = seen[cur]
+    pts.reverse()
+    run = [pts[0]]
+    for q in pts[1:]:
+        if q[2] != run[-1][2]:
+            _flush_run(run, netname, width)
+            via(run[-1][0] * GRID_MM, run[-1][1] * GRID_MM, netname)
+            run = [q]
+        else:
+            run.append(q)
+    _flush_run(run, netname, width)
+    # 两端各补一小截接到真正的焊盘中心
+    _emit([a, (start[0] * GRID_MM, start[1] * GRID_MM)], F, min(width, 0.25), netname)
+    _emit([(goal[0] * GRID_MM, goal[1] * GRID_MM), b], F, min(width, 0.25), netname)
+    return True
+
+
+def _flush_run(run, netname, width):
+    """把同层的一串栅格点压成尽量少的直线段。"""
+    if len(run) < 2:
+        return
+    layer = F if run[0][2] == 0 else B
+    keep = [run[0]]
+    for k in range(1, len(run) - 1):
+        d1 = (run[k][0] - run[k - 1][0], run[k][1] - run[k - 1][1])
+        d2 = (run[k + 1][0] - run[k][0], run[k + 1][1] - run[k][1])
+        if d1 != d2:
+            keep.append(run[k])
+    keep.append(run[-1])
+    _emit([(i * GRID_MM, j * GRID_MM) for i, j, _l in keep], layer, width, netname)
+
+
 UNROUTED = []
 DIRTY = []
 TODO = []            # 待布的短连线;收齐之后按难度排序再跑
@@ -451,6 +607,8 @@ def corridor(netname, a, b, ys=None, xs=None, width=W_SIG, ea=2.2, eb=2.2, clr=0
                     _emit(mid, B, width, netname)
                     return True
 
+    if maze(netname, a, b, width=width, clr=clr):
+        return True
     DIRTY.append((netname, f"{a}→{b}", _who()))
     return False
 
@@ -495,6 +653,8 @@ def auto(netname, ra, rb, width=W_SIG, clr=0.21, layers=(F,), esc=1.4):
                             via(vb[0], vb[1], netname)
                             _emit(pts, B, width, netname)
                             return True
+    if maze(netname, a, b, width=width, clr=clr):
+        return True
     UNROUTED.append((netname, ra, rb, _who()))
     return False
 
@@ -670,16 +830,11 @@ path([P("R1", "PMOS_GATE"), P("TP8", "PMOS_GATE")], F, 0.4, "PMOS_GATE")
 vl = P("PTC1", "V24_LOGIC")
 c35 = P("C35", "V24_LOGIC")
 # 横过来的那一段走 y=52 —— y=40 那条走廊要留给 buck 的 FB / COMP / EN 分压回 U2
-# ⚠️ PTC1 与 C35 都是**贴片件,焊盘只在顶层** —— 从它们的脚上直接起一条底层线,
-# 那条线两头都是悬空的(DRC 报 track_dangling,实测栽过)。所以这一段交给
-# `corridor()`:它会在两端各打一个换层过孔。
-# 中途还要穿过 V5_SYS 那条底层横轨(y=50),所以在 x=92 上一小段顶层跳过去。
-path([vl, (vl[0], 57.5), (92.0, 57.5)], F, W_PWR1, "V24_LOGIC")
-via(92.0, 57.5, "V24_LOGIC")
-path([(92.0, 57.5), (92.0, 45.0)], B, W_PWR1, "V24_LOGIC")
-via(92.0, 45.0, "V24_LOGIC")
-path([(92.0, 45.0), (c35[0] + 4.0, 45.0), (c35[0] + 4.0, c35[1] - 3.0),
-      (c35[0], c35[1] - 3.0), c35], F, W_PWR1, "V24_LOGIC")
+# PTC1 → buck 的输入电容。这一段既要沿右板边下来、又要横穿半块板,中途还得躲开
+# V5_SYS 那条底层横轨和右板边那两条 I2C 竖道 —— 手写路径改了四轮都还在撞,
+# 直接交给迷宫布线:它按栅格搜,躲得比人手挑准。
+if not maze("V24_LOGIC", vl, c35, width=W_PWR1):
+    DIRTY.append(("V24_LOGIC", f"{vl}→{c35}", _who()))
 u2vin = P("U2", "V24_LOGIC")
 drop(u2vin[0], u2vin[1] - 2.0, "V24_LOGIC", W_PWR1, frm=u2vin)
 
@@ -698,7 +853,9 @@ zone("GND", [F, B], rect(0.5, 0.5, 129.5, 63.5), 5, "GND 逻辑地(y ≤ 63.5)")
 zone("GND", [B], rect(0.5, 78.0, 129.5, 163.5), 5, "GND 功率地(底层,y ≥ 78)")
 zone("GND", [B], rect(100.5, 55.0, 129.5, 80.0), 6, "GND 汇合颈(RS1 旁,唯一的连接点)")
 zone("GND", [F], rect(0.5, 78.0, 100.5, 146.5), 4, "GND 功率地(顶层,通道列 + 底部带)")
-zone("GND", [F], rect(100.5, 74.0, 129.5, 146.5), 3, "GND 入电区顶层(优先级低于 V24_PROT)")
+zone("GND", [F], rect(100.5, 55.0, 129.5, 146.5), 3, "GND 入电区顶层(优先级低于 V24_PROT)")
+# ↑ 上沿从 74 提到 55:U1 / C6 / C45 / C46 / TP2 的地脚落在 y 63.5–78 这条带里,
+#   逻辑地(≤63.5)和功率地(≥78)都够不着,原来它们是**悬空的**。
 
 # MOS 源极不单独打过孔:顶层在通道列里本来就是一片功率地,源极焊盘直接落在铜面上,
 # 一路向下汇到底部带、横着回 J1 的负极。(原来在源极旁边打过孔,反而会打到
@@ -716,7 +873,9 @@ for (n, *_r) in CH_PARTS:
     for yy in (94.0, 100.0, 113.2, 136.0, 143.0):
         via(cx + 5.0, yy, "GND", STITCH_D, STITCH_DRILL)
 
-print("[地] 逻辑地 / 功率地两片,只在 RS1 旁边那一段颈上汇合")
+# 地平面缝合:顶层与底层的地覆铜之间必须有过孔,否则顶层那几片在电气上是浮的
+# (DRC 会报一堆「覆铜与覆铜未连接」)。按 8mm 网格扫一遍,只在两层都空着的地方打。
+print("[地] 逻辑地 / 功率地两片,只在 RS1 旁边那一段颈上汇合", flush=True)
 
 # ============================================================================
 # ⑤ 栅极驱动区 A5 与总断路
@@ -1001,6 +1160,35 @@ later("LED1_K", "LED1", "R8", layers=FB)
 # (已由前面的 corridor 接管)
 
 run_todo()
+
+
+def chain(netname, width=W_SIG):
+    """把一个网络的所有焊盘按**最近邻**串成一条链,逐段交给迷宫布线。
+
+    给那些「靠覆铜连、但覆铜够不着」的网络收尾用(V3P3 / V5_SYS 这类电源支线)。
+    同一个网络上多铺一点铜是无害的(阻抗更低),但**布不通照样记账**。
+    """
+    pads = sorted({(x, y) for (r, n), (x, y) in PADXY.items() if n == netname})
+    if len(pads) < 2:
+        return
+    order, rest = [pads[0]], set(pads[1:])
+    while rest:
+        cx, cy = order[-1]
+        nxt = min(rest, key=lambda q: (q[0] - cx) ** 2 + (q[1] - cy) ** 2)
+        rest.discard(nxt)
+        order.append(nxt)
+    for a, b in zip(order, order[1:]):
+        if not maze(netname, a, b, width=width):
+            UNROUTED.append((netname, f"{a}", f"{b}", _who()))
+
+
+# 这几个网络的焊盘散在全板,而覆铜够不到它们中的一部分 —— 逐个串起来收尾。
+for _n, _w in (("V3P3", 0.4), ("V5_SYS", 0.4), ("V5_BUCK", 0.5), ("USB_VBUS", 0.4),
+               ("USB_DP", W_SIG), ("USB_DM", W_SIG), ("COMP", W_SIG), ("CC2", W_SIG),
+               ("EN", W_SIG), ("PMOS_GATE", 0.4), ("CH1_WW_GR", W_SIG),
+               ("CH1_WW_D", 0.8), ("V24_BUS", 1.0), ("V24_PROT", 1.0)):
+    chain(_n, _w)
+
 print(f"[逻辑区] 近距离连线布完;没布通的 {len(UNROUTED)} 条", flush=True)
 if DIRTY:
     print(f"[干线] 手写干线里有 {len(DIRTY)} 条找不到干净走廊:", flush=True)
@@ -1013,6 +1201,35 @@ for _n, _a, _b, _w in UNROUTED:
 # ============================================================================
 # 收尾:填充覆铜、报告
 # ============================================================================
+# ============================================================================
+# ⑦ 地平面缝合(**必须放在所有布线之后**)
+# ============================================================================
+# 顶层与底层的地覆铜之间必须有过孔,否则顶层那几片在电气上是浮的。
+# ⚠️ 这一步一定要最后做:早先放在布线之前,后面那些成束规划的线(PWM / 接口总线)
+#    是按规划直接落笔的,不查已有铜 —— 结果一堆缝合孔被后来的线压上,DRC 报 10 处短路。
+#    放到最后,它只往**确实还空着**的地方打。
+# 只在**两层确实都是地**的那几块里打,不然孔会落进 24V 的铜面里(短路)
+# 或者落进没铜的空当里(悬空孔)。
+GND_STITCH_AREAS = [
+    (3.0, 3.0, 127.0, 62.0),        # 逻辑区(天线净空由 FORBIDDEN 挡掉)
+    (3.0, 79.0, 99.0, 146.0),       # 六列 + 底部回流带
+    (101.5, 56.0, 129.0, 72.0),     # D0 上段(V24_PROT 那片铜从 y=74 才开始)
+    (101.5, 132.0, 129.0, 146.0),   # D0 下段(V24_FUSED 那片铜到 y=124.3 为止)
+]
+_stitch_gnd = 0
+for (_ax, _ay, _bx, _by) in GND_STITCH_AREAS:
+    _gy = _ay
+    while _gy <= _by:
+        _gx = _ax
+        while _gx <= _bx:
+            if _clean([(_gx, _gy)], None, VIA_D + 0.3, "GND", 0.3):
+                via(_gx, _gy, "GND", STITCH_D, STITCH_DRILL)
+                _stitch_gnd += 1
+            _gx += 8.0
+        _gy += 8.0
+print(f"[地] 逻辑地 / 功率地两片,只在 RS1 旁边那一段颈上汇合;"
+      f"两层之间按 8mm 网格缝了 {_stitch_gnd} 颗过孔")
+
 # 覆铜填充不在本进程里做 —— pcbnew 的 ZONE_FILLER 在无头环境里跑多块覆铜会直接崩掉
 # (进程无声退出,连回溯都没有)。改用命令行的 `kicad-cli pcb drc --refill-zones
 # --save-board`,它在自己的进程里填、填完存盘,顺带把 DRC 也跑了。

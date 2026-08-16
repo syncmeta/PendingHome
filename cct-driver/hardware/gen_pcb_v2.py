@@ -458,7 +458,9 @@ ka.SetLayerSet(_ls)
 ka.SetZoneName("A0 天线净空(双面禁铜/禁过孔/禁走线)")
 pts = pcbnew.SHAPE_POLY_SET()
 pts.NewOutline()
-for (px, py) in ((0, 0), (8, 0), (8, 25), (0, 25)):
+# x 收到 7.0(不是 8.0):U4 那两颗角上的 GND 焊盘从 x=7.125 起,
+# 禁到 8.0 的话它们被禁区圈在里面,地覆铜够不着,板上真的接不上(DRC 报未连接)。
+for (px, py) in ((0, 0), (7.0, 0), (7.0, 25), (0, 25)):
     pts.Append(FromMM(px), FromMM(py))
 ka.SetOutline(pts)
 board.Add(ka)
