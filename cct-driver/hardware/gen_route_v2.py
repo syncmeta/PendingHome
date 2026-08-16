@@ -824,14 +824,9 @@ for drv, lanes in (("U6", PWM_LANES_U6), ("U7", PWM_LANES_U7)):
 
 # IO0 也在 U4 的**上排**,处境跟 12 路 PWM 一模一样:必须从模组底下走底层下来。
 # 顺手在同一套竖道分配里给它留一条,免得跟 PWM 抢同一个 x。
-_io0_u4 = P("U4", "IO0")
-_io0_esc = (_lane_x(_io0_u4[0], "IO0"), _io0_u4[1] + 2.6)
-path([_io0_u4, _io0_esc], F, W_SIG, "IO0")
-via(_io0_esc[0], _io0_esc[1], "IO0")
-_io0_sw = P("SW1", "IO0")
-path([_io0_esc, (_io0_esc[0], 34.5), (_io0_sw[0], 34.5)], B, W_SIG, "IO0")
-via(_io0_sw[0], 34.5, "IO0")
-path([(_io0_sw[0], 34.5), _io0_sw], F, W_SIG, "IO0")
+_lane_x(P("U4", "IO0")[0], "IO0")      # 先在竖道分配里占住它的 x,别跟 PWM 抢
+corridor("IO0", P("U4", "IO0"), P("SW1", "IO0"),
+         ys=[34.5, 33.0, 36.5, 38.0, 30.0], ea=2.6, eb=2.4)
 
 print("[PWM] 12 路 PWM + IO0 按「底层竖 → 顶层车道 → 顶层竖」布完", flush=True)
 
@@ -938,8 +933,7 @@ for netname, rpull in (("I2C_SDA", "R52"), ("I2C_SCL", "R53")):
 
 # ---- A2 USB 与自动下载(交叉接法:DTR→R11→RTS_B→Q4→EN,RTS→R12→DTR_B→Q5→IO0)----
 auto("CC1", "J2", "R9", layers=FB)
-_cc, _r10 = P("J2", "CC2"), P("R10", "CC2")
-path([_cc, (_cc[0], 10.5), (_r10[0], 10.5), _r10], F, W_SIG, "CC2")
+auto("CC2", "J2", "R10", layers=FB)
 # (已由前面的 corridor 接管)
 auto("U0TXD", "U5", "U4", layers=FB)
 auto("U0RXD", "U5", "U4", layers=FB)
