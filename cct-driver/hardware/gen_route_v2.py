@@ -168,6 +168,10 @@ def via(x, y, netname, d=VIA_D, drill=VIA_DRILL):
     for (vx, vy, vn) in VIAS:
         if vn == netname and (vx - x) ** 2 + (vy - y) ** 2 < 0.49:
             return
+    # 插件件的焊盘本来就两层都通,再在它上面打一个孔只会换来 holes_co_located
+    for (px0, py0, px1, py1, pnet, thru, _f, _b) in PADBOX:
+        if thru and pnet == netname and px0 - 0.3 <= x <= px1 + 0.3 and py0 - 0.3 <= y <= py1 + 0.3:
+            return
     v = pcbnew.PCB_VIA(board)
     v.SetPosition(VECTOR2I(FromMM(x), FromMM(y)))
     v.SetWidth(FromMM(d))
@@ -224,6 +228,12 @@ def zone(netname, layers, pts, priority=0, name="", clr=0.25):
     z.SetMinThickness(FromMM(0.2))
     z.SetPadConnection(pcbnew.ZONE_CONNECTION_FULL)   # 大电流:焊盘全连,不用热焊盘
     z.SetIsFilled(False)
+    # 填完之后把**孤岛**删掉:走线把大铜面切碎之后,难免留下几块谁也没连上的小铜片。
+    # 留着它们既是天线又会被 DRC 逐块报「未连接」;删掉是标准做法。
+    try:
+        z.SetIslandRemovalMode(pcbnew.ISLAND_REMOVAL_MODE_ALWAYS)
+    except AttributeError:
+        pass
     board.Add(z)
     return z
 
@@ -398,13 +408,23 @@ def _rasterize(netname, inflate):
     bf, bb = set(), set()
 
     def mark(x0, y0, x1, y1, dst):
-        i0 = max(0, int((x0 - inflate) / GRID_MM))
+        # ⚠️ 逐格**按格点到矩形的真实距离**判,不要拿包围盒粗暴地涂 ——
+        # 粗暴涂会多堵掉最多两格(0.5mm),而 Type-C 那排脚的缝隙本来就只有 0.35mm,
+        # 一多堵就再也搜不出路来(v1 是拿 0.20mm 细线从连接器身子底下钻上去的)。
+        i0 = max(0, int((x0 - inflate) / GRID_MM) - 1)
         i1 = min(GW - 1, int((x1 + inflate) / GRID_MM) + 1)
-        j0 = max(0, int((y0 - inflate) / GRID_MM))
+        j0 = max(0, int((y0 - inflate) / GRID_MM) - 1)
         j1 = min(GH - 1, int((y1 + inflate) / GRID_MM) + 1)
         for i in range(i0, i1 + 1):
+            px = i * GRID_MM
+            dx = max(x0 - px, px - x1, 0.0)
+            if dx >= inflate:
+                continue
             for j in range(j0, j1 + 1):
-                dst.add((i, j))
+                py = j * GRID_MM
+                dy = max(y0 - py, py - y1, 0.0)
+                if dx * dx + dy * dy < inflate * inflate:
+                    dst.add((i, j))
 
     for (px0, py0, px1, py1, pnet, thru, onf, onb) in PADBOX:
         if pnet == netname:
@@ -426,9 +446,14 @@ def _rasterize(netname, inflate):
     return bf, bb
 
 
-def maze(netname, a, b, width=W_SIG, clr=0.21, via_cost=14, turn_cost=2):
+def maze(netname, a, b, width=W_SIG, clr=None, via_cost=14, turn_cost=2):
     """A* 从 a 走到 b。走得通就落笔,走不通返回 False(照样记账)。"""
     import heapq
+    # 细线配紧间距:0.2mm 线在 Type-C 那排 0.5mm 间距的脚里,只有把间距收到
+    # 板规下限(0.2mm)才钻得过去。取 0.205 留一点浮点余量 —— 取 0.18 会真的违规。
+    if clr is None:
+        # 粗线走的是 PWR* 网络类,板规要求 0.25;细线按 Default 的 0.2 算。
+        clr = 0.205 if width <= 0.2 else (0.26 if width >= 0.3 else 0.21)
     inflate = width / 2 + clr
     bl = _rasterize(netname, inflate)
     # 过孔比走线粗(⌀0.6),换层的那个格子要按**过孔**的尺寸另查一遍 ——
@@ -445,8 +470,10 @@ def maze(netname, a, b, width=W_SIG, clr=0.21, via_cost=14, turn_cost=2):
                 if di * di + dj * dj <= r * r:
                     near_via_cells.add((ci + di, cj + dj))
     margin = int(1.0 / GRID_MM)                     # 离板边留 1mm
-    start = (int(a[0] / GRID_MM), int(a[1] / GRID_MM), 0)
-    goal = (int(b[0] / GRID_MM), int(b[1] / GRID_MM))
+    # 用 round 不用 int:截断会让起点落到离焊盘中心 0.25mm 的地方,
+    # 补的那一小截就伸到焊盘外面去了(实测因此蹭到隔壁网络,报短路)。
+    start = (round(a[0] / GRID_MM), round(a[1] / GRID_MM), 0)
+    goal = (round(b[0] / GRID_MM), round(b[1] / GRID_MM))
 
     def ok(i, j, l):
         return (margin <= i < GW - margin and margin <= j < GH - margin
@@ -489,6 +516,13 @@ def maze(netname, a, b, width=W_SIG, clr=0.21, via_cost=14, turn_cost=2):
     if end is None:
         return False
 
+    # 两端补到焊盘中心的那两小截也要**先查干净** —— 它们不在栅格上,
+    # 不查的话会蹭到隔壁网络(实测报出过一条短路)。查不过就当这条路没走通。
+    ew = min(width, 0.25)
+    if not (_clean([a, (start[0] * GRID_MM, start[1] * GRID_MM)], F, ew, netname, clr)
+            and _clean([(goal[0] * GRID_MM, goal[1] * GRID_MM), b], F, ew, netname, clr)):
+        return False
+
     # 回溯 → 折线,同层连续段合成一条走线,换层处打过孔
     pts = []
     cur = end
@@ -506,8 +540,8 @@ def maze(netname, a, b, width=W_SIG, clr=0.21, via_cost=14, turn_cost=2):
             run.append(q)
     _flush_run(run, netname, width)
     # 两端各补一小截接到真正的焊盘中心
-    _emit([a, (start[0] * GRID_MM, start[1] * GRID_MM)], F, min(width, 0.25), netname)
-    _emit([(goal[0] * GRID_MM, goal[1] * GRID_MM), b], F, min(width, 0.25), netname)
+    _emit([a, (start[0] * GRID_MM, start[1] * GRID_MM)], F, ew, netname)
+    _emit([(goal[0] * GRID_MM, goal[1] * GRID_MM), b], F, ew, netname)
     return True
 
 
@@ -849,17 +883,25 @@ print("[入电区] J1 → F1 → Q1/Q2 → 体电容 → RS1 → 脊椎 一条�
 # ============================================================================
 # ④ GND —— 拆成「逻辑地」和「功率地」两片,只在 RS1 附近汇合
 # ============================================================================
-zone("GND", [F, B], rect(0.5, 0.5, 129.5, 63.5), 5, "GND 逻辑地(y ≤ 63.5)")
-zone("GND", [B], rect(0.5, 78.0, 129.5, 163.5), 5, "GND 功率地(底层,y ≥ 78)")
-zone("GND", [B], rect(100.5, 55.0, 129.5, 80.0), 6, "GND 汇合颈(RS1 旁,唯一的连接点)")
-zone("GND", [F], rect(0.5, 78.0, 100.5, 146.5), 4, "GND 功率地(顶层,通道列 + 底部带)")
-zone("GND", [F], rect(100.5, 55.0, 129.5, 146.5), 3, "GND 入电区顶层(优先级低于 V24_PROT)")
-# ↑ 上沿从 74 提到 55:U1 / C6 / C45 / C46 / TP2 的地脚落在 y 63.5–78 这条带里,
-#   逻辑地(≤63.5)和功率地(≥78)都够不着,原来它们是**悬空的**。
-
-# MOS 源极不单独打过孔:顶层在通道列里本来就是一片功率地,源极焊盘直接落在铜面上,
-# 一路向下汇到底部带、横着回 J1 的负极。(原来在源极旁边打过孔,反而会打到
-# 隔壁 CHn_VOUT 的底层竖带和漏极车道上去。)
+# 地不是几块拼起来的,而是**每层一整块**,形状里刻意留了一道口子:
+#
+#     ┌──────────────────────────────┐  y0.5
+#     │        逻辑地                 │
+#     ├───────────────────┬──────────┤  y63.5
+#     │  ← 脊椎带,没有地 →│   D0     │  ← 唯一的通路在 x>100.5(RS1 那一侧)
+#     ├───────────────────┤          │  y78
+#     │        功率地      │          │
+#     └───────────────────┴──────────┘  y146.5 / 163.5
+#
+# **为什么非要一整块**:早先拆成五块互相重叠的覆铜,KiCad 的连通性判定认为
+# 优先级不同的同网覆铜只是「贴着」而不是「连着」,DRC 一直报十几条
+# 「覆铜与覆铜未连接」。一整块 + 一道口子,既保住单点接地,又不会被判成断开。
+GND_OUTLINE_F = [(0.5, 0.5), (129.5, 0.5), (129.5, 146.5), (0.5, 146.5),
+                 (0.5, 78.0), (100.5, 78.0), (100.5, 63.5), (0.5, 63.5)]
+GND_OUTLINE_B = [(0.5, 0.5), (129.5, 0.5), (129.5, 163.5), (0.5, 163.5),
+                 (0.5, 78.0), (100.5, 78.0), (100.5, 63.5), (0.5, 63.5)]
+zone("GND", [F], GND_OUTLINE_F, 3, "GND 顶层(逻辑地与功率地只在 x>100.5 那一侧汇合)")
+zone("GND", [B], GND_OUTLINE_B, 4, "GND 底层(同上)")
 
 # 列内其它 GND 脚(电解负极 / 100nF / TVS 阳极 / 栅极下拉)不再逐脚打过孔 ——
 # 顶层在通道列里本来就铺了一片功率地,它们直接落在铜面上。这里只在每一列打一组
@@ -1059,9 +1101,11 @@ path([(117.8, _u3[1]), (117.8, V5_RAIL_Y), (22.93, V5_RAIL_Y)], B, 0.8, "V5_SYS"
 for _ref in ("U6", "U7", "R13"):
     _p = P(_ref, "V5_SYS")
     via(_p[0], V5_RAIL_Y, "V5_SYS")
-    path([(_p[0], V5_RAIL_Y), (_p[0], _p[1])], F, 0.5, "V5_SYS")
+    path([(_p[0], V5_RAIL_Y), (_p[0], _p[1])], F, 0.25, "V5_SYS")   # 隔壁 0.65mm 是通道输入脚
 for _x in (70.93, 22.93):        # 驱动器的两只 VCC 脚在 IC 两排之间对接
-    path([(_x, 51.63), (_x, 57.37)], F, 0.5, "V5_SYS")
+    # 用 0.25 细线:隔壁 0.65mm 就是通道输入脚,0.5mm 宽的话间距只剩 0.115mm(违规)。
+    # 这一段只走驱动器自己的供电电流(几十毫安),细线足够。
+    path([(_x, 51.63), (_x, 57.37)], F, 0.25, "V5_SYS")
 # 走底层:顶层 y≈9.5 那一带要留给 J9 的 I2C 竖下来
 corridor("FB_5V", P("R64", "FB_5V"), P("U2", "FB_5V"),
          ys=[40.6, 41.2, 40.0, 39.4, 41.8], ea=-1.8, eb=1.8)
@@ -1182,9 +1226,14 @@ def chain(netname, width=W_SIG):
             UNROUTED.append((netname, f"{a}", f"{b}", _who()))
 
 
+# A1 那一排 3V3 去耦件(C10/C11/R4/R5)的脚彼此只隔 1.5mm,而它们中间还夹着
+# EN / IO0 的脚 —— 一根根拉线怎么绕都会压到隔壁那只脚。给它们下一块**小铜岛**:
+# 覆铜会自动绕开异网焊盘,只把同网的那几只连起来,这是覆铜最擅长的事。
+zone("V3P3", [F], rect(8.4, 27.4, 30.5, 31.6), 20, "A1 3V3 小铜岛")
+
 # 这几个网络的焊盘散在全板,而覆铜够不到它们中的一部分 —— 逐个串起来收尾。
-for _n, _w in (("V3P3", 0.4), ("V5_SYS", 0.4), ("V5_BUCK", 0.5), ("USB_VBUS", 0.4),
-               ("USB_DP", W_SIG), ("USB_DM", W_SIG), ("COMP", W_SIG), ("CC2", W_SIG),
+for _n, _w in (("V3P3", 0.3), ("V5_SYS", 0.3), ("V5_BUCK", 0.5), ("USB_VBUS", 0.3),
+               ("USB_DP", 0.2), ("USB_DM", 0.2), ("COMP", W_SIG), ("CC2", 0.2),
                ("EN", W_SIG), ("PMOS_GATE", 0.4), ("CH1_WW_GR", W_SIG),
                ("CH1_WW_D", 0.8), ("V24_BUS", 1.0), ("V24_PROT", 1.0)):
     chain(_n, _w)
@@ -1225,8 +1274,8 @@ for (_ax, _ay, _bx, _by) in GND_STITCH_AREAS:
             if _clean([(_gx, _gy)], None, VIA_D + 0.3, "GND", 0.3):
                 via(_gx, _gy, "GND", STITCH_D, STITCH_DRILL)
                 _stitch_gnd += 1
-            _gx += 8.0
-        _gy += 8.0
+            _gx += 5.0
+        _gy += 5.0
 print(f"[地] 逻辑地 / 功率地两片,只在 RS1 旁边那一段颈上汇合;"
       f"两层之间按 8mm 网格缝了 {_stitch_gnd} 颗过孔")
 
