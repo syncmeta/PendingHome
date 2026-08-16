@@ -259,6 +259,7 @@ def _hit(b1, b2, clr):
                 or b1[3] + clr <= b2[1] or b2[3] + clr <= b1[1])
 
 
+BLOCKERS_SEEN = []       # 布不通时用来说清「是谁挡的」
 GRID = 6.0
 _gidx = {}           # (gx, gy) → [障碍物]
 
@@ -308,6 +309,7 @@ def _clean(pts, layer, width, netname, clr):
                         or (onb and layer in (B, None))):
                     continue
                 if _hit(bb, (px0, py0, px1, py1), clr):
+                    BLOCKERS_SEEN.append(f"焊盘[{pnet or '无网络'}]")
                     return False
             else:                                 # 已铺的铜
                 qx0, qy0, qx1, qy1, qlayer, qnet = o
@@ -316,6 +318,7 @@ def _clean(pts, layer, width, netname, clr):
                 if qlayer is not None and layer is not None and qlayer != layer:
                     continue
                 if _hit(bb, (qx0, qy0, qx1, qy1), clr):
+                    BLOCKERS_SEEN.append(f"走线[{qnet}]")
                     return False
     return True
 
@@ -371,6 +374,14 @@ UNROUTED = []
 DIRTY = []
 
 
+def _who(n=3):
+    """挡路的都是谁 —— 出现次数最多的那几个,报告里直接说出名字。"""
+    from collections import Counter
+    c = Counter(BLOCKERS_SEEN)
+    BLOCKERS_SEEN.clear()
+    return "、".join(f"{k}×{v}" for k, v in c.most_common(n)) or "(无)"
+
+
 def hpath(pts, layer, width, netname, tag):
     """手写的走线也要**先查干净再落笔**;不干净就记账,不硬塞。"""
     if _clean(pts, layer, width, netname, 0.21):
@@ -406,7 +417,7 @@ def corridor(netname, a, b, ys=None, xs=None, width=W_SIG, ea=2.2, eb=2.2, clr=0
             via(pb[0], pb[1], netname)
             _emit(mid, B, width, netname)
             return True
-    DIRTY.append((netname, f"{a}→{b}"))
+    DIRTY.append((netname, f"{a}→{b}", _who()))
     return False
 
 
@@ -448,7 +459,7 @@ def auto(netname, ra, rb, width=W_SIG, clr=0.21, layers=(F,), esc=1.4):
                             via(vb[0], vb[1], netname)
                             _emit(pts, B, width, netname)
                             return True
-    UNROUTED.append((netname, ra, rb))
+    UNROUTED.append((netname, ra, rb, _who()))
     return False
 
 
@@ -811,7 +822,18 @@ for drv, lanes in (("U6", PWM_LANES_U6), ("U7", PWM_LANES_U7)):
         via(vx, lane, G)
         path([(vx, lane), (tgt[0], lane), (tgt[0], tgt[1])], F, W_SIG, G)
 
-print("[PWM] 12 路 PWM 按「底层竖 → 顶层车道 → 顶层竖」布完", flush=True)
+# IO0 也在 U4 的**上排**,处境跟 12 路 PWM 一模一样:必须从模组底下走底层下来。
+# 顺手在同一套竖道分配里给它留一条,免得跟 PWM 抢同一个 x。
+_io0_u4 = P("U4", "IO0")
+_io0_esc = (_lane_x(_io0_u4[0], "IO0"), _io0_u4[1] + 2.6)
+path([_io0_u4, _io0_esc], F, W_SIG, "IO0")
+via(_io0_esc[0], _io0_esc[1], "IO0")
+_io0_sw = P("SW1", "IO0")
+path([_io0_esc, (_io0_esc[0], 34.5), (_io0_sw[0], 34.5)], B, W_SIG, "IO0")
+via(_io0_sw[0], 34.5, "IO0")
+path([(_io0_sw[0], 34.5), _io0_sw], F, W_SIG, "IO0")
+
+print("[PWM] 12 路 PWM + IO0 按「底层竖 → 顶层车道 → 顶层竖」布完", flush=True)
 
 # ============================================================================
 # ⑥ 逻辑区 A1–A4
@@ -833,6 +855,12 @@ corridor("USB_VBUS", P("J2", "USB_VBUS"), P("D4", "USB_VBUS"), width=0.6,
          ys=[33.0, 34.0, 35.0, 32.0, 31.0, 36.5, 38.0, 39.5, 41.0, 43.0, 44.5], ea=2.6, eb=-2.6)
 corridor("USB_DM", P("J2", "USB_DM"), P("U5", "USB_DM"),
          xs=[49.9, 51.2, 52.4, 45.0], ea=3.5, eb=1.6)
+corridor("USB_DP", P("J2", "USB_DP"), P("U5", "USB_DP"),
+         xs=[46.6, 45.4, 44.2, 52.8, 54.0], ea=3.5, eb=1.6)
+# OE_CTRL:MCU 右侧脚 → 驱动区的 /OE 电平转换。它要绕过 U4 底下那 12 根 PWM 的底层竖道
+# (x 8.9–25.6),所以先往右出到 x≈30 再下来。这条是失效安全链的输入,不能不通。
+corridor("OE_CTRL", P("U4", "OE_CTRL"), P("R14", "OE_CTRL"),
+         xs=[30.0, 31.0, 32.0, 33.0, 29.0, 34.5, 36.0], ea=3.0, eb=2.4)
 corridor("V3P3", P("C43", "V3P3"), P("U1", "V3P3"), width=0.5,
          xs=[123.3, 122.3, 121.3, 124.3, 119.5, 118.5, 125.3, 117.5], ea=2.5, eb=-1.8)
 corridor("V5_SYS", P("C41", "V5_SYS"), P("J10", "V5_SYS"), width=0.5,
@@ -912,7 +940,7 @@ for netname, rpull in (("I2C_SDA", "R52"), ("I2C_SCL", "R53")):
 auto("CC1", "J2", "R9", layers=FB)
 _cc, _r10 = P("J2", "CC2"), P("R10", "CC2")
 path([_cc, (_cc[0], 10.5), (_r10[0], 10.5), _r10], F, W_SIG, "CC2")
-auto("USB_DP", "J2", "U5", layers=FB)
+# (已由前面的 corridor 接管)
 auto("U0TXD", "U5", "U4", layers=FB)
 auto("U0RXD", "U5", "U4", layers=FB)
 auto("DTR", "U5", "R11", layers=FB)
@@ -925,20 +953,20 @@ auto("EN", "C12", "SW2", layers=FB)
 auto("EN", "SW2", "U4", layers=FB)
 auto("IO0", "Q5", "R5", layers=FB)
 auto("IO0", "R5", "SW1", layers=FB)
-auto("IO0", "SW1", "U4", layers=FB)
+# (已由 ⑥ 的上排竖道接管)
 
 # ---- A1 状态灯 / 总断路控制 ----
 auto("LED_STATUS", "U4", "LED1", layers=FB)
 auto("LED1_K", "LED1", "R8", layers=FB)
-auto("OE_CTRL", "U4", "R14", layers=FB)
+# (已由前面的 corridor 接管)
 
 print(f"[逻辑区] 近距离连线布完;没布通的 {len(UNROUTED)} 条", flush=True)
 if DIRTY:
     print(f"[干线] 手写干线里有 {len(DIRTY)} 条找不到干净走廊:", flush=True)
-    for _n, _w in DIRTY:
-        print(f"    ✗ {_n:<12} {_w}", flush=True)
-for _n, _a, _b in UNROUTED:
-    print(f"    ✗ {_n:<12} {_a} → {_b}", flush=True)
+    for _n, _w, _b in DIRTY:
+        print(f"    ✗ {_n:<12} {_w}\n         挡路的:{_b}", flush=True)
+for _n, _a, _b, _w in UNROUTED:
+    print(f"    ✗ {_n:<12} {_a} → {_b}   挡路的:{_w}", flush=True)
 
 
 # ============================================================================
