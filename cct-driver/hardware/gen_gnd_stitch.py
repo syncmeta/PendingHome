@@ -122,6 +122,36 @@ for _pass in range(PASSES):
             for v in board.Tracks()
             if v.Type() == pcbnew.PCB_VIA_T and v.GetNetname() == "GND"]
 
+    # 先清掉**悬空的缝合过孔**:盲缝的网格不知道哪里最后会填出铜,
+    # 落在 V24 那几片覆铜底下的过孔两层都够不着地,DRC 直接报悬空。
+    # 判据是「两层的地铜都不含它」,从填充结果上量出来的,不是拍的。
+    killed = 0
+    for v in list(board.Tracks()):
+        if v.Type() != pcbnew.PCB_VIA_T or v.GetNetname() != "GND":
+            continue
+        if ToMM(v.GetWidth()) > STITCH_D + 0.01:      # 只动缝合过孔,不动信号过孔
+            continue
+        pt = v.GetPosition()
+        if not any(o[0].Contains(pt, o[1]) for _l, _i, o, _a in isl):
+            board.Remove(v)
+            killed += 1
+    if killed:
+        print(f"  − 清掉 {killed} 颗悬空的缝合过孔(两层地铜都够不着)")
+        pcbnew.SaveBoard(str(BOARD), board)
+        (HERE / "cct-main.kicad_pro").write_bytes(_pro)
+        fill_and_refresh()
+        (HERE / "cct-main.kicad_pro").write_bytes(_pro)
+        board = pcbnew.LoadBoard(str(BOARD))
+        isl = islands(board)
+        main, planes = {}, {}
+        for lay, _i, o, a in isl:
+            main.setdefault(lay, o)
+            if a >= 50.0:
+                planes.setdefault(lay, []).append(o)
+        vias = [(ToMM(v.GetPosition().x), ToMM(v.GetPosition().y))
+                for v in board.Tracks()
+                if v.Type() == pcbnew.PCB_VIA_T and v.GetNetname() == "GND"]
+
     added, stranded = 0, []
     _keep = []
     for lay, idx, o, area in isl:
