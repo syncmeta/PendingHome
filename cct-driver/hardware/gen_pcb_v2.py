@@ -378,6 +378,18 @@ def net_of(name):
 # 外框纯装饰(`gen_strip_res_silk.py` 早就对 12 颗灯的限流电阻这么做过)。
 # **有极性/有方向的一个都不动**:LED、二极管、电解、IC、三极管、端子、保险丝座。
 NO_SILK_FP = {"R0603", "C0603", "C0805", "C1210", "R1206", "R2512"}
+# 另外按**位号**去外框的:入电区那几颗体电容和 buck 输入电容。它们封装自带的
+# 外框四个角压在自己焊盘的边上(DRC 报 silk_over_copper),而丝印压焊盘会挡锡。
+# 这几颗无极性,外框纯装饰,去掉不丢信息。
+#
+# ⚠️ **通道储能那六颗(C16/C18/C20/C22/C24/C26)故意留着外框** —— 量过:
+# 去掉它们的话,正下方那一排指示灯的位号就少了「最近的参照物」,
+# 歧义判据过不去,LED5/7/9/11 里会有 1–3 个位号被迫隐藏。
+# 两害相权:外框压的只是自己焊盘的**四个角**,而位号是装配和调试时要看的。
+# 试过的替代方案都不行:指示灯行上下挪(最好也只到 1 个隐藏)、
+# 储能电容往上挪(会吃掉保险丝下方 8mm 的镊子空间,那是硬要求)、
+# 指示灯往列中心收(摆位直接冲突 13 处)。
+NO_SILK_REF = {"C1", "C2", "C3", "C4", "C5", "C35"}
 _stripped = 0
 
 
@@ -482,6 +494,15 @@ board.Add(ka)
 
 out = str(HERE / "cct-main.kicad_pcb")
 
+# 六个输出端子的位号默认落在端子体正上方,而那一块正是「CH1 / V+ CW WW」
+# 这些功能丝印的位置 —— 两者叠在一起谁都看不清(人类原话「丝印标号对不上」)。
+# 挪到相邻两列端子之间那道 4mm 的缝里去,和功能丝印彼此不挡。
+for _ref, _cx in (("J3", COL_X[1]), ("J4", COL_X[2]), ("J5", COL_X[3]),
+                  ("J6", COL_X[4]), ("J7", COL_X[5]), ("J8", COL_X[6])):
+    _fp = board.FindFootprintByReference(_ref)
+    if _fp is not None:
+        _fp.Reference().SetPosition(VECTOR2I(FromMM(_cx - 7.6), FromMM(ROW["term_y"])))
+
 # ⚠️ `SaveBoard()` 会把同名的 .kicad_pro 一起重写成**出厂默认** —— 5 个网络类
 # (TRUNK/PWR2/PWR1/GND)和 14 条 netclass_patterns 会被静默清空,`min_text_height`
 # 从 0.5 变回 0.8。README 里那一节讲的是「GUI 会干这件事」,无头 SaveBoard 同样会。
@@ -520,7 +541,9 @@ def strip_silk(path):
                     break
             k += 1
         blk = src[j:k]
-        if name in NO_SILK_FP:
+        _m = re.search(r'\(property "Reference" "([^"]*)"', blk)
+        _ref = _m.group(1) if _m else None
+        if name in NO_SILK_FP or _ref in NO_SILK_REF:
             keep, m = [], 0
             while m < len(blk):
                 g = -1
