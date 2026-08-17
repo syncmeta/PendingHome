@@ -12,3 +12,6 @@ hardware/logs/
 .DS_Store
 hardware/.drc-v2.rpt
 hardware/.netlist-verify.net
+
+# kicad-cli 跑 DRC / 导出时在仓库根生成的本地状态文件(不是工程的一部分)
+cct-main.kicad_prl
