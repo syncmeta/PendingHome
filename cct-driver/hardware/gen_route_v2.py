@@ -593,7 +593,11 @@ def hpath(pts, layer, width, netname, tag):
     if _clean(pts, layer, width, netname, 0.21):
         _emit(pts, layer, width, netname)
         return True
-    DIRTY.append((netname, tag))
+    # ⚠️ 三元组,和 corridor() 记的账对齐 —— 末尾那个报告循环是按三元组解包的。
+    # 早先这里记的是二元组,于是**只要有一条手写走线布不通,脚本就在报告那一行崩掉**,
+    # 而且崩在保存之前:板文件停在「摆位有了、布线一根没有」的半成品上,报出来的又是
+    # `ValueError: not enough values to unpack`,完全看不出真正的原因是有走线没布通。
+    DIRTY.append((netname, tag, _who()))
     return False
 
 
