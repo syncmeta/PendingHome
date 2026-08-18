@@ -105,7 +105,10 @@ part("U4", "C701341", ESP_PINS)
 part("C10", "C15850", {"1": "V3P3", "2": "GND"})
 part("C11", "C14663", {"1": "V3P3", "2": "GND"})
 part("R4", "C25804", {"1": "V3P3", "2": "EN"})
-part("C12", "C15850", {"1": "EN", "2": "GND"})
+# 2026-08-18:10µF → 1µF。10µF 时 R4·C12 = 100ms,EN 要 138ms 才过 VIH(2.475V),
+# 而 esptool 释放 EN 之后只等 50ms 就放掉 IO0 → 进不了下载模式。
+# 1µF 时 13.8ms 过 VIH,仍然给足上电复位延时。Espressif 硬件设计指南给的就是 10k+1µF。
+part("C12", "C28323", {"1": "EN", "2": "GND"})    # 1µF/50V X7R 0805(基础库)
 part("R5", "C25804", {"1": "V3P3", "2": "IO0"})
 part("SW1", "C318884", {"1": "IO0", "2": "GND"})
 part("SW2", "C318884", {"1": "EN", "2": "GND"})
@@ -121,10 +124,16 @@ part("J2", "C165948", {"VBUS": "USB_VBUS", "GND": "GND", "DP": "USB_DP",
                        "SHELL": "GND"})
 part("R9", "C23186", {"1": "CC1", "2": "GND"})
 part("R10", "C23186", {"1": "CC2", "2": "GND"})
-part("Q4", "C2146", {"B": "RTS_B", "C": "EN", "E": "GND"})
-part("Q5", "C2146", {"B": "DTR_B", "C": "IO0", "E": "GND"})
-part("R11", "C25804", {"1": "DTR", "2": "RTS_B"})
-part("R12", "C25804", {"1": "RTS", "2": "DTR_B"})
+# 2026-08-18:发射极从 GND 改接**对方那根控制线**。
+# Espressif 参考电路要的是异或型行为:DTR#/RTS# 同电平 → 两管都截止 → 正常运行;
+# 只有一高一低才动 EN 或 IO0。这个性质是靠「基极接一根、发射极接另一根」得到的。
+# 原来两个发射极都接 GND,它退化成两个普通反相器:CH340C 的 DTR#/RTS# 是低有效输出、
+# 空闲都是高 → EN 被钉低、IO0 也被钉低 → 烧录必败、串口一关板子就停机。
+# 详见 pre-order-circuit-review.md 🔴-1。
+part("Q4", "C2146", {"B": "RTS_B", "C": "EN", "E": "RTS"})
+part("Q5", "C2146", {"B": "DTR_B", "C": "IO0", "E": "DTR"})
+part("R11", "C25804", {"1": "DTR", "2": "RTS_B"})    # DTR# → Q4 基极
+part("R12", "C25804", {"1": "RTS", "2": "DTR_B"})    # RTS# → Q5 基极
 
 # ---- Block D ----
 HCT_A = ["CH1_CW", "CH1_WW", "CH2_CW", "CH2_WW", "CH3_CW", "CH3_WW", "CH4_CW", "CH4_WW"]
@@ -146,7 +155,12 @@ part("C15", "C14663", {"1": "V5_SYS", "2": "GND"})
 part("R13", "C25804", {"1": "V5_SYS", "2": "OE_N"})
 part("Q6", "C20526", {"B": "OE_B", "C": "OE_N", "E": "GND"})
 part("R14", "C25804", {"1": "OE_CTRL", "2": "OE_B"})
-part("R15", "C25803", {"1": "OE_B", "2": "GND"})
+# 2026-08-18:100k → 4.7k。GPIO15(MTDO)带 45kΩ 内部上拉(ESP32 手册 Table 3-1 与
+# Table IO_MUX 的 At Reset / After Reset 都是 wpu),经 R14 能灌 40µA 进 Q6 基极,
+# 足够让 Q6 饱和 → /OE 在整个启动期间是使能的 → 上电闪灯,且「复位自动关灯」不成立。
+# 4.7k 在 0.7V 时要吸 149µA > 内部上拉能给的 75µA → Q6 铁定截止。
+# 详见 pre-order-circuit-review.md 🔴-2。
+part("R15", "C23162", {"1": "OE_B", "2": "GND"})   # 4.7k(R52/R53 已在用,不新增料号)
 
 # ---- Block E(6 通道) ----
 CH_TABLE = [  # (ch, F, J, Q_cw, Q_ww, Rg_cw, Rg_ww, Rpd_cw, Rpd_ww, Dfw_cw, Dfw_ww, Dtvs_cw, Dtvs_ww, Cel, Cmlcc, LEDcw, LEDww, Rl_cw, Rl_ww)
@@ -210,6 +224,7 @@ CID_SYMBOL_ALIAS = {
     "C22858":  "C25804",   # 102k  0603  R63(FB 上,替代 C402870)
     "C17928":  "C25804",   # 1Ω    1206  R68(进线阻尼)
     "C459679": "C500614",  # 2mΩ   2512  RS1(替代已停产的 C500614)
+    "C28323":  "C15850",   # 1µF/50V X7R 0805  C12(EN 上电复位延时,替代 10µF)
 }
 
 ALIASES = {
