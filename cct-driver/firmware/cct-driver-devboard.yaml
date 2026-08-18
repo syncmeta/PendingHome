@@ -3,6 +3,8 @@
 # 用途:在裸 ESP32 开发板(无 INA237、无 HCT245、无功率级)上验证固件行为。
 #
 # 与 cct-driver.yaml 的唯一差异:**删除了 I2C/INA237 与动态限流逻辑**。
+# 每通道的静态 max_power 与主配置保持一致 —— 板子到货前,这里是唯一能实际量到
+# "静态封顶"的地方。要做满量程引脚测试,把下面六个 chN_max_power 临时改成 100%。
 # 原因:开发板上没有 INA237,bus_current 恒为 NaN,主配置的保护逻辑会在连续
 #       5 次无效读数后关闭 /OE —— 那是正确行为,但会让测试无法进行。
 #
@@ -28,6 +30,14 @@ substitutions:
   current_limit: "12.0"
   # 迟滞下限,低于此值才开始恢复限幅
   current_release: "11.0"
+  # 每通道 PWM 静态上限,与 cct-driver.yaml 一致(那边有完整说明)。
+  # ⚠️ 68.5% 是"六条灯带相同"的假设初值,不是实测值。
+  ch1_max_power: "68.5%"
+  ch2_max_power: "68.5%"
+  ch3_max_power: "68.5%"
+  ch4_max_power: "68.5%"
+  ch5_max_power: "68.5%"
+  ch6_max_power: "68.5%"
 
 esphome:
   name: ${device_name}
@@ -94,6 +104,7 @@ output:
     pin: GPIO4
     frequency: ${pwm_frequency}
     phase_angle: 0deg
+    max_power: ${ch1_max_power}
   - platform: ledc
     id: pwm_ch1_ww
     # GPIO5 是 strapping 脚(SDIO 时序选择)。此处安全:它只驱动 74HCT245 的
@@ -104,61 +115,72 @@ output:
       ignore_strapping_warning: true
     frequency: ${pwm_frequency}
     phase_angle: 180deg
+    max_power: ${ch1_max_power}
 
   - platform: ledc
     id: pwm_ch2_cw
     pin: GPIO13
     frequency: ${pwm_frequency}
     phase_angle: 0deg
+    max_power: ${ch2_max_power}
   - platform: ledc
     id: pwm_ch2_ww
     pin: GPIO14
     frequency: ${pwm_frequency}
     phase_angle: 180deg
+    max_power: ${ch2_max_power}
 
   - platform: ledc
     id: pwm_ch3_cw
     pin: GPIO16
     frequency: ${pwm_frequency}
     phase_angle: 0deg
+    max_power: ${ch3_max_power}
   - platform: ledc
     id: pwm_ch3_ww
     pin: GPIO17
     frequency: ${pwm_frequency}
     phase_angle: 180deg
+    max_power: ${ch3_max_power}
 
   - platform: ledc
     id: pwm_ch4_cw
     pin: GPIO18
     frequency: ${pwm_frequency}
     phase_angle: 0deg
+    max_power: ${ch4_max_power}
   - platform: ledc
     id: pwm_ch4_ww
     pin: GPIO19
     frequency: ${pwm_frequency}
     phase_angle: 180deg
+    max_power: ${ch4_max_power}
 
   - platform: ledc
     id: pwm_ch5_cw
     pin: GPIO21
     frequency: ${pwm_frequency}
     phase_angle: 0deg
+    max_power: ${ch5_max_power}
   - platform: ledc
     id: pwm_ch5_ww
     pin: GPIO22
     frequency: ${pwm_frequency}
     phase_angle: 180deg
+    max_power: ${ch5_max_power}
 
   - platform: ledc
     id: pwm_ch6_cw
     pin: GPIO23
     frequency: ${pwm_frequency}
     phase_angle: 0deg
+    max_power: ${ch6_max_power}
   - platform: ledc
     id: pwm_ch6_ww
     pin: GPIO25
     frequency: ${pwm_frequency}
     phase_angle: 180deg
+    max_power: ${ch6_max_power}
 
 # ---------------------------------------------------------------------------
 # 6 个 CCT 灯实体
