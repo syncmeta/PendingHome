@@ -35,6 +35,7 @@
 """
 import gc
 gc.disable()          # pcbnew 的 SWIG 对象所有权:不关 GC 会在 SaveBoard 时崩
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -405,25 +406,35 @@ BOARD_W, BOARD_H = 130.0, 164.0
 GW, GH = int(BOARD_W / GRID_MM), int(BOARD_H / GRID_MM)
 
 
-def _rasterize(netname, inflate):
-    """把别的网络的铜栅格化成两层障碍图。返回 (blockedF, blockedB) 两个 set。"""
+def _rasterize(netname, inflate, grid=None, win=None):
+    """把别的网络的铜栅格化成两层障碍图。返回 (blockedF, blockedB) 两个 set。
+
+    grid 给了就按那个步长(默认 GRID_MM=0.25);win=(x0,y0,x1,y1) 给了就只涂窗口内 ——
+    细网格必须配窗口,不然 0.05mm 步长铺满整块板是 850 万格,内存和时间都吃不消。
+    """
+    grid = grid or GRID_MM
     bf, bb = set(), set()
+    wi0 = wj0 = 0
+    wi1, wj1 = int(BOARD_W / grid), int(BOARD_H / grid)
+    if win:
+        wi0, wj0 = int(win[0] / grid), int(win[1] / grid)
+        wi1, wj1 = int(win[2] / grid) + 1, int(win[3] / grid) + 1
 
     def mark(x0, y0, x1, y1, dst):
         # ⚠️ 逐格**按格点到矩形的真实距离**判,不要拿包围盒粗暴地涂 ——
         # 粗暴涂会多堵掉最多两格(0.5mm),而 Type-C 那排脚的缝隙本来就只有 0.35mm,
         # 一多堵就再也搜不出路来(v1 是拿 0.20mm 细线从连接器身子底下钻上去的)。
-        i0 = max(0, int((x0 - inflate) / GRID_MM) - 1)
-        i1 = min(GW - 1, int((x1 + inflate) / GRID_MM) + 1)
-        j0 = max(0, int((y0 - inflate) / GRID_MM) - 1)
-        j1 = min(GH - 1, int((y1 + inflate) / GRID_MM) + 1)
+        i0 = max(wi0, int((x0 - inflate) / grid) - 1)
+        i1 = min(wi1, int((x1 + inflate) / grid) + 1)
+        j0 = max(wj0, int((y0 - inflate) / grid) - 1)
+        j1 = min(wj1, int((y1 + inflate) / grid) + 1)
         for i in range(i0, i1 + 1):
-            px = i * GRID_MM
+            px = i * grid
             dx = max(x0 - px, px - x1, 0.0)
             if dx >= inflate:
                 continue
             for j in range(j0, j1 + 1):
-                py = j * GRID_MM
+                py = j * grid
                 dy = max(y0 - py, py - y1, 0.0)
                 if dx * dx + dy * dy < inflate * inflate:
                     dst.add((i, j))
@@ -448,37 +459,59 @@ def _rasterize(netname, inflate):
     return bf, bb
 
 
-def maze(netname, a, b, width=W_SIG, clr=None, via_cost=14, turn_cost=2):
-    """A* 从 a 走到 b。走得通就落笔,走不通返回 False(照样记账)。"""
+def maze(netname, a, b, width=W_SIG, clr=None, via_cost=14, turn_cost=2,
+         grid=None, win_margin=None):
+    """A* 从 a 走到 b。走得通就落笔,走不通返回 False(照样记账)。
+
+    grid 默认 0.25mm —— 对全板搜索是合适的粒度,但**它会漏掉比 0.25mm 窄的走廊**。
+    实测:C46 的地脚从 24V 脊椎里出来那条路,按 0.05mm 量是通的,按 0.25mm 搜不到,
+    因为格点正好都落在障碍上。所以给短距离的救援连线留了细网格这条路:
+    grid=0.05 + win_margin=4.0,只在 a、b 的包围盒外扩 4mm 那个窗口里搜,
+    格子数才压得住(全板 0.05mm 是 850 万格)。
+    """
     import heapq
+    grid = grid or GRID_MM
+    win = None
+    if win_margin is not None:
+        win = (max(0.0, min(a[0], b[0]) - win_margin),
+               max(0.0, min(a[1], b[1]) - win_margin),
+               min(BOARD_W, max(a[0], b[0]) + win_margin),
+               min(BOARD_H, max(a[1], b[1]) + win_margin))
     # 细线配紧间距:0.2mm 线在 Type-C 那排 0.5mm 间距的脚里,只有把间距收到
     # 板规下限(0.2mm)才钻得过去。取 0.205 留一点浮点余量 —— 取 0.18 会真的违规。
     if clr is None:
         # 粗线走的是 PWR* 网络类,板规要求 0.25;细线按 Default 的 0.2 算。
         clr = 0.205 if width <= 0.2 else (0.26 if width >= 0.3 else 0.21)
     inflate = width / 2 + clr
-    bl = _rasterize(netname, inflate)
+    bl = _rasterize(netname, inflate, grid, win)
     # 过孔比走线粗(⌀0.6),换层的那个格子要按**过孔**的尺寸另查一遍 ——
     # 用走线的余量去判过孔,过孔就会贴到隔壁焊盘上(实测栽过)。
-    blv = _rasterize(netname, VIA_D / 2 + clr)
+    blv = _rasterize(netname, VIA_D / 2 + clr, grid, win)
     # 已有孔周围 0.8mm 内不许再换层(钻孔之间要留得开)。先算成格子集合,
     # 否则每搜一个节点都要跟几百个孔比一遍 —— 实测慢到 2 分半。
     near_via_cells = set()
-    r = int(0.8 / GRID_MM) + 1
+    r = int(0.8 / grid) + 1
     for (vx, vy, _vn) in VIAS:
-        ci, cj = int(vx / GRID_MM), int(vy / GRID_MM)
+        if win and not (win[0] - 1 <= vx <= win[2] + 1 and win[1] - 1 <= vy <= win[3] + 1):
+            continue
+        ci, cj = int(vx / grid), int(vy / grid)
         for di in range(-r, r + 1):
             for dj in range(-r, r + 1):
                 if di * di + dj * dj <= r * r:
                     near_via_cells.add((ci + di, cj + dj))
-    margin = int(1.0 / GRID_MM)                     # 离板边留 1mm
+    margin = int(1.0 / grid)                        # 离板边留 1mm
+    gw, gh = int(BOARD_W / grid), int(BOARD_H / grid)
+    lo_i, lo_j, hi_i, hi_j = margin, margin, gw - margin, gh - margin
+    if win:
+        lo_i, lo_j = max(lo_i, int(win[0] / grid)), max(lo_j, int(win[1] / grid))
+        hi_i, hi_j = min(hi_i, int(win[2] / grid)), min(hi_j, int(win[3] / grid))
     # 用 round 不用 int:截断会让起点落到离焊盘中心 0.25mm 的地方,
     # 补的那一小截就伸到焊盘外面去了(实测因此蹭到隔壁网络,报短路)。
-    start = (round(a[0] / GRID_MM), round(a[1] / GRID_MM), 0)
-    goal = (round(b[0] / GRID_MM), round(b[1] / GRID_MM))
+    start = (round(a[0] / grid), round(a[1] / grid), 0)
+    goal = (round(b[0] / grid), round(b[1] / grid))
 
     def ok(i, j, l):
-        return (margin <= i < GW - margin and margin <= j < GH - margin
+        return (lo_i <= i < hi_i and lo_j <= j < hi_j
                 and (i, j) not in bl[l])
 
     def h(i, j):
@@ -521,8 +554,8 @@ def maze(netname, a, b, width=W_SIG, clr=None, via_cost=14, turn_cost=2):
     # 两端补到焊盘中心的那两小截也要**先查干净** —— 它们不在栅格上,
     # 不查的话会蹭到隔壁网络(实测报出过一条短路)。查不过就当这条路没走通。
     ew = min(width, 0.25)
-    if not (_clean([a, (start[0] * GRID_MM, start[1] * GRID_MM)], F, ew, netname, clr)
-            and _clean([(goal[0] * GRID_MM, goal[1] * GRID_MM), b], F, ew, netname, clr)):
+    if not (_clean([a, (start[0] * grid, start[1] * grid)], F, ew, netname, clr)
+            and _clean([(goal[0] * grid, goal[1] * grid), b], F, ew, netname, clr)):
         return False
 
     # 回溯 → 折线,同层连续段合成一条走线,换层处打过孔
@@ -535,19 +568,19 @@ def maze(netname, a, b, width=W_SIG, clr=None, via_cost=14, turn_cost=2):
     run = [pts[0]]
     for q in pts[1:]:
         if q[2] != run[-1][2]:
-            _flush_run(run, netname, width)
-            via(run[-1][0] * GRID_MM, run[-1][1] * GRID_MM, netname)
+            _flush_run(run, netname, width, grid)
+            via(run[-1][0] * grid, run[-1][1] * grid, netname)
             run = [q]
         else:
             run.append(q)
-    _flush_run(run, netname, width)
+    _flush_run(run, netname, width, grid)
     # 两端各补一小截接到真正的焊盘中心
-    _emit([a, (start[0] * GRID_MM, start[1] * GRID_MM)], F, ew, netname)
-    _emit([(goal[0] * GRID_MM, goal[1] * GRID_MM), b], F, ew, netname)
+    _emit([a, (start[0] * grid, start[1] * grid)], F, ew, netname)
+    _emit([(goal[0] * grid, goal[1] * grid), b], F, ew, netname)
     return True
 
 
-def _flush_run(run, netname, width):
+def _flush_run(run, netname, width, grid=None):
     """把同层的一串栅格点压成尽量少的直线段。"""
     if len(run) < 2:
         return
@@ -559,7 +592,8 @@ def _flush_run(run, netname, width):
         if d1 != d2:
             keep.append(run[k])
     keep.append(run[-1])
-    _emit([(i * GRID_MM, j * GRID_MM) for i, j, _l in keep], layer, width, netname)
+    g = grid or GRID_MM
+    _emit([(i * g, j * g) for i, j, _l in keep], layer, width, netname)
 
 
 UNROUTED = []
@@ -1295,6 +1329,48 @@ later("LED_STATUS", "U4", "LED1", layers=FB)
 later("LED1_K", "LED1", "R8", layers=FB)
 # (已由前面的 corridor 接管)
 
+# ---------------------------------------------- 被碎铜围住的地脚,逐只拉出去
+# 地是靠两层覆铜走的,所以地脚一般不用单独布线 —— 但**覆铜会被别的线切碎**,
+# 碎出来的小块里如果正好夹着一只地脚、而这块铜小到连一颗 ⌀0.5 的缝合过孔都放不下,
+# 那只脚就真的浮在那儿了。gen_gnd_stitch.py 跑完会把这种逐块列名(它按填出来的
+# 真实铜判),列到谁就在这里给谁拉一根线。判据见 check-floating-pads.py。
+#
+# 现在名单上三只,都是量出来的、不是猜的:
+#   · C11.2 —— 困在 0.83mm² 的碎铜里(上有 EN 那一横、下有 3V3 干线)
+#   · SW2.2 —— 困在 0.98mm² 的碎铜里(EN 按键自己那一竖把它和 C10 隔开了)
+#   · C46.2 —— 它整个人坐在 24V 脊椎当中,顶层四面都是脊椎铜,
+#              底层那一小片只有 0.19mm²;最近的主地是 U1 的地脚,6.7mm 外
+# 锚点一律选**离得最近、且确实在主地平面上的那只地脚**,让 A* 自己找路;
+# 找不到就照常记账,不硬塞。
+# ⚠️ **这一段必须排在 run_todo() 和 chain() 之前。** 地脚的活路只有零点几毫米宽,
+# 谁先落笔谁占着 —— 实测把它放在最后跑,EN 和 3V3 的短连线已经把 SW2 那只地脚
+# 三面封死(0.05mm 细网格洪水填充量过:可达区只有 x 13.25–14.45 / y 30.25–33.45
+# 一个封闭口袋);放到前面跑,后面那些线自己会绕开。
+# ⚠️ 这几条一律**先按常规 0.25mm 网格试,再退到 0.05mm 的细网格**:
+# 这种脚周围本来就只剩零点几毫米的缝,0.25mm 的格点常常正好都落在障碍上 ——
+# 实测 C46 那条路按 0.05mm 量是通的,按 0.25mm 搜不到。细网格只在两端
+# 外扩 4mm 的窗口里搜,不会拖慢别处。
+# (C46 不在这张表里 —— 它那只地脚出不去的根因是**摆位**:整个人躺在 24V 脊椎当中,
+#  两层四面都是 24V 铜。已经在 gen_pcb_v2.py 里转 90° 挪到脊椎北沿上,
+#  V24_BUS 那只脚贴脊椎、GND 那只脚落进北边的地,不用布线。)
+for _ref, _anchor, _why in (("C11", "C10", "0.83mm² 碎铜"),
+                            ("SW2", "C11", "0.98mm² 碎铜")):
+    _a, _b = P(_ref, "GND"), P(_anchor, "GND")
+    if os.environ.get("DBG_RESCUE"):
+        _win = (min(_a[0], _b[0]) - 4, min(_a[1], _b[1]) - 4,
+                max(_a[0], _b[0]) + 4, max(_a[1], _b[1]) + 4)
+        _bl = _rasterize("GND", W_SIG / 2 + 0.21, 0.05, _win)
+        _sc = (round(_a[0] / 0.05), round(_a[1] / 0.05))
+        _gc = (round(_b[0] / 0.05), round(_b[1] / 0.05))
+        print(f"  [dbg] {_ref}: 起点格 {_sc} 顶层{'堵' if _sc in _bl[0] else '通'}"
+              f" / 终点格 {_gc} 顶层{'堵' if _gc in _bl[0] else '通'}"
+              f" / 窗口 {_win} / 顶层障碍格 {len(_bl[0])} 底层 {len(_bl[1])}", flush=True)
+    if (auto("GND", _ref, _anchor, width=W_SIG, layers=(F, B))
+            or maze("GND", _a, _b, width=W_SIG, grid=0.05, win_margin=4.0)):
+        print(f"[地] {_ref} 的地脚({_why})已拉到 {_anchor} 的地脚上", flush=True)
+    else:
+        print(f"[地] ✗ {_ref} 的地脚({_why})连细网格都出不去", flush=True)
+
 run_todo()
 
 
@@ -1325,38 +1401,24 @@ def chain(netname, width=W_SIG):
 # 原先的办法是「顶底各铺一小块 3V3 铜岛,每颗件的 3V3 脚各扎一颗过孔下去,
 # 顶层碎成几片都不要紧,底层那一片是整的」。**实测这句话是假的**:
 # 底层那一片根本不整 —— 12 路 PWM 从它正中间竖着穿过去,把它切成十几条
-# 互不相连的窄条,条条是孤岛;而四颗过孔里只有 R5 那颗找得到落脚点,
-# 其余三颗的十个候选位**全被底层 PWM 顶掉**(逐个打印过挡路的是谁)。
+# 互不相连的窄条,条条是孤岛;而四颗过孔里只有 R5 那颗找得到落脚点。
 # 结果:C11 两只脚、R4 的 3V3 脚、C12 的地脚**一根线一颗过孔都没有**,
 # 全靠一块 1–3mm² 的孤立碎铜托着。DRC 只把它记成「覆铜分片」,看着像记账问题,
 # 其实是 **EN 的 10k 上拉和上电延时电容双双悬空 —— 板子起不来**。
-# ⚠️ 教训:**碎铜里夹着焊盘却没有过孔 = 那只脚是浮的**,不能跟着一句
-# 「电气上通,靠底层地平面」放过去。判据写进 check-multipad-mapping.py 了。
+# ⚠️ 教训:**碎铜里夹着焊盘却没有过孔和走线 = 那只脚是浮的**,不能跟着一句
+# 「电气上通,靠底层地平面」放过去。这条判据写成 check-floating-pads.py 了,
+# 每次改完布线都要跑,而且是**全板**跑,不是只看这一处。
 #
-# 现在改成明着走线,不靠覆铜猜:
-#   · **底层那块岛删掉** —— 它不导通,还把底层地从这一带挤了出去。删掉之后
-#     PWM 竖线之间那些窄条变成地,而地在 PWM 竖线的下端(y≈39–46)是通的,
-#     于是这一带终于有了能扎过孔的底层地。
-#   · 顶层拉一条 **3V3 横轨**(y=29.68,车道带下沿 29.245 与 0805 焊盘上沿
-#     30.12 的正中,两边各 0.31mm),从 C11 一路到 R5,沿途给 C11 / R4 / R5
-#     各下一段短竖线。R5 那头本来就有过孔接到 y=31.75 那条 3V3 干线上,
-#     整条轨是有根的。**C10 不并进来** —— 它左边 x=9.75 是 EN 下按键那一竖,
-#     轨伸过去就压上了;C10 自己有 U4→C10 那条线,早就通了。
-#   · GND:C11 的地脚往东 1.4mm 扎一颗过孔下底层地 —— x=17.125 正好是
-#     CH4_WW(16.49)与 CH4_CW(17.76)之间那道 1.27mm 缝的正中。
-#     C12 的地脚往东绕过 IO0 的换层过孔再往南,直接落进主地平面
-#     (实测 (26.5,33.5) 就在主地平面那一大块里)。
-_RAIL_Y = 29.68
+# 真正让这四只脚接上的,是**把上面那条车道带整体抬高 0.43mm**
+# (上沿 23.25→23.00、间距 0.70→0.68,见前面 A3_BUS 那一段):
+# 抬之前最下那根车道离 0805 焊盘上沿只剩 0.57mm,连一根 0.25mm 的线都塞不下;
+# 抬完这条缝变成 1.0mm,下面 chain("V3P3") 自己就把 C11.1 / R4.1 顺着
+# y=31.75 那条 3V3 干线串起来了 —— 不用再手写一条横轨。
+# ⚠️ 一度在这儿手写过「y=29.68 的 3V3 横轨 + 两颗 GND 过孔」,**五条全部布不通**
+# (EN 那一横压着,过孔位被 PWM 顶掉),留在代码里只会误导人,删掉。
+# 底层那块 3V3 铜岛也删掉了:它不导通,还把底层地从这一带挤了出去;
+# 删掉之后 PWM 竖线之间那些窄条变成地,C10 / C12 的地脚才缝得上过孔。
 zone("V3P3", [F], rect(8.4, 28.7, 30.5, 32.9), 20, "A1 3V3 小铜岛(顶)")
-_v_c11, _v_r4, _v_r5 = P("C11", "V3P3"), P("R4", "V3P3"), P("R5", "V3P3")
-hpath([(_v_c11[0], _RAIL_Y), (_v_r5[0], _RAIL_Y)], F, W_SIG, "V3P3", "A1 3V3 横轨")
-for _r, _p in (("C11", _v_c11), ("R4", _v_r4), ("R5", _v_r5)):
-    hpath([(_p[0], _RAIL_Y), _p], F, W_SIG, "V3P3", f"3V3 横轨 → {_r}")
-_g_c11 = P("C11", "GND")
-if hpath([_g_c11, (17.125, _g_c11[1])], F, W_SIG, "GND", "C11 地脚 → PWM 缝里的过孔"):
-    via(17.125, _g_c11[1], "GND", STITCH_D, STITCH_DRILL)
-_g_c12 = P("C12", "GND")
-hpath([_g_c12, (26.5, _g_c12[1]), (26.5, 33.5)], F, W_SIG, "GND", "C12 地脚 → 主地平面")
 
 # ⚠️ 还差两条,都点名试过、都是**周围被必须的东西占死**,不是加根线能解决的
 #(细节见 layout-guide.md 第八节,别再往这儿塞补丁):

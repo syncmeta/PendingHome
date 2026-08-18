@@ -154,6 +154,16 @@ for _pass in range(PASSES):
                 for v in board.Tracks()
                 if v.Type() == pcbnew.PCB_VIA_T and v.GetNetname() == "GND"]
 
+    # 岛里有没有夹着焊盘 —— **夹着焊盘的岛不许按面积跳过**。
+    # MIN_AREA 原来是无差别的:小于 1mm² 一律记一句「面积过小」了事。
+    # 实测这条把两只真焊盘扔在外面(C11 的地脚 0.83mm²、SW2 的地脚 0.98mm²),
+    # 而那两块其实**放得下一颗 0.5mm 的缝合过孔**,只是面积数字不好看。
+    # 判据改成:**岛里夹着焊盘 → 无论多小都要试**,试不下再逐块列名;
+    # 面积门槛只用来放过那些一只脚都不沾的纯碎铜(那种缝不缝无所谓)。
+    gnd_pads = [(ToMM(p.GetPosition().x), ToMM(p.GetPosition().y))
+                for fp in board.GetFootprints() for p in fp.Pads()
+                if p.GetNetname() == "GND"]
+
     added, stranded = 0, []
     _keep = []
     for lay, idx, o, area in isl:
@@ -163,13 +173,16 @@ for _pass in range(PASSES):
                   for vx, vy in vias)
         if has:
             continue
-        if area < MIN_AREA:
-            stranded.append((board.GetLayerName(lay), idx, area, "面积过小"))
+        holds_pad = any(o[0].Contains(VECTOR2I(FromMM(px), FromMM(py)), o[1])
+                        for px, py in gnd_pads)
+        if area < MIN_AREA and not holds_pad:
+            stranded.append((board.GetLayerName(lay), idx, area, "面积过小,且没夹着焊盘"))
             continue
         others = [m for l2, ms in planes.items() if l2 != lay for m in ms]
         p = spot(o, others, MARGIN) or spot(o, others, MARGIN_TIGHT)
         if p is None:
-            stranded.append((board.GetLayerName(lay), idx, area, "岛内放不下过孔"))
+            stranded.append((board.GetLayerName(lay), idx, area,
+                             "岛内放不下过孔" + ("(⚠️ 里面夹着焊盘)" if holds_pad else "")))
             continue
         v = pcbnew.PCB_VIA(board)
         _keep.append(v)
