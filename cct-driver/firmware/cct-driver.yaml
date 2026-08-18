@@ -45,7 +45,8 @@ esphome:
   friendly_name: ${friendly_name}
   on_boot:
     # priority -100:在所有组件(含 light 状态恢复)之后执行。
-    # 此时 12 路 PWM 已是正确值,再使能 HCT245 输出,避免上电闪光。
+    # 此时 12 路 PWM 已是正确值(六个 light 都是 ALWAYS_OFF,所以一定是 0),
+    # 再使能 HCT245 输出,避免上电闪光。
     - priority: -100
       then:
         - lambda: |-
@@ -221,6 +222,13 @@ output:
 # ---------------------------------------------------------------------------
 # constant_brightness: true 保证 CW+WW 合计 duty ≤100%,
 # 使每条灯带的平均电流不超过单通道满载值(设计文档 §3)。
+#
+# ⚠️ restore_mode 取 ALWAYS_OFF,不是 RESTORE_DEFAULT_OFF。
+#    ESPHome 对 RESTORE_DEFAULT_OFF 的定义是"先尝试恢复上次状态,恢复不出来才默认 OFF",
+#    所以停电前亮着的灯来电后会自己重新点亮 —— 不是"来电一律不亮"。
+#    硬件 /OE 只保证复位窗口内输出关断,并不改变最终的恢复策略;on_boot(priority -100)
+#    又是在 light 状态恢复之后才使能 /OE,恢复出来的 ON 会照样点亮。
+#    产品取舍已定为"来电一律不亮"(设计文档 §未决 一节),所以用 ALWAYS_OFF。
 light:
   - platform: cwww
     id: light_ch1
@@ -232,7 +240,7 @@ light:
     constant_brightness: true
     gamma_correct: 2.2
     default_transition_length: 500ms
-    restore_mode: RESTORE_DEFAULT_OFF
+    restore_mode: ALWAYS_OFF
 
   - platform: cwww
     id: light_ch2
@@ -244,7 +252,7 @@ light:
     constant_brightness: true
     gamma_correct: 2.2
     default_transition_length: 500ms
-    restore_mode: RESTORE_DEFAULT_OFF
+    restore_mode: ALWAYS_OFF
 
   - platform: cwww
     id: light_ch3
@@ -256,7 +264,7 @@ light:
     constant_brightness: true
     gamma_correct: 2.2
     default_transition_length: 500ms
-    restore_mode: RESTORE_DEFAULT_OFF
+    restore_mode: ALWAYS_OFF
 
   - platform: cwww
     id: light_ch4
@@ -268,7 +276,7 @@ light:
     constant_brightness: true
     gamma_correct: 2.2
     default_transition_length: 500ms
-    restore_mode: RESTORE_DEFAULT_OFF
+    restore_mode: ALWAYS_OFF
 
   - platform: cwww
     id: light_ch5
@@ -280,7 +288,7 @@ light:
     constant_brightness: true
     gamma_correct: 2.2
     default_transition_length: 500ms
-    restore_mode: RESTORE_DEFAULT_OFF
+    restore_mode: ALWAYS_OFF
 
   - platform: cwww
     id: light_ch6
@@ -292,7 +300,7 @@ light:
     constant_brightness: true
     gamma_correct: 2.2
     default_transition_length: 500ms
-    restore_mode: RESTORE_DEFAULT_OFF
+    restore_mode: ALWAYS_OFF
 
   # 板载状态灯(GPIO2)
   - platform: status_led
