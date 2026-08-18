@@ -1306,7 +1306,11 @@ for netname, rpull in (("I2C_SDA", "R52"), ("I2C_SCL", "R53")):
 # (已由 ⑥a 的横向车道接管)
 # (已由 ⑥a 的横向车道接管)
 
-# ---- A2 USB 与自动下载(交叉接法:DTR→R11→RTS_B→Q4→EN,RTS→R12→DTR_B→Q5→IO0)----
+# ---- A2 USB 与自动下载 ----
+# 交叉在**发射极**上,不在基极上(2026-08-18 修正,原来这行注释把它写成基极交叉了):
+#   Q4:B←R11←DTR# / **E←RTS#** / C→EN
+#   Q5:B←R12←RTS# / **E←DTR#** / C→IO0
+# 于是 DTR#/RTS# 同电平时两管都截止 → 板子正常运行;只有一高一低才动 EN 或 IO0。
 later("CC1", "J2", "R9", layers=FB)
 # CC2 从 B5 竖下来、贴着 y=13.2 往西回 R10 —— 这条横道要压在 D+/D− 那两颗过孔
 #(y 12.2 / 13.6)之间的缝里走,自动布线找不到,点名写死。
@@ -1316,6 +1320,10 @@ later("DTR", "U5", "R11", layers=FB)
 later("RTS", "U5", "R12", layers=FB)
 later("RTS_B", "R11", "Q4", layers=FB)
 later("DTR_B", "R12", "Q5", layers=FB)
+# 两条发射极线:Q4.E 要够到 RTS(R12 那边)、Q5.E 要够到 DTR(R11 那边) —— 两条互相交叉,
+# 所以给两层,让 maze 自己挑一条走底层。
+later("RTS", "Q4", "R12", layers=FB)
+later("DTR", "Q5", "R11", layers=FB)
 later("EN", "Q4", "R4", layers=FB)
 later("EN", "R4", "C12", layers=FB)
 later("EN", "C12", "SW2", layers=FB)
