@@ -14,6 +14,14 @@ substitutions:
   current_limit: "12.0"
   # 迟滞下限,低于此值才开始恢复限幅
   current_release: "11.0"
+  # 12 路 PWM 的静态占空比上限。
+  # ⚠️ 这里出现 max_power 还有第二个作用:ESPHome 2026.5 起把 FloatOutput 的
+  #    runtime power scaling 做成按需编译 —— components/output/__init__.py 只有在
+  #    某个 output 写了 min_power / max_power / zero_means_zero 时才 add_define
+  #    USE_OUTPUT_FLOAT_POWER_SCALING;否则 set_max_power() 退化成一个带
+  #    static_assert 的模板桩,下面动态限流的 lambda 会直接编译失败。
+  #    删掉这一项之前先确认动态限流也一起删掉了。
+  pwm_max_power: "100%"
 
 esphome:
   name: ${device_name}
@@ -85,6 +93,7 @@ output:
     pin: GPIO4
     frequency: ${pwm_frequency}
     phase_angle: 0deg
+    max_power: ${pwm_max_power}
   - platform: ledc
     id: pwm_ch1_ww
     # GPIO5 是 strapping 脚(SDIO 时序选择)。此处安全:它只驱动 74HCT245 的
@@ -95,61 +104,72 @@ output:
       ignore_strapping_warning: true
     frequency: ${pwm_frequency}
     phase_angle: 180deg
+    max_power: ${pwm_max_power}
 
   - platform: ledc
     id: pwm_ch2_cw
     pin: GPIO13
     frequency: ${pwm_frequency}
     phase_angle: 0deg
+    max_power: ${pwm_max_power}
   - platform: ledc
     id: pwm_ch2_ww
     pin: GPIO14
     frequency: ${pwm_frequency}
     phase_angle: 180deg
+    max_power: ${pwm_max_power}
 
   - platform: ledc
     id: pwm_ch3_cw
     pin: GPIO16
     frequency: ${pwm_frequency}
     phase_angle: 0deg
+    max_power: ${pwm_max_power}
   - platform: ledc
     id: pwm_ch3_ww
     pin: GPIO17
     frequency: ${pwm_frequency}
     phase_angle: 180deg
+    max_power: ${pwm_max_power}
 
   - platform: ledc
     id: pwm_ch4_cw
     pin: GPIO18
     frequency: ${pwm_frequency}
     phase_angle: 0deg
+    max_power: ${pwm_max_power}
   - platform: ledc
     id: pwm_ch4_ww
     pin: GPIO19
     frequency: ${pwm_frequency}
     phase_angle: 180deg
+    max_power: ${pwm_max_power}
 
   - platform: ledc
     id: pwm_ch5_cw
     pin: GPIO21
     frequency: ${pwm_frequency}
     phase_angle: 0deg
+    max_power: ${pwm_max_power}
   - platform: ledc
     id: pwm_ch5_ww
     pin: GPIO22
     frequency: ${pwm_frequency}
     phase_angle: 180deg
+    max_power: ${pwm_max_power}
 
   - platform: ledc
     id: pwm_ch6_cw
     pin: GPIO23
     frequency: ${pwm_frequency}
     phase_angle: 0deg
+    max_power: ${pwm_max_power}
   - platform: ledc
     id: pwm_ch6_ww
     pin: GPIO25
     frequency: ${pwm_frequency}
     phase_angle: 180deg
+    max_power: ${pwm_max_power}
 
 # ---------------------------------------------------------------------------
 # 6 个 CCT 灯实体
@@ -258,15 +278,15 @@ sensor:
     adc_range: 1
     update_interval: 1s
     current:
-      name: "总电流"
+      name: "总电流 Current"
       id: bus_current
       accuracy_decimals: 2
     power:
-      name: "总功率"
+      name: "总功率 Power"
       id: bus_power
       accuracy_decimals: 1
     bus_voltage:
-      name: "母线电压"
+      name: "母线电压 Voltage"
       id: bus_voltage
       accuracy_decimals: 2
 
