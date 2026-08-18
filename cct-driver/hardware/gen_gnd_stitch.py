@@ -31,6 +31,8 @@ from pathlib import Path
 import pcbnew
 from pcbnew import VECTOR2I, FromMM, ToMM
 
+from pcb_connectivity import collect, components
+
 HERE = Path(__file__).parent
 BOARD = HERE / "cct-main.kicad_pcb"
 CLI = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
@@ -191,9 +193,115 @@ for _pass in range(PASSES):
     fill_and_refresh()
     (HERE / "cct-main.kicad_pro").write_bytes(_pro)
 
-print(f"\n[地岛缝合] 共补 {total} 颗过孔")
+
+# ============================================================================
+# 第二趟:**按连通性并块**,不是按「这块岛上有没有过孔」
+# ============================================================================
+# 上面那一趟的判据是「岛里一颗地过孔都没有 → 补一颗」。它漏掉一整类:
+# **岛上明明有过孔,过孔对面接住的却是另一块同样孤立的铜。** 本板实测栽在这儿 ——
+# buck 那七颗去耦(C32–C37)加 R62 的地脚,连着 6 颗过孔和一块 212mm² 的底层铜,
+# 自成一个封闭的小世界,和主地平面一点关系没有。R62 是振荡电阻,它的地一浮,
+# buck 就没有基准 —— 和当初 EN 悬空一样是「整板起不来」级别,而第一趟一声不吭。
+#
+# 所以这一趟换判据:**先算出真实的连通块**(焊盘/走线/过孔/每一片填充岛,
+# 见 pcb_connectivity.py),把最大的那块当主体,然后逐个孤立块去找一个落点 ——
+# 落点要同时落在「这个孤立块某一层的铜」和「主体在另一层的铜」里,
+# 一颗过孔就把两边并起来。找不到落点的**逐块列名并列出里面困着哪几只焊盘**,
+# 不在这儿糊:那说明得回布线那一步给它拉一根线。
+MERGE_PASSES = 4
+
+
+def _fits_poly(sps, x, y, margin):
+    """(x,y) 为心、半径 margin 的圆是否整个落在这块填充铜里(算上挖空)。
+
+    ⚠️ x/y 是**内部单位(nm)**,margin 是毫米 —— 填充多边形的坐标是 nm,
+    这里混过一次单位:传毫米进来的话 Contains() 全落在原点附近,一个落点都找不到,
+    而报出来的是「和主体在两层上都没有重叠」,看着像几何结论,其实是单位错了。
+    """
+    for dx, dy in ((0, 0), (margin, 0), (-margin, 0), (0, margin), (0, -margin),
+                   (margin * .71, margin * .71), (-margin * .71, margin * .71),
+                   (margin * .71, -margin * .71), (-margin * .71, -margin * .71)):
+        if not sps.Contains(VECTOR2I(int(x + dx * IU), int(y + dy * IU))):
+            return False
+    return True
+
+
+IU = 1e6
+merged, unmergeable = 0, []
+for _pass in range(MERGE_PASSES):
+    board = pcbnew.LoadBoard(str(BOARD))
+    _pro = (HERE / "cct-main.kicad_pro").read_bytes()
+    items = collect(board, "GND")["GND"]
+    comps, _adj = components(items)
+    comps.sort(key=len, reverse=True)
+    if len(comps) == 1:
+        print(f"[并块] 第 {_pass + 1} 轮:地已经是一整块,不用并")
+        break
+    main_zone = {}
+    for i in comps[0]:
+        if items[i].kind == "zone":
+            lay = next(iter(items[i].layers))
+            main_zone.setdefault(lay, []).append(items[i].shapes[lay])
+
+    added, unmergeable = 0, []
+    for c in comps[1:]:
+        zs = [items[i] for i in c if items[i].kind == "zone"]
+        pads = [items[i].label for i in c if items[i].kind == "pad"]
+        hit = None
+        for z in sorted(zs, key=lambda z: -z.shapes[next(iter(z.layers))].Area()):
+            lay = next(iter(z.layers))
+            targets = [t for l2, ts in main_zone.items() if l2 != lay for t in ts]
+            if not targets:
+                continue
+            sps, bb = z.shapes[lay], z.bbox
+            y = bb[1]
+            while y <= bb[3] and hit is None:
+                x = bb[0]
+                while x <= bb[2]:
+                    if (_fits_poly(sps, x, y, MARGIN)
+                            and any(_fits_poly(t, x, y, MARGIN) for t in targets)):
+                        hit = (x / IU, y / IU)
+                        break
+                    x += FromMM(STEP)
+                y += FromMM(STEP)
+            if hit:
+                break
+        if hit is None:
+            unmergeable.append((len(c), pads,
+                                [z.label for z in zs]))
+            continue
+        v = pcbnew.PCB_VIA(board)
+        _keep.append(v)
+        v.SetPosition(VECTOR2I(FromMM(hit[0]), FromMM(hit[1])))
+        v.SetWidth(FromMM(STITCH_D))
+        v.SetDrill(FromMM(STITCH_DRILL))
+        v.SetLayerPair(pcbnew.F_Cu, pcbnew.B_Cu)
+        v.SetNetCode(board.GetNetsByName()["GND"].GetNetCode())
+        board.Add(v)
+        added += 1
+        who = ("、".join(pads[:3]) + ("…" if len(pads) > 3 else "")) or "(无焊盘)"
+        print(f"  + 孤立块({who})并入主体:过孔 @({hit[0]:.2f}, {hit[1]:.2f})")
+
+    print(f"[并块] 第 {_pass + 1} 轮:地分成 {len(comps)} 块,"
+          f"并掉 {added} 块,并不上 {len(unmergeable)} 块")
+    if not added:
+        break
+    merged += added
+    pcbnew.SaveBoard(str(BOARD), board)
+    (HERE / "cct-main.kicad_pro").write_bytes(_pro)
+    fill_and_refresh()
+    (HERE / "cct-main.kicad_pro").write_bytes(_pro)
+
+print(f"\n[地岛缝合] 第一趟补 {total} 颗过孔;第二趟按连通性并掉 {merged} 块孤立地")
 if stranded:
-    print(f"缝不上的 {len(stranded)} 块碎铜(逐块列名,不糊):")
+    print(f"第一趟缝不上的 {len(stranded)} 块碎铜(逐块列名,不糊):")
     for lay, idx, area, why in stranded:
         print(f"  · {lay} 第 {idx} 块 {area:.2f}mm² —— {why}")
+if unmergeable:
+    print(f"⚠️ 第二趟并不上的 {len(unmergeable)} 块 —— 和主体在两层上都没有重叠,"
+          f"一颗过孔解决不了,得回 gen_route_v2.py 给它拉一根线:")
+    for _n, pads, zlabels in unmergeable:
+        print(f"  · 困住 {len(pads)} 只焊盘:{'、'.join(pads) or '(无)'}")
+        for zl in zlabels:
+            print(f"      {zl}")
 sys.exit(0)
