@@ -62,7 +62,12 @@ switch:
   - platform: gpio
     id: hct245_enable
     name: "输出使能"
-    # GPIO15 是 strapping 脚。此处安全:经 10k(R14)+ 100k(R15)到地构成弱下拉,
+    # GPIO15 是 strapping 脚,经 10k(R14)+ 4.7k(R15)到地构成下拉。
+    # ⚠️ R15 原为 100k,那样是不成立的:GPIO15 自带 45k 内部上拉(ESP32 数据手册
+    # strapping 默认表 / IO_MUX 的 At Reset 列均标 wpu),45k+10k 对 100k 分压后
+    # 基极约 2.1V,Q6 反而饱和 —— 复位期间 245 是使能的,每次上电会闪灯,
+    # 「崩溃自动关灯」这条硬件失效安全根本不成立。2026-08-18 换成 4.7k 后
+    # 开路分压降到约 0.26V,低于 Vbe 门槛,Q6 确实关断,上面那句才成立。
     # 启动时读低,效果仅为关闭 ROM 引导日志输出,对 ESPHome 日志与下载模式无影响。
     pin:
       number: GPIO15
