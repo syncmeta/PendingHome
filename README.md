@@ -1,5 +1,7 @@
 # PendingHome
 
+> 以下内容暂时由 Claude 撰写。
+
 一套自建智能家居的工程文件：Home Assistant 的装机与部署方案、自己写的 ESPHome
 传感器节点固件、Zigbee 接入的排障记录，以及配套的设计文档。
 
