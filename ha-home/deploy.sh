@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # 【在 Mac 上跑】把这套东西推到实体机，包括鼠标桥的代码。
 #
-#   ./deploy.sh hey@homeassistant.local
-#   ./deploy.sh hey@192.168.1.50 --with-token
+#   ./deploy.sh <你的用户名>@homeassistant.local
+#   ./deploy.sh <你的用户名>@192.168.1.50 --with-token
 #
 # 走 tar over ssh，不用 rsync/scp —— 刚装好的 Debian 只有最小工具集，
 # 这样对面只要有 ssh 和 tar（base 系统自带）就够，不用先去装东西。

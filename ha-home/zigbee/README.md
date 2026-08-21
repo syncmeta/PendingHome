@@ -298,7 +298,7 @@ event 的触发器都救不了**，这不是写法问题。
 
 ```bash
 # 1. 推文件（/opt/ha/config 是 root 的，借容器写；docker exec 要带 -i 才接 stdin）
-ssh hey@192.168.1.29 'docker exec -i homeassistant sh -c \
+ssh <你的用户名>@192.168.1.29 'docker exec -i homeassistant sh -c \
     "mkdir -p /config/custom_zha_quirks && cat > /config/custom_zha_quirks/lh79221.py"' \
     < ha-home/zigbee/custom_zha_quirks/lh79221.py
 
@@ -328,7 +328,7 @@ curl -s -X POST -H "Authorization: Bearer $HA_TOKEN" \
 
 ```bash
 # 日志里有这一行才说明自定义 quirk 被加载了
-ssh hey@homeassistant.local 'docker exec homeassistant grep -i quirk /config/home-assistant.log'
+ssh <你的用户名>@homeassistant.local 'docker exec homeassistant grep -i quirk /config/home-assistant.log'
 # → WARNING [zhaquirks] Loaded custom quirks. Please contribute them to ...
 
 # 设备上真的套上了才算数（光加载不等于匹配上）

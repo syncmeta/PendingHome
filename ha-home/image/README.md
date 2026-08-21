@@ -69,10 +69,11 @@ diskutil eject /dev/disk10
 ## 四、之后怎么进这台机器
 
 ```bash
-ssh hey@homeassistant.local          # Mac 上的密钥已经预置好了，不用输密码
+ssh <你的用户名>@homeassistant.local          # Mac 上的密钥已经预置好了，不用输密码
 ```
 
-坐在机器前用键盘登录（SSH 进不去时的后路）：用户名 `hey`，密码 `homeassistant`。
+坐在机器前用键盘登录（SSH 进不去时的后路）：用户名和密码是造镜像时定的
+（`build-image.sh` 的 `USERNAME` / `CONSOLE_PASSWORD`，默认密码 `homeassistant`）。
 > 这个密码**只能在机器本地的键盘上用** —— SSH 那边是纯密钥、关掉了密码登录，
 > 所以它弱一点也不会变成网络上的口子。**登进去之后建议 `passwd` 改掉。**
 
