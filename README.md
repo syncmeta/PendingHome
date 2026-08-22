@@ -1,15 +1,47 @@
-# PendingHome
+<p align="center">
+  <img src="docs/app-icon.png" width="128" alt="PendingHome 图标" />
+</p>
+<h1 align="center">PendingHome</h1>
 
-> 以下内容暂时由 Claude 撰写。
+<p align="center">
+  一个人给自己家做的智能家居，从装机到排障的完整档案
+  <br />
+  <em>不是能拿去直接用的通用方案，是「这套具体的硬件、在这个具体的网络里，怎么一步步装起来、又怎么修好的」</em>
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-blue" /></a>
+  <img alt="Home Assistant" src="https://img.shields.io/badge/Home%20Assistant-Docker-41BDF5?logo=homeassistant&logoColor=white" />
+  <img alt="ESPHome" src="https://img.shields.io/badge/ESPHome-ESP32--C3-000000?logo=espressif&logoColor=white" />
+  <img alt="Zigbee" src="https://img.shields.io/badge/Zigbee-ZHA-EB0443" />
+</p>
 
 一套自建智能家居的工程文件：Home Assistant 的装机与部署方案、自己写的 ESPHome
 传感器节点固件、Zigbee 接入的排障记录，以及配套的设计文档。
 
-这是**一个人给自己家做的东西的完整档案**，不是一个能拿去直接用的通用方案。
-它记的是"这套具体的硬件、在这个具体的网络里，是怎么一步步装起来、又怎么修好的"。
-
 <!-- 截图/照片位：这里适合放两张 —— 一张 HA 仪表盘、一张传感器节点实物。
      图片只能人工补，文件放 docs/img/ 下。 -->
+
+> **这是一个人的实验项目，不是产品。**
+>
+> 整套东西**不能 clone 下来直接用** —— 里面是具体的机器、具体的设备、具体的局域网。
+> 下面的「做到哪儿了」一节写清了哪几处真的在跑、哪几处连静态校验都没跑过。
+>
+> 文档是中文的。
+>
+> *(A personal experiment, not a product. Chinese-language docs.
+> These are one person's home-lab files, not a reusable recipe.)*
+
+## 快速开始
+
+**没有「装一下就能用」这条路。** 这是一份档案，不是发行版。按你的目的挑一处开始读：
+
+| 你想干什么 | 从这儿读 |
+|---|---|
+| 照着装一套 HA | [`ha-home/README.md`](ha-home/README.md) —— 台式机 + Debian + Docker 的完整装机流程 |
+| 看 Zigbee 到底怎么排障 | [`ha-home/zigbee/README.md`](ha-home/zigbee/README.md) —— 一份真实的排障记录，比设计文档有用 |
+| 抄传感器节点的固件 | [`sensor-nodes/firmware/`](sensor-nodes/firmware/) —— ESPHome 配置，注意还没上过真机 |
+| 把摄像头接进 HomeKit | [`ha-t630/README.md`](ha-t630/README.md) —— 瘦客户机 + Scrypted + 大华摄像头（含 HKSV） |
 
 ## 里面有什么
 
@@ -24,7 +56,7 @@
 
 顶层的 `t630-*.sh` 是给 t630 那台机器做裸机引导（USB 直连 / PXE）的 Mac 侧脚本。
 
-## 做到哪儿了
+## 状态：做到哪儿了
 
 如实写，免得看着像"全都跑起来了"：
 
@@ -41,8 +73,7 @@
 
 ## 外人能从这儿拿走什么
 
-整套东西**不能 clone 下来直接用** —— 里面是具体的机器、具体的设备、具体的局域网。
-但有几块可以单独抄：
+整套东西不能直接用，但有几块可以单独抄：
 
 - [`sensor-nodes/firmware/`](sensor-nodes/firmware/) 的 ESPHome 配置用 `packages:`
   做复用，三个节点共享一套 `common/`，只靠"引入了哪几个包"来区分。
@@ -85,6 +116,16 @@ cd PendingHome && git clone git@github.com:syncmeta/cct-driver.git
   用 `ha-home/image/build-image.sh` 重新造
 - **构建产物** —— `.esphome/`、Swift 编译出来的 `mouse-source`
 
+## 参与
+
+这是个人给自己家做的东西，issue 和 PR 都欢迎，但作者不保证响应速度，也不承诺路线。
+里面很多决定只对这一套具体硬件成立，照抄前先看清楚是不是你的场景。
+
 ## 许可
 
 MIT，见 [LICENSE](LICENSE)。
+
+---
+
+<sub>本 README 全文由 Claude 撰写。「做到哪儿了」一节的结论来自仓库里的实测记录与目录核对
+（哪几处有实测记录、哪几处连静态校验都没跑过），不是从旧文档转抄。</sub>
