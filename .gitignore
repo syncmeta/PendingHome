@@ -1,6 +1,3 @@
-# cct-driver 是独立仓库（见 README），不并入本库
-/cct-driver/
-
 # 凭据：HA 长期访问令牌、米家证书私钥、本地实际配置
 .env
 token.env
