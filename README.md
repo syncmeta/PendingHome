@@ -29,7 +29,7 @@
 | [`ha-lab/`](ha-lab/) | Mac 上的 Lima 虚拟机试验台。`ha-home` 就是从它平移过来的，现已退役 |
 | [`sensor-nodes/`](sensor-nodes/) | ESP32-C3 传感器节点的 ESPHome 固件（CO₂、光谱、门窗磁），含选购清单 |
 | [`docs/`](docs/) | 跨项目的设计文档 |
-| `cct-driver/` | 6 路 CCT 灯驱动板（KiCad + ESPHome）—— **独立仓库**，见下 |
+| [`cct-driver/`](cct-driver/) | 6 路 CCT 灯驱动板：KiCad 工程、生产文件、ESPHome 固件、验板清单 |
 
 顶层的 `t630-*.sh` 是给 t630 那台机器做裸机引导（USB 直连 / PXE）的 Mac 侧脚本。
 

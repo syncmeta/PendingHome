@@ -10,8 +10,8 @@
 不符合就非零退出并打印差在哪。
 
 用法:
-    python3 hardware/check-netclasses.py            # 校验工作区文件
-    python3 hardware/check-netclasses.py <路径>      # 校验指定文件
+    python3 cct-driver/hardware/check-netclasses.py          # 校验工作区文件
+    python3 cct-driver/hardware/check-netclasses.py <路径>    # 校验指定文件
 """
 import json
 import os
@@ -87,7 +87,7 @@ def main():
         print()
         print("   最可能的原因:有人用 KiCad 图形界面打开过本工程,它把这些设置重置成了默认值。")
         print("   若你并没有故意改这些设置,直接退回即可:")
-        print("       git checkout -- hardware/cct-main.kicad_pro")
+        print("       git checkout -- cct-driver/hardware/cct-main.kicad_pro")
         print("   若是有意调整(例如新增了网络类),请同步更新 hardware/check-netclasses.py 里的基准值。")
         print("   详见 README「KiCad 工程文件会被 GUI 悄悄重置」一节。")
         return 1

@@ -9,16 +9,23 @@
 | `firmware/` | ESPHome 配置（`cct-driver.yaml` 正式板、`cct-driver-devboard.yaml` 开发板） |
 | `docs/` | 设计规格书与实施计划 |
 
+> 这块板子原来是一个独立仓库，2026-08-23 连同全部提交历史并进了 PendingHome，
+> 现在是它的一个子目录。原仓库 <https://github.com/syncmeta/cct-driver> 保留为归档，
+> 不再更新；合库时提交哈希做过重写，本文与脚本里提到的旧哈希指的是那边的。
+
 ## 上手
 
 ```sh
-git clone https://github.com/syncmeta/cct-driver.git
-cd cct-driver
+git clone https://github.com/syncmeta/PendingHome.git
+cd PendingHome
 git config core.hooksPath .githooks     # ← 必做，见下一节
+cd cct-driver
 ```
 
-**`git config core.hooksPath .githooks` 这一句不能漏。** Git 的钩子不随仓库克隆自动生效，
-不执行这句，下面那个防护就是摆设。
+**`git config core.hooksPath .githooks` 这一句不能漏**（在仓库根执行，不是在本目录）。
+Git 的钩子不随仓库克隆自动生效，不执行这句，下面那个防护就是摆设。
+
+**下文所有命令都在 `cct-driver/` 目录下执行**，除非另有说明。
 
 改板脚本要用 KiCad 自带的 Python（系统 `python3` 里没有 `pcbnew`）：
 
@@ -46,7 +53,7 @@ DRC 都会按错误的规则跑 —— 主电流脊椎按 3.5mm 设计的走线�
 真凶是图形界面那一侧（旁证：只有 GUI 会写的 `cct-main.kicad_prl` 同时被改了）。
 
 **防护**：`hardware/check-netclasses.py` 断言这些值仍是基准值，
-经 `.githooks/pre-commit` 在每次提交前自动跑。
+经仓库根的 `.githooks/pre-commit` 在每次提交前自动跑。
 
 **检查失败时该怎么办**：
 
