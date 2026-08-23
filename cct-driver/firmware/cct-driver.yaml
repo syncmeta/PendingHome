@@ -1,0 +1,589 @@
+# 6 路 CCT 灯带驱动板 — ESPHome 配置
+#
+# 硬件:ESP32-WROOM-32E + 2× 74HCT245 + 12× 60V NMOS 低边驱动
+# 设计文档:docs/superpowers/specs/2026-07-29-led-cct-driver-design.md (v7)
+#
+# GPIO 分配已在设计文档 §5 锁定,修改前请先改设计文档。
+# 注意:GPIO12 必须全程悬空(上电被拉高会令 ESP32 按 1.8V flash 电压启动,板子无法开机)。
+
+substitutions:
+  device_name: "cct-driver-01"
+  friendly_name: "CCT 驱动板 01"
+  pwm_frequency: "19531Hz"
+  # 总电流预算(A)。硬件主回路按 15A 连续设计,此处为正常运行上限。
+  current_limit: "12.0"
+  # 迟滞下限,低于此值才开始恢复限幅
+  current_release: "11.0"
+  # 预警线(A):设计文档 §3 要求 11A 预警、12A 才开始降亮度。
+  current_warn: "11.0"
+  # 每通道 PWM 的静态占空比上限(设计文档 §3:"按实测灯带电流设置每条最大输出
+  # 比例,使总配置上限 ≤12A")。
+  #
+  # ⚠️ 68.5% 是"六条灯带完全相同"的**假设初值,不是实测值**:
+  #      六条 5m 灯带理论满载 6 × 2.92A = 17.52A;12 / 17.52 = 0.6849。
+  #    验板时必须按每条灯带的**实测满载电流**重新分配这六个数 —— 只要满足
+  #      Σ(chN_max_power × 该条实测满载电流) ≤ 12A
+  #    即可,六条不必都是 68.5%。别把 68.5% 当成量出来的结论。
+  #    constant_brightness: true 已保证同一通道 CW+WW 合计 duty ≤100%,
+  #    所以一个通道只用一个上限,不用再乘 2。
+  #
+  # ⚠️ 这里出现 max_power 还有第二个作用:ESPHome 2026.5 起把 FloatOutput 的
+  #    runtime power scaling 做成按需编译 —— components/output/__init__.py 只有在
+  #    某个 output 写了 min_power / max_power / zero_means_zero 时才 add_define
+  #    USE_OUTPUT_FLOAT_POWER_SCALING;否则 set_max_power() 退化成一个带
+  #    static_assert 的模板桩,下面动态限流的 lambda 会直接编译失败。
+  #    删掉这些项之前先确认动态限流也一起删掉了。
+  ch1_max_power: "68.5%"
+  ch2_max_power: "68.5%"
+  ch3_max_power: "68.5%"
+  ch4_max_power: "68.5%"
+  ch5_max_power: "68.5%"
+  ch6_max_power: "68.5%"
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  on_boot:
+    # priority -100:在所有组件(含 light 状态恢复)之后执行。
+    # 此时 12 路 PWM 已是正确值(六个 light 都是 ALWAYS_OFF,所以一定是 0),
+    # 再使能 HCT245 输出,避免上电闪光。
+    - priority: -100
+      then:
+        - lambda: |-
+            // 记下 YAML 里 12 路的静态 max_power。动态限流写回的是
+            // 「静态上限 × power_scale」,如果不先记住静态上限,第一次
+            // set_max_power(power_scale) 就会把 68.5% 的静态封顶抬回 100%。
+            // 此处 priority -100,所有 output 的 setup 已跑完,读到的就是 YAML 值。
+            output::FloatOutput *outs[12] = {
+              id(pwm_ch1_cw), id(pwm_ch1_ww), id(pwm_ch2_cw), id(pwm_ch2_ww),
+              id(pwm_ch3_cw), id(pwm_ch3_ww), id(pwm_ch4_cw), id(pwm_ch4_ww),
+              id(pwm_ch5_cw), id(pwm_ch5_ww), id(pwm_ch6_cw), id(pwm_ch6_ww)};
+            for (int k = 0; k < 12; k++)
+              id(static_max_power)[k] = outs[k]->get_max_power();
+            // 告警实体给出确定的初始状态,不要让 HA 看到 unknown。
+            id(warn_over_current).publish_state(false);
+            id(limiting_active).publish_state(false);
+            id(fault_ina).publish_state(false);
+            id(power_scale_pct).publish_state(100.0f);
+        - logger.log: "PWM 已初始化,使能 HCT245 输出"
+        - switch.turn_on: hct245_enable
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+logger:
+  level: INFO
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "${device_name} Fallback"
+
+captive_portal:
+
+# ---------------------------------------------------------------------------
+# HCT245 输出使能
+# ---------------------------------------------------------------------------
+# 硬件:GPIO15 → 10k → MMBT3904 基极(另有 100k 下拉);集电极 → /OE;
+#       /OE 另有 10k 上拉到 5V_SYS。
+# GPIO15 高 → NPN 导通 → /OE 拉低 → 12 路输出使能。
+# 未上电/复位/崩溃时 GPIO15 为高阻,100k 下拉关断 NPN,/OE 被拉高 → 输出高阻,
+# 灯带自动熄灭。这是硬件失效安全,不依赖固件执行任何代码。
+switch:
+  - platform: gpio
+    id: hct245_enable
+    name: "输出使能"
+    # GPIO15 是 strapping 脚,经 10k(R14)+ 4.7k(R15)到地构成下拉。
+    # ⚠️ R15 原为 100k,那样是不成立的:GPIO15 自带 45k 内部上拉(ESP32 数据手册
+    # strapping 默认表 / IO_MUX 的 At Reset 列均标 wpu),45k+10k 对 100k 分压后
+    # 基极约 2.1V,Q6 反而饱和 —— 复位期间 245 是使能的,每次上电会闪灯,
+    # 「崩溃自动关灯」这条硬件失效安全根本不成立。2026-08-18 换成 4.7k 后
+    # 开路分压降到约 0.26V,低于 Vbe 门槛,Q6 确实关断,上面那句才成立。
+    # 启动时读低,效果仅为关闭 ROM 引导日志输出,对 ESPHome 日志与下载模式无影响。
+    pin:
+      number: GPIO15
+      ignore_strapping_warning: true
+    restore_mode: ALWAYS_OFF
+    entity_category: diagnostic
+    # INA237 失效锁存后,人在 HA 里把这个开关重新打开也要被立刻关回去。
+    # 旧代码的判据是 ina_fault_count == 5:重新打开时计数已经是 6、7……,
+    # 永远不再命中,输出就被永久放行了。
+    on_turn_on:
+      - if:
+          condition:
+            lambda: 'return id(ina_fault_latched);'
+          then:
+            - logger.log:
+                level: ERROR
+                format: "电流监测仍无有效读数,拒绝使能输出"
+            - switch.turn_off: hct245_enable
+
+# ---------------------------------------------------------------------------
+# 12 路 PWM
+# ---------------------------------------------------------------------------
+# 每对 CW/WW 相位错开 180°,降低总线纹波峰值(改善量需在样机上以总线电流波形验证)。
+output:
+  - platform: ledc
+    id: pwm_ch1_cw
+    pin: GPIO4
+    frequency: ${pwm_frequency}
+    phase_angle: 0deg
+    max_power: ${ch1_max_power}
+  - platform: ledc
+    id: pwm_ch1_ww
+    # GPIO5 是 strapping 脚(SDIO 时序选择)。此处安全:它只驱动 74HCT245 的
+    # CMOS 输入(高阻),不构成任何外部上拉/下拉,启动时保持内部上拉的默认态。
+    # 引脚已全部用满,无非 strapping 脚可替换。
+    pin:
+      number: GPIO5
+      ignore_strapping_warning: true
+    frequency: ${pwm_frequency}
+    phase_angle: 180deg
+    max_power: ${ch1_max_power}
+
+  - platform: ledc
+    id: pwm_ch2_cw
+    pin: GPIO13
+    frequency: ${pwm_frequency}
+    phase_angle: 0deg
+    max_power: ${ch2_max_power}
+  - platform: ledc
+    id: pwm_ch2_ww
+    pin: GPIO14
+    frequency: ${pwm_frequency}
+    phase_angle: 180deg
+    max_power: ${ch2_max_power}
+
+  - platform: ledc
+    id: pwm_ch3_cw
+    pin: GPIO16
+    frequency: ${pwm_frequency}
+    phase_angle: 0deg
+    max_power: ${ch3_max_power}
+  - platform: ledc
+    id: pwm_ch3_ww
+    pin: GPIO17
+    frequency: ${pwm_frequency}
+    phase_angle: 180deg
+    max_power: ${ch3_max_power}
+
+  - platform: ledc
+    id: pwm_ch4_cw
+    pin: GPIO18
+    frequency: ${pwm_frequency}
+    phase_angle: 0deg
+    max_power: ${ch4_max_power}
+  - platform: ledc
+    id: pwm_ch4_ww
+    pin: GPIO19
+    frequency: ${pwm_frequency}
+    phase_angle: 180deg
+    max_power: ${ch4_max_power}
+
+  - platform: ledc
+    id: pwm_ch5_cw
+    pin: GPIO21
+    frequency: ${pwm_frequency}
+    phase_angle: 0deg
+    max_power: ${ch5_max_power}
+  - platform: ledc
+    id: pwm_ch5_ww
+    pin: GPIO22
+    frequency: ${pwm_frequency}
+    phase_angle: 180deg
+    max_power: ${ch5_max_power}
+
+  - platform: ledc
+    id: pwm_ch6_cw
+    pin: GPIO23
+    frequency: ${pwm_frequency}
+    phase_angle: 0deg
+    max_power: ${ch6_max_power}
+  - platform: ledc
+    id: pwm_ch6_ww
+    pin: GPIO25
+    frequency: ${pwm_frequency}
+    phase_angle: 180deg
+    max_power: ${ch6_max_power}
+
+# ---------------------------------------------------------------------------
+# 6 个 CCT 灯实体
+# ---------------------------------------------------------------------------
+# constant_brightness: true 保证 CW+WW 合计 duty ≤100%,
+# 使每条灯带的平均电流不超过单通道满载值(设计文档 §3)。
+#
+# ⚠️ restore_mode 取 ALWAYS_OFF,不是 RESTORE_DEFAULT_OFF。
+#    ESPHome 对 RESTORE_DEFAULT_OFF 的定义是"先尝试恢复上次状态,恢复不出来才默认 OFF",
+#    所以停电前亮着的灯来电后会自己重新点亮 —— 不是"来电一律不亮"。
+#    硬件 /OE 只保证复位窗口内输出关断,并不改变最终的恢复策略;on_boot(priority -100)
+#    又是在 light 状态恢复之后才使能 /OE,恢复出来的 ON 会照样点亮。
+#    产品取舍已定为"来电一律不亮"(设计文档 §未决 一节),所以用 ALWAYS_OFF。
+light:
+  - platform: cwww
+    id: light_ch1
+    name: "通道 1"
+    cold_white: pwm_ch1_cw
+    warm_white: pwm_ch1_ww
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2700 K
+    constant_brightness: true
+    gamma_correct: 2.2
+    default_transition_length: 500ms
+    restore_mode: ALWAYS_OFF
+
+  - platform: cwww
+    id: light_ch2
+    name: "通道 2"
+    cold_white: pwm_ch2_cw
+    warm_white: pwm_ch2_ww
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2700 K
+    constant_brightness: true
+    gamma_correct: 2.2
+    default_transition_length: 500ms
+    restore_mode: ALWAYS_OFF
+
+  - platform: cwww
+    id: light_ch3
+    name: "通道 3"
+    cold_white: pwm_ch3_cw
+    warm_white: pwm_ch3_ww
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2700 K
+    constant_brightness: true
+    gamma_correct: 2.2
+    default_transition_length: 500ms
+    restore_mode: ALWAYS_OFF
+
+  - platform: cwww
+    id: light_ch4
+    name: "通道 4"
+    cold_white: pwm_ch4_cw
+    warm_white: pwm_ch4_ww
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2700 K
+    constant_brightness: true
+    gamma_correct: 2.2
+    default_transition_length: 500ms
+    restore_mode: ALWAYS_OFF
+
+  - platform: cwww
+    id: light_ch5
+    name: "通道 5"
+    cold_white: pwm_ch5_cw
+    warm_white: pwm_ch5_ww
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2700 K
+    constant_brightness: true
+    gamma_correct: 2.2
+    default_transition_length: 500ms
+    restore_mode: ALWAYS_OFF
+
+  - platform: cwww
+    id: light_ch6
+    name: "通道 6"
+    cold_white: pwm_ch6_cw
+    warm_white: pwm_ch6_ww
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2700 K
+    constant_brightness: true
+    gamma_correct: 2.2
+    default_transition_length: 500ms
+    restore_mode: ALWAYS_OFF
+
+  # 板载状态灯(GPIO2)
+  - platform: status_led
+    id: status_light
+    # GPIO2 是 strapping 脚。此处安全:LED 串电阻到地构成弱下拉,
+    # 而"低电平"正是进入下载模式所要求的状态。
+    pin:
+      number: GPIO2
+      ignore_strapping_warning: true
+    internal: true
+
+# ---------------------------------------------------------------------------
+# I2C:INA237 功率监测 + 板边 Qwiic 扩展口
+# ---------------------------------------------------------------------------
+i2c:
+  sda: GPIO32
+  scl: GPIO33
+  frequency: 100kHz
+  scan: true
+
+sensor:
+  - platform: ina2xx_i2c
+    model: INA237
+    address: 0x40
+    shunt_resistance: 0.002 ohm
+    max_current: 20 A
+    # adc_range 1 = ±40.96mV 档 → 2mΩ 采样电阻下满量程 20.48A
+    adc_range: 1
+    update_interval: 1s
+    current:
+      name: "总电流 Current"
+      id: bus_current
+      accuracy_decimals: 2
+    power:
+      name: "总功率 Power"
+      id: bus_power
+      accuracy_decimals: 1
+    bus_voltage:
+      name: "母线电压 Voltage"
+      id: bus_voltage
+      accuracy_decimals: 2
+
+  - platform: wifi_signal
+    name: "WiFi 信号"
+    update_interval: 60s
+    entity_category: diagnostic
+
+  # 当前动态限幅深度(100% = 没有限幅)。由下面的 1s 守护逻辑推送,不轮询。
+  - platform: template
+    id: power_scale_pct
+    name: "输出限幅比例 Power Scale"
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    entity_category: diagnostic
+
+# ---------------------------------------------------------------------------
+# 动态限流
+# ---------------------------------------------------------------------------
+# ⚠️ 这是运行管理,不是安全保护。短路与过流的硬保护由电源限流、15A 主保险丝
+#    和每路 4A 慢断保险丝承担(设计文档 §3、§6.1、§6.2)。
+#
+# 第一道是上面每路 max_power 的**静态封顶**:配置层面的总上限已经 ≤12A。
+# 这里是第二道,按实测总电流在静态上限之上再乘一个 ≤1 的系数。
+#
+# ⚠️ 12.0A 这个阈值是**未校准**的:复核 🟡-2 给出的最坏未校准误差在 25℃ 约
+#    ±0.18A、100℃ 约 ±0.27A。验板做完 0/3/6/9/12A 五点校准之后,应把
+#    current_limit 按残余误差下移,才谈得上"绝不超过 12A"。
+# ⚠️ INA237 一个完整新样本约 1.582s(复核 🟡-1),1s 轮询看到的可能是旧值;
+#    验板时按那一节调 adc_time / adc_averaging,再复核这里的步进。
+globals:
+  - id: power_scale
+    type: float
+    restore_value: false
+    initial_value: '1.0'
+  # 12 路的静态 max_power(YAML 值),on_boot 时读回,见上面的说明。
+  - id: static_max_power
+    type: float[12]
+    restore_value: false
+  - id: ina_fault_count
+    type: int
+    restore_value: false
+    initial_value: '0'
+  # INA237 失效**锁存**:置位后输出被关断,且不允许重新使能,直到重新读到有效电流。
+  - id: ina_fault_latched
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+
+script:
+  - id: apply_power_scale
+    mode: single
+    then:
+      - lambda: |-
+          const float s = id(power_scale);
+          output::FloatOutput *outs[12] = {
+            id(pwm_ch1_cw), id(pwm_ch1_ww), id(pwm_ch2_cw), id(pwm_ch2_ww),
+            id(pwm_ch3_cw), id(pwm_ch3_ww), id(pwm_ch4_cw), id(pwm_ch4_ww),
+            id(pwm_ch5_cw), id(pwm_ch5_ww), id(pwm_ch6_cw), id(pwm_ch6_ww)};
+          for (int k = 0; k < 12; k++)
+            outs[k]->set_max_power(id(static_max_power)[k] * s);
+
+          // ⚠️ 只调 set_max_power() 是**假限流**。ESPHome 2026.7.4
+          //    components/output/float_output.cpp:10-12,set_max_power() 只给
+          //    max_power_ 赋值;真正的比例换算和 write_state() 发生在之后的
+          //    FloatOutput::set_level()(同文件 19-38 行)。灯稳定点亮后不会再有
+          //    人调 set_level(),硬件占空比根本不变,日志却已经打印"限幅至 x%"。
+          //
+          //    所以这里显式让每个已点亮的 light 重写一次输出。调用链:
+          //      LightCall(transition_length=0u)
+          //        → light_call.cpp validate_():transition 为 0 → 清 FLAG_HAS_TRANSITION
+          //        → perform() 走 INSTANT CHANGE → LightState::set_immediately_()
+          //        → schedule_write_() → 下一次 loop → CWWWLightOutput::write_state()
+          //        → FloatOutput::set_level() → 新的 max_power_ 落到 LEDC 占空比。
+          //    publish=false / save=false:限幅不改 HA 里显示的亮度(限幅本来就
+          //    只压占空比上限),也不写 flash。
+          //    副作用:正在进行的 500ms 过渡会被打断、直接跳到目标值 —— 过流时
+          //    这是可接受的。
+          //
+          //    ⚠️ 未经实物验证:没有板子就没法确认稳态满亮下电流真的从 17.5A
+          //    降下来。验板时必须用钳流表确认,见 docs/bring-up-checklist.md。
+          light::LightState *lights[6] = {
+            id(light_ch1), id(light_ch2), id(light_ch3),
+            id(light_ch4), id(light_ch5), id(light_ch6)};
+          for (auto *lt : lights) {
+            if (!lt->remote_values.is_on())
+              continue;
+            lt->make_call().set_transition_length(0u).set_publish(false).set_save(false).perform();
+          }
+
+interval:
+  - interval: 1s
+    then:
+      - lambda: |-
+          const float i = id(bus_current).state;
+
+          // ---- INA237 读数无效 → 锁存切断输出(设计文档 §9:传感器故障时禁止输出)
+          if (std::isnan(i)) {
+            id(ina_fault_count) += 1;
+            // 判据必须是 >= 而不是 ==:用 == 5 时,人在 HA 里重新打开"输出使能"
+            // 的那一刻计数已经是 6、7……,永远不再命中。
+            if (id(ina_fault_count) >= 5) {
+              if (!id(ina_fault_latched)) {
+                id(ina_fault_latched) = true;
+                ESP_LOGE("guard", "INA237 连续 %d 次读数无效,锁存切断输出", id(ina_fault_count));
+                id(fault_ina).publish_state(true);
+              }
+              // 锁存期间反复压回去,配合 hct245_enable 的 on_turn_on 兜底。
+              if (id(hct245_enable).state)
+                id(hct245_enable).turn_off();
+            }
+            return;
+          }
+
+          // ---- 读数恢复 → 解锁。不自动重新使能输出,由人在 HA 里显式打开。
+          id(ina_fault_count) = 0;
+          if (id(ina_fault_latched)) {
+            id(ina_fault_latched) = false;
+            ESP_LOGW("guard", "INA237 读数已恢复(%.2fA),解除锁存;输出需手动重新使能", i);
+            id(fault_ina).publish_state(false);
+          }
+
+          // ---- 11A 预警(设计文档 §3)
+          const bool warn = i >= ${current_warn}f;
+          if (warn && !id(warn_over_current).state)
+            ESP_LOGW("guard", "总电流 %.2fA,已越过 ${current_warn}A 预警线", i);
+          id(warn_over_current).publish_state(warn);
+
+          // ---- 12A 降亮度
+          const float prev = id(power_scale);
+          float s = prev;
+          if (i > ${current_limit}f) {
+            s -= 0.05f;                 // 超预算:每秒降 5%
+            if (s < 0.30f) s = 0.30f;
+          } else if (i < ${current_release}f && s < 1.0f) {
+            s += 0.02f;                 // 回落:每秒恢复 2%
+            if (s > 1.0f) s = 1.0f;
+          }
+
+          if (s == prev) {
+            // 已经降到 30% 地板还压不下去 —— 这不是限流在工作,是限流不够。
+            if (i > ${current_limit}f)
+              ESP_LOGE("guard", "总电流 %.2fA,已限幅到底 30%% 仍超 ${current_limit}A 预算", i);
+            return;
+          }
+
+          id(power_scale) = s;
+          ESP_LOGW("guard", "总电流 %.2fA,输出限幅至 %.0f%%", i, s * 100.0f);
+          id(limiting_active).publish_state(s < 0.999f);
+          id(power_scale_pct).publish_state(s * 100.0f);
+          // 只在系数真的变了时才重写输出:无谓的重写会打断正在进行的过渡。
+          id(apply_power_scale)->execute();
+
+# ---------------------------------------------------------------------------
+# 4 路墙壁开关干接点
+# ---------------------------------------------------------------------------
+# GPIO34/35/36/39 是纯输入脚且内部无上拉,依赖板上 10k 外部上拉。
+# delayed_on/off 兼作消抖与 GPIO36/39 errata(WiFi 省电模式偶发毛刺)的兜底。
+# 联动逻辑写在板内,WiFi/HA 掉线时物理开关仍可控灯。
+binary_sensor:
+  - platform: gpio
+    id: sw1
+    name: "墙壁开关 1"
+    pin:
+      number: GPIO34
+      inverted: true
+    filters:
+      - delayed_on: 30ms
+      - delayed_off: 30ms
+    on_click:
+      min_length: 20ms
+      max_length: 500ms
+      then:
+        - light.toggle: light_ch1
+
+  - platform: gpio
+    id: sw2
+    name: "墙壁开关 2"
+    pin:
+      number: GPIO35
+      inverted: true
+    filters:
+      - delayed_on: 30ms
+      - delayed_off: 30ms
+    on_click:
+      min_length: 20ms
+      max_length: 500ms
+      then:
+        - light.toggle: light_ch2
+
+  - platform: gpio
+    id: sw3
+    name: "墙壁开关 3"
+    pin:
+      number: GPIO36
+      inverted: true
+    filters:
+      - delayed_on: 30ms
+      - delayed_off: 30ms
+    on_click:
+      min_length: 20ms
+      max_length: 500ms
+      then:
+        - light.toggle: light_ch3
+
+  - platform: gpio
+    id: sw4
+    name: "墙壁开关 4"
+    pin:
+      number: GPIO39
+      inverted: true
+    filters:
+      - delayed_on: 30ms
+      - delayed_off: 30ms
+    on_click:
+      min_length: 20ms
+      max_length: 500ms
+      then:
+        - light.toggle: light_ch4
+
+  - platform: status
+    name: "运行状态"
+
+  # ---- HA 可见的告警(设计文档 §3:11A 预警、12A 降亮度并告警)
+  # 三个都由 1s 守护逻辑推送,没有 lambda,所以不轮询。
+  - platform: template
+    id: warn_over_current
+    name: "电流预警 Current Warning"
+    device_class: problem
+  - platform: template
+    id: limiting_active
+    name: "输出限幅中 Output Limiting"
+    device_class: problem
+  - platform: template
+    id: fault_ina
+    name: "电流监测故障 Current Sense Fault"
+    device_class: problem
+
+# ---------------------------------------------------------------------------
+# UART2:板边毫米波/串口传感器接口(未接传感器时保持注释)
+# ---------------------------------------------------------------------------
+# uart:
+#   tx_pin: GPIO26
+#   rx_pin: GPIO27
+#   baud_rate: 256000
+#   parity: NONE
+#   stop_bits: 1

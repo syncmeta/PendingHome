@@ -1,0 +1,13 @@
+#!/bin/sh
+# 提交前校验 KiCad 工程文件的网络类与设计规则没有被 GUI 悄悄重置。
+# 启用方式(克隆后要手动执行一次,钩子不随 clone 生效):
+#     git config core.hooksPath .githooks
+# 详见 README「KiCad 工程文件会被 GUI 悄悄重置」一节。
+
+repo="$(git rev-parse --show-toplevel)"
+
+if ! python3 "$repo/hardware/check-netclasses.py"; then
+	echo
+	echo "提交已中止。确认无误要强行提交,用: git commit --no-verify"
+	exit 1
+fi
